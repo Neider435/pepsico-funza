@@ -166,7 +166,6 @@
     </div>
     <h2 style="text-align:center;">FORMULARIO - PEPSICO FUNZA</h2>
 
-    <!-- ⚠️ Se eliminó data-netlify="true" -->
     <form id="formPepsico" name="registro-pepsico">
         <label for="lugar">Lugar de operación:</label>
         <select name="lugar" id="lugar" required onchange="actualizarCampos()">
@@ -610,7 +609,7 @@
             guardarProgreso();
         }
 
-        // ✅ FUNCIÓN ACTUALIZADA PARA ENVIAR A GOOGLE APPS SCRIPT
+        // ✅ FUNCIÓN ACTUALIZADA PARA ENVIAR DATOS + FOTOS A GOOGLE APPS SCRIPT
         async function validarYEnviar(event) {
             event.preventDefault();
             
@@ -621,81 +620,64 @@
             }
 
             const form = document.getElementById('formPepsico');
-            const datos = {
-                lugar: form.lugar.value || '',
-                lider: (form.lider.value || '').toUpperCase().trim(),
-                coordinador: (form.coordinador.value || '').toUpperCase().trim(),
-                lider_pepsico: form.lider_pepsico.value || '',
-                fecha: form.fecha.value || '',
-                turno: form.turno.value || '',
-                total_personas: form.total_personas.value || '',
-                cajas_totales: form.cajas_totales.value || ''
-            };
+            const formData = new FormData();
 
-            datos.vehiculos = [];
+            // Datos generales
+            formData.append('lugar', form.lugar.value || '');
+            formData.append('lider', (form.lider.value || '').toUpperCase().trim());
+            formData.append('coordinador', (form.coordinador.value || '').toUpperCase().trim());
+            formData.append('lider_pepsico', form.lider_pepsico.value || '');
+            formData.append('fecha', form.fecha.value || '');
+            formData.append('turno', form.turno.value || '');
+            formData.append('total_personas', form.total_personas.value || '');
+            formData.append('cajas_totales', form.cajas_totales.value || '');
+
+            // Vehículos y fotos
             document.querySelectorAll('.registro-vehiculo').forEach((div, idx) => {
-                const v = {};
                 const fields = div.querySelectorAll('[name]');
                 fields.forEach(field => {
-                    let name = field.name;
-                    if (name.startsWith('vehiculos[') && name.endsWith(']')) {
-                        const match = name.match(/vehiculos\[\d+\]\[([^\]]+)\]/);
+                    if (field.type !== 'file' && field.name.startsWith('vehiculos[')) {
+                        const match = field.name.match(/vehiculos\[\d+\]\[([^\]]+)\]/);
                         if (match) {
                             let key = match[1];
                             let value = field.value || '';
                             if (typeof value === 'string' && !/^\d+$/.test(value.trim())) {
                                 value = value.toUpperCase().trim();
                             }
-                            v[key] = value;
+                            formData.append(`vehiculo_${idx}_${key}`, value);
                         }
                     }
                 });
-                datos.vehiculos.push(v);
+
+                const fileInput = div.querySelector('input[type="file"]');
+                if (fileInput && fileInput.files[0]) {
+                    formData.append(`foto_vehiculo_${idx}`, fileInput.files[0]);
+                }
             });
 
-            datos.paradas_operacion = [];
-            document.querySelectorAll('#operacion-contenedor .parada-group').forEach(div => {
+            // Paradas de operación
+            document.querySelectorAll('#operacion-contenedor .parada-group').forEach((div, idx) => {
                 const inputs = div.querySelectorAll('input[placeholder="HH:MM"]');
                 const select = div.querySelector('select');
                 const otro = div.querySelector('.otro-input');
-                datos.paradas_operacion.push({
-                    inicio: inputs[0]?.value || '',
-                    fin: inputs[1]?.value || '',
-                    motivo: (select?.value || '').toUpperCase(),
-                    otro_motivo: (otro?.value || '').toUpperCase()
-                });
+                formData.append(`parada_op_${idx}_inicio`, inputs[0]?.value || '');
+                formData.append(`parada_op_${idx}_fin`, inputs[1]?.value || '');
+                formData.append(`parada_op_${idx}_motivo`, (select?.value || '').toUpperCase());
+                formData.append(`parada_op_${idx}_otro`, (otro?.value || '').toUpperCase());
             });
-
-            if (!datos.fecha || !datos.lugar || datos.vehiculos.length === 0) {
-                alert("❌ Complete todos los campos obligatorios.");
-                return;
-            }
 
             const btn = form.querySelector('button[type="submit"]');
             btn.disabled = true;
             btn.textContent = "Enviando...";
 
             try {
-                const payload = {
-                    lugar: datos.lugar,
-                    lider: datos.lider,
-                    coordinador: datos.coordinador,
-                    lider_pepsico: datos.lider_pepsico,
-                    fecha: datos.fecha,
-                    turno: datos.turno,
-                    total_personas: datos.total_personas,
-                    cajas_totales: datos.cajas_totales,
-                    vehiculos: datos.vehiculos,
-                    paradas_operacion: datos.paradas_operacion
-                };
-
-                // 🔁 PON TU URL DE GOOGLE APPS SCRIPT AQUÍ CUANDO LA TENGAS
+                // 🔁 PEGAR AQUÍ TU URL REAL DE GOOGLE APPS SCRIPT (sin espacios)
                 const scriptUrl = "https://script.google.com/macros/s/AKfycbx73TuSxIL_PH8AZmn6FxJDg7bMUUg91ydqXhgldgIlqhnDG7wbVglDUy4g9KNj8QPANg/exec";
 
                 const response = await fetch(scriptUrl, {
                     method: "POST",
-                    body: JSON.stringify(payload),
-                    headers: { "Content-Type": "application/json" }
+                    body: formData  // ⚠️ FormData incluye archivos
+                    // ⚠️ NO poner headers: fetch los configura solo
                 });
 
                 if (response.ok) {
