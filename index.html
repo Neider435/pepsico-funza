@@ -609,7 +609,7 @@
             guardarProgreso();
         }
 
-        // ✅ FUNCIÓN ACTUALIZADA PARA ENVIAR DATOS + FOTOS A GOOGLE APPS SCRIPT
+        // ✅ FUNCIÓN ACTUALIZADA Y CORREGIDA PARA ENVIAR A GOOGLE APPS SCRIPT
         async function validarYEnviar(event) {
             event.preventDefault();
             
@@ -633,7 +633,11 @@
             formData.append('cajas_totales', form.cajas_totales.value || '');
 
             // Vehículos y fotos
-            document.querySelectorAll('.registro-vehiculo').forEach((div, idx) => {
+            let vehiculoIndex = 0;
+            document.querySelectorAll('.registro-vehiculo').forEach(div => {
+                const placaInput = div.querySelector('[name$="[placa]"]');
+                if (!placaInput || !placaInput.value.trim()) return; // Ignorar vehículos sin placa
+
                 const fields = div.querySelectorAll('[name]');
                 fields.forEach(field => {
                     if (field.type !== 'file' && field.name.startsWith('vehiculos[')) {
@@ -644,26 +648,30 @@
                             if (typeof value === 'string' && !/^\d+$/.test(value.trim())) {
                                 value = value.toUpperCase().trim();
                             }
-                            formData.append(`vehiculo_${idx}_${key}`, value);
+                            formData.append(`vehiculo_${vehiculoIndex}_${key}`, value);
                         }
                     }
                 });
 
                 const fileInput = div.querySelector('input[type="file"]');
                 if (fileInput && fileInput.files[0]) {
-                    formData.append(`foto_vehiculo_${idx}`, fileInput.files[0]);
+                    formData.append(`foto_vehiculo_${vehiculoIndex}`, fileInput.files[0]);
                 }
+
+                vehiculoIndex++;
             });
 
             // Paradas de operación
-            document.querySelectorAll('#operacion-contenedor .parada-group').forEach((div, idx) => {
+            let paradaIndex = 0;
+            document.querySelectorAll('#operacion-contenedor .parada-group').forEach(div => {
                 const inputs = div.querySelectorAll('input[placeholder="HH:MM"]');
                 const select = div.querySelector('select');
                 const otro = div.querySelector('.otro-input');
-                formData.append(`parada_op_${idx}_inicio`, inputs[0]?.value || '');
-                formData.append(`parada_op_${idx}_fin`, inputs[1]?.value || '');
-                formData.append(`parada_op_${idx}_motivo`, (select?.value || '').toUpperCase());
-                formData.append(`parada_op_${idx}_otro`, (otro?.value || '').toUpperCase());
+                formData.append(`parada_op_${paradaIndex}_inicio`, inputs[0]?.value || '');
+                formData.append(`parada_op_${paradaIndex}_fin`, inputs[1]?.value || '');
+                formData.append(`parada_op_${paradaIndex}_motivo`, (select?.value || '').toUpperCase());
+                formData.append(`parada_op_${paradaIndex}_otro`, (otro?.value || '').toUpperCase());
+                paradaIndex++;
             });
 
             const btn = form.querySelector('button[type="submit"]');
@@ -671,25 +679,24 @@
             btn.textContent = "Enviando...";
 
             try {
-                // 🔁 PEGAR AQUÍ TU URL REAL DE GOOGLE APPS SCRIPT (sin espacios)
+                // 🔑 URL CORREGIDA: SIN ESPACIOS AL FINAL
                 const scriptUrl = "https://script.google.com/macros/s/AKfycbx73TuSxIL_PH8AZmn6FxJDg7bMUUg91ydqXhgldgIlqhnDG7wbVglDUy4g9KNj8QPANg/exec";
-                
 
                 const response = await fetch(scriptUrl, {
                     method: "POST",
-                    body: formData  // ⚠️ FormData incluye archivos
-                    // ⚠️ NO poner headers: fetch los configura solo
+                    body: formData
+                    // ⚠️ NO incluir 'headers' con FormData
                 });
 
                 if (response.ok) {
                     localStorage.clear();
                     window.location.href = "aceptacion.html";
                 } else {
-                    throw new Error("El servidor no aceptó los datos.");
+                    throw new Error("El servidor respondió con error.");
                 }
 
             } catch (error) {
-                console.error("Error:", error);
+                console.error("Error de envío:", error);
                 alert("❌ Error al enviar: " + error.message);
             } finally {
                 btn.disabled = false;
@@ -708,5 +715,3 @@
     </script>
 </body>
 </html>
-
-
