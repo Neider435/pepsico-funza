@@ -1,717 +1,863 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Registro - Pepsico Funza</title>
-    <style>
-        /* Diseño original mantenido sin cambios */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
-            padding: 40px;
-        }
-        .logo-container {
-            position: absolute;
-            top: 50px;
-            left: 50px;
-        }
-        .logo-container img {
-            width: 200px;
-            height: auto;
-        }
-        form {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            width: 500px;
-            margin: auto;
-        }
-        .registro-vehiculo {
-            border: 2px solid #C76E00;
-            padding: 15px;
-            margin-top: 20px;
-            border-radius: 10px;
-            position: relative;
-        }
-        .parada-group {
-            border: 1px dashed #ced4da;
-            padding: 10px;
-            margin-top: 15px;
-            border-radius: 5px;
-        }
-        .form-group-custom { 
-            margin-top: 15px;
-            display: flex;
-            flex-direction: column;
-        }
-        .btn-agregar-registro,
-        .btn-agregar-parada-op {
-            background-color: #001855;
-            color: white;
-            border: none;
-            cursor: pointer;
-            margin-top: 15px;
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: bold;
-        }
-        .btn-agregar-registro:hover,
-        .btn-agregar-parada-op:hover {
-            background-color: #0056b3;
-        }
-        label {
-            font-weight: bold;
-            display: block;
-            margin-top: 15px;
-        }
-        select, input, button {
-            width: 100%;
-            padding: 8px;
-            margin-top: 8px;
-            border-radius: 8px;
-            border: 1px solid #170303;
-        }
-        .time-row {
-            display: flex;
-            gap: 10px;
-            align-items: flex-start;
-        }
-        .time-row > div {
-            flex-grow: 1;
-            position: relative;
-        }
-        .time-display {
-            display: block;
-            margin-top: 5px;
-            font-size: 0.85em;
-            color: #155724;
-            font-weight: bold;
-        }
-        .time-label {
-            font-weight: bold;
-            display: block;
-            margin-top: 5px;
-            color: #007bff;
-        }
-        button[type="submit"] {
-            background-color: #001855;
-            color: white;
-            border: none;
-            cursor: pointer;
-            margin-top: 20px;
-            width: 70%; 
-        }
-        .btn-borrar-todo {
-            background-color: #8B1234 !important;
-            color: white !important;
-            border: none;
-            cursor: pointer;
-            margin-top: 20px;
-            width: 28%;
-            font-weight: bold;
-        }
-        .flex-buttons {
-            display: flex;
-            justify-content: space-between;
-        }
-        button[type="submit"]:hover {
-            background-color: #0056b3;
-        }
-        .time-input-masked {
-            text-align: center;
-            font-size: 1.1em;
-            letter-spacing: 2px;
-        }
-        .btn-eliminar {
-            background-color:#8B0000 !important;
-            width:auto !important;
-            padding:5px 10px !important;
-            margin-top:10px !important;
-            border: none !important;
-            color: white !important;
-        }
-        .btn-eliminar-registro {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: #8B0000 !important;
-            color: white !important;
-            border: none !important;
-            padding: 5px 10px !important;
-            cursor: pointer;
-            font-size: 0.8em;
-            width: auto;
-        }
-        .btn-eliminar:hover {
-            background-color:#c82333 !important;
-        }
-        .otro-input {
-            margin-top:5px;
-            display:none;
-        }
-        .preview-foto img {
-            max-width: 100%;
-            max-height: 200px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            margin-top: 8px;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>Registro - Pepsico Funza</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f8f9fa;
+  padding: 40px;
+}
+.logo-container {
+  position: absolute;
+  top: 50px;
+  left: 50px;
+}
+.logo-container img {
+  width: 200px;
+  height: auto;
+}
+form {
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  width: 500px;
+  margin: auto;
+}
+.registro-vehiculo {
+  border: 2px solid #C76E00;
+  padding: 15px;
+  margin-top: 20px;
+  border-radius: 10px;
+  position: relative;
+}
+.parada-group {
+  border: 1px dashed #ced4da;
+  padding: 10px;
+  margin-top: 15px;
+  border-radius: 5px;
+}
+.form-group-custom {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+}
+.btn-agregar-registro,
+.btn-agregar-parada-op {
+  background-color: #001855;
+  color: white;
+  border: none;
+  cursor: pointer;
+  margin-top: 15px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: bold;
+}
+.btn-agregar-registro:hover,
+.btn-agregar-parada-op:hover {
+  background-color: #0056b3;
+}
+label {
+  font-weight: bold;
+  display: block;
+  margin-top: 15px;
+}
+select, input, button {
+  width: 100%;
+  padding: 8px;
+  margin-top: 8px;
+  border-radius: 8px;
+  border: 1px solid #170303;
+}
+.time-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.time-row > div {
+  flex-grow: 1;
+  position: relative;
+}
+.time-display {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.85em;
+  color: #155724;
+  font-weight: bold;
+}
+.time-label {
+  font-weight: bold;
+  display: block;
+  margin-top: 5px;
+  color: #007bff;
+}
+button[type="submit"] {
+  background-color: #001855;
+  color: white;
+  border: none;
+  cursor: pointer;
+  margin-top: 20px;
+}
+button[type="submit"]:hover {
+  background-color: #0056b3;
+}
+.time-input-masked {
+  text-align: center;
+  font-size: 1.1em;
+  letter-spacing: 2px;
+}
+.btn-eliminar {
+  background-color:#8B0000 !important;
+  width:auto !important;
+  padding:5px 10px !important;
+  margin-top:10px !important;
+  border: none !important;
+  color: white !important;
+}
+.btn-eliminar-registro {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #8B0000 !important;
+  color: white !important;
+  border: none !important;
+  padding: 5px 10px !important;
+  cursor: pointer;
+  font-size: 0.8em;
+  width: auto;
+}
+.btn-eliminar:hover {
+  background-color:#c82333 !important;
+}
+.otro-input {
+  margin-top:5px;
+  display:none;
+}
+.preview-foto img {
+  max-width: 100%;
+  max-height: 200px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+.btn-borrar-todo {
+  background-color: #8B0000;
+  color: white;
+  margin-top: 20px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+</style>
 </head>
 <body>
-    <div class="logo-container">
-        <img src="prueba.png" alt="Logo de la Empresa"> 
-    </div>
-    <h2 style="text-align:center;">FORMULARIO - PEPSICO FUNZA</h2>
+<div class="logo-container">
+  <img src="prueba.png" alt="Logo de la Empresa">
+</div>
+<h2 style="text-align:center;">FORMULARIO - PEPSICO FUNZA</h2>
+<form name="formulario-pepsico" method="POST" data-netlify="true">
+  <input type="hidden" name="form-name" value="formulario-pepsico" />
+  <label for="lugar">Lugar de operación:</label>
+  <select name="lugar" id="lugar" required onchange="actualizarCampos()">
+    <option value="">Seleccione una opción</option>
+    <option value="Funza">Pepsico Funza</option>
+  </select>
+  <label for="lider">Líder Asignado:</label>
+  <input type="text" name="lider_asignado" id="lider" required placeholder="Primer Nombre y Primer Apellido">
+  <label for="coordinador">Coordinador Asignado:</label>
+  <input type="text" name="coordinador" id="coordinador" readonly required>
+  <label for="lider_pepsico">Líder De Pepsico:</label>
+  <select name="lider_pepsico" id="lider_pepsico" required>
+    <option value="">Seleccione un líder</option>
+    <option value="Alejandro Ariza">Alejandro Ariza</option>
+    <option value="Alejandro Monroy">Alejandro Monroy</option>
+    <option value="Carlos Ruiz">Carlos Ruiz</option>
+  </select>
+  <label for="fecha">Fecha:</label>
+  <input type="date" name="fecha" id="fecha" required>
+  <label for="turno">Turno Asignado:</label>
+  <select name="turno" id="turno" required>
+    <option value="">Seleccione un turno</option>
+    <option value="Manana">Mañana</option>
+    <option value="Tarde">Tarde</option>
+    <option value="Noche">Noche</option>
+  </select>
+  <hr style="margin-top: 25px; border-style: dotted;">
+  <h3 style="text-align:center; font-size:1.3em; color:#C76E00;">REGISTRO DE VEHÍCULOS</h3>
+  <div id="vehiculos-contenedor"></div>
+  <button type="button" class="btn-agregar-registro" onclick="agregarRegistroVehiculo()">
+    + Registrar Nuevo Vehículo
+  </button>
+  <hr style="margin-top: 25px; border-style: dotted;">
+  <h3 style="text-align:center; font-size:1.3em; color:#001855;">PARADAS DE OPERACIÓN</h3>
+  <div id="operacion-contenedor"></div>
+  <button type="button" class="btn-agregar-parada-op" onclick="agregarCampoParada('operacion')">
+    + Agregar Parada
+  </button>
+  <hr style="margin-top: 25px; border-style: dotted;">
+  <h3 style="text-align:center; font-size:1.1em; color:#296097;">TOTALES DE TURNO</h3>
+  <label for="total_personas">Total Personas En El Turno:</label>
+  <input type="number" name="total_personas" id="total_personas" min="1" required
+    placeholder="Total de empleados en el turno">
+  <label for="cajas_totales">Total Cajas Movidas:</label>
+  <input type="number" name="cajas_totales" id="cajas_totales" min="0" required
+    placeholder="Cantidad total de cajas movidas" oninput="actualizarTotalCajas()">
+  <input type="hidden" name="datos_vehiculos" id="datos_vehiculos" value="">
+  <input type="hidden" name="datos_paradas_operacion" id="datos_paradas_operacion" value="">
+  <div style="display: flex; gap: 10px;">
+    <button type="submit" style="flex: 3;">Enviar</button>
+    <button type="button" class="btn-borrar-todo" style="flex: 1;" onclick="limpiarTodo()">Borrar Todo</button>
+  </div>
+</form>
+<script>
+let vehiculosData = [];
 
-    <form id="formPepsico" name="registro-pepsico">
-        <label for="lugar">Lugar de operación:</label>
-        <select name="lugar" id="lugar" required onchange="actualizarCampos()">
-            <option value="">Seleccione una opción</option>
-            <option value="Funza">Pepsico Funza</option>
-        </select>
+function horaAMinutos(horaStr) {
+  if (!horaStr || !horaStr.includes(':')) return null;
+  const [h, m] = horaStr.split(':').map(Number);
+  if (isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) return null;
+  return h * 60 + m;
+}
+function rangosSeSolapan(inicio1, fin1, inicio2, fin2) {
+  const i1 = horaAMinutos(inicio1);
+  const f1 = horaAMinutos(fin1);
+  const i2 = horaAMinutos(inicio2);
+  const f2 = horaAMinutos(fin2);
+  if (i1 === null || f1 === null || i2 === null || f2 === null) return false;
+  return i1 < f2 && i2 < f1;
+}
 
-        <label for="lider">Líder Asignado:</label>
-        <input type="text" name="lider" id="lider" required placeholder="Primer Nombre y Primer Apellido">
+function validarSolapamientoVehiculos() {
+  const agrupados = {};
+  for (let idx = 0; idx < vehiculosData.length; idx++) {
+    const data = vehiculosData[idx];
+    if (!data.muelle && data.muelle !== 'otro') continue;
+    const muelle = data.muelle === 'otro' ? (data.otro_muelle_num || '') : data.muelle;
+    if (!muelle || !data.inicio || !data.fin) continue;
+    if (!agrupados[muelle]) agrupados[muelle] = [];
+    agrupados[muelle].push({ inicio: data.inicio, fin: data.fin, idx });
+  }
+  for (const muelle in agrupados) {
+    const regs = agrupados[muelle];
+    for (let i = 0; i < regs.length; i++) {
+      for (let j = i + 1; j < regs.length; j++) {
+        if (rangosSeSolapan(regs[i].inicio, regs[i].fin, regs[j].inicio, regs[j].fin)) {
+          alert(`¡Conflicto en muelle ${muelle}! Vehículos #${regs[i].idx + 1} y #${regs[j].idx + 1} se superponen.`);
+          return false;
+        }
+      }
+    }
+  }
+  return true;
+}
+function validarSolapamientoParadas() {
+  const paradas = [];
+  const cont = document.getElementById('operacion-contenedor');
+  const grupos = cont.querySelectorAll('.parada-group');
+  grupos.forEach((grupo, idx) => {
+    const inicio = grupo.querySelector(`input[name="parada_inicio_operacion_${grupo.dataset.index}"]`).value;
+    const fin = grupo.querySelector(`input[name="parada_fin_operacion_${grupo.dataset.index}"]`).value;
+    if (inicio && fin) paradas.push({ inicio, fin, idx });
+  });
+  for (let i = 0; i < paradas.length; i++) {
+    for (let j = i + 1; j < paradas.length; j++) {
+      if (rangosSeSolapan(paradas[i].inicio, paradas[i].fin, paradas[j].inicio, paradas[j].fin)) {
+        alert(`¡Las paradas de operación #${i + 1} y #${j + 1} se superponen!`);
+        return false;
+      }
+    }
+  }
+  return true;
+}
 
-        <label for="coordinador">Coordinador Asignado:</label>
-        <input type="text" name="coordinador" id="coordinador" readonly required>
+function eliminarRegistroVehiculo(index) {
+  if (vehiculosData.length <= 1) {
+    alert("Debe haber al menos un vehículo.");
+    return;
+  }
+  sincronizarVehiculosDesdeDOM();
+  vehiculosData.splice(index, 1);
+  reindexarVehiculos();
+  actualizarTotalCajas();
+  guardarProgreso();
+}
 
-        <label for="lider_pepsico">Líder De Pepsico:</label>
-        <select name="lider_pepsico" id="lider_pepsico" required>
-            <option value="">Seleccione un líder</option>
-            <option value="Alejandro Ariza">Alejandro Ariza</option>
-            <option value="Alejandro Monroy">Alejandro Monroy</option>
-            <option value="Carlos Ruiz">Carlos Ruiz</option>
-        </select>
+function reindexarVehiculos() {
+  const contenedor = document.getElementById('vehiculos-contenedor');
+  contenedor.innerHTML = '';
+  for (let i = 0; i < vehiculosData.length; i++) {
+    crearVehiculoHTML(contenedor, i, vehiculosData[i]);
+  }
+}
 
-        <label for="fecha">Fecha:</label>
-        <input type="date" name="fecha" id="fecha" required>
+function agregarRegistroVehiculo() {
+  const vIndex = vehiculosData.length;
+  vehiculosData.push({});
+  const contenedor = document.getElementById('vehiculos-contenedor');
+  crearVehiculoHTML(contenedor, vIndex, {});
+  actualizarTotalCajas();
+  guardarProgreso();
+}
 
-        <label for="turno">Turno Asignado:</label>
-        <select name="turno" id="turno" required>
-            <option value="">Seleccione un turno</option>
-            <option value="Manana">Mañana</option>
-            <option value="Tarde">Tarde</option>
-            <option value="Noche">Noche</option>
-        </select>
+function sincronizarVehiculosDesdeDOM() {
+  const contenedor = document.getElementById('vehiculos-contenedor');
+  const registros = contenedor.querySelectorAll('.registro-vehiculo');
+  for (let i = 0; i < registros.length; i++) {
+    const reg = registros[i];
+    if (vehiculosData[i] === undefined) vehiculosData[i] = {};
+    const getValue = name => {
+      const el = reg.querySelector(`[name="${name}"]`);
+      return el ? el.value || '' : '';
+    };
+    vehiculosData[i] = {
+      inicio: getValue(`vehiculo_${i}_inicio`),
+      fin: getValue(`vehiculo_${i}_fin`),
+      motivo: getValue(`vehiculo_${i}_motivo`),
+      otro_motivo: getValue(`vehiculo_${i}_otro_motivo`),
+      muelle: getValue(`vehiculo_${i}_muelle`),
+      otro_muelle_num: getValue(`vehiculo_${i}_otro_muelle_num`),
+      placa: getValue(`vehiculo_${i}_placa`),
+      tipo_vehi: getValue(`vehiculo_${i}_tipo_vehi`),
+      otro_tipo: getValue(`vehiculo_${i}_otro_tipo`),
+      destino: getValue(`vehiculo_${i}_destino`),
+      otro_destino: getValue(`vehiculo_${i}_otro_destino`),
+      origen: getValue(`vehiculo_${i}_origen`),
+      personas: getValue(`vehiculo_${i}_personas`),
+      cajas: getValue(`vehiculo_${i}_cajas`),
+      justificacion: getValue(`vehiculo_${i}_justificacion`),
+      otro_justificacion: getValue(`vehiculo_${i}_otro_justificacion`),
+      tiempo_muerto_inicio: getValue(`vehiculo_${i}_tiempo_muerto_inicio`),
+      tiempo_muerto_final: getValue(`vehiculo_${i}_tiempo_muerto_final`),
+      foto_url: getValue(`vehiculo_${i}_foto_url`)
+    };
+  }
+}
 
-        <hr style="margin-top: 25px; border-style: dotted;">
-        <h3 style="text-align:center; font-size:1.3em; color:#C76E00;">REGISTRO DE VEHÍCULOS</h3>
-        <div id="vehiculos-contenedor"></div>
-        <button type="button" class="btn-agregar-registro" onclick="agregarRegistroVehiculo()">
-            + Registrar Nuevo Vehículo
-        </button>
+function manejarOtroCampo(select) {
+  const otro = select.nextElementSibling;
+  if (!otro || !otro.classList.contains('otro-input')) return;
+  if (select.value === 'otro') {
+    otro.style.display = 'block';
+    otro.required = true;
+  } else {
+    otro.style.display = 'none';
+    otro.required = false;
+    otro.value = '';
+  }
+  guardarProgreso();
+}
 
-        <hr style="margin-top: 25px; border-style: dotted;">
-        <h3 style="text-align:center; font-size:1.3em; color:#001855;">PARADAS DE OPERACIÓN</h3>
-        <div id="operacion-contenedor"></div>
-        <button type="button" class="btn-agregar-parada-op" onclick="agregarCampoParada('operacion')">
-            + Agregar Parada
-        </button>
+function alternarDestinoRemitente(selectMotivo, vIndex) {
+  const motivo = selectMotivo.value;
+  const destinoGroup = document.getElementById(`destino-group-${vIndex}`);
+  const remitenteGroup = document.getElementById(`remitente-group-${vIndex}`);
+  if (destinoGroup) destinoGroup.style.display = motivo === 'cargue' ? 'block' : 'none';
+  if (remitenteGroup) remitenteGroup.style.display = motivo === 'descargue' ? 'block' : 'none';
+  const destinoSelect = document.getElementById(`destino-select-${vIndex}`);
+  const remitenteInput = document.getElementById(`remitente-input-${vIndex}`);
+  if (motivo === 'cargue' && destinoSelect) {
+    destinoSelect.setAttribute('required', 'required');
+  } else if (remitenteInput) {
+    remitenteInput.required = motivo === 'descargue';
+  }
+}
 
-        <hr style="margin-top: 25px; border-style: dotted;">
-        <h3 style="text-align:center; font-size:1.1em; color:#296097;">TOTALES DE TURNO</h3>
-        <label for="total_personas">Total Personas:</label>
-        <input type="number" name="total_personas" id="total_personas" min="1" required
-            placeholder="Total de empleados en el turno">
-        
-        <label for="cajas_totales">Total Cajas Movidas:</label>
-        <input type="number" name="cajas_totales" id="cajas_totales" min="0" required
-            placeholder="Cantidad total de cajas movidas" readonly>
+// ✅ FUNCIÓN ACTUALIZADA: muestra tiempo muerto para CUALQUIER opción seleccionada
+function mostrarTiempoMuerto(select, vIndex) {
+  const div = document.getElementById(`tiempo-muerto-${vIndex}`);
+  if (select.value !== "") {
+    div.style.display = 'flex';
+  } else {
+    div.style.display = 'none';
+    // Limpiar valores
+    const inicio = document.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_inicio"]`);
+    const fin = document.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_final"]`);
+    if (inicio) inicio.value = '';
+    if (fin) fin.value = '';
+  }
+  guardarProgreso();
+}
 
-        <div class="flex-buttons">
-            <button type="submit">Enviar</button>
-            <button type="button" class="btn-borrar-todo" onclick="borrarTodoDefinitivo()">BORRAR TODO</button>
+function crearVehiculoHTML(contenedor, vIndex, datos = {}) {
+  const inicioId = `cargue-inicio-${vIndex}`;
+  const finId = `cargue-fin-${vIndex}`;
+  const fotoInputId = `foto_vehiculo_${vIndex}`;
+  const previewFotoId = `preview_foto_${vIndex}`;
+  const motivoSelectId = `motivo-cargue-descargue-${vIndex}`;
+
+  const registro = document.createElement('div');
+  registro.className = 'registro-vehiculo';
+  registro.dataset.index = vIndex;
+
+  const html = `
+    <button type="button" class="btn-eliminar-registro" onclick="eliminarRegistroVehiculo(${vIndex})">
+      Eliminar Vehículo #${vIndex + 1}
+    </button>
+    <hr style="margin-top:25px; border-style:dashed;">
+    <h4 style="text-align:center; color:#C76E00;">VEHÍCULO #${vIndex + 1}</h4>
+    <h5 style="text-align:center; color:#C76E00;">PARADA DE CARGUE/DESCARGUE</h5>
+    <div class="parada-group">
+      <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #1 (Cargue/Descargue)</p>
+      <div class="time-row">
+        <div>
+          <label class="time-label">Hora Inicio (HH:MM):</label>
+          <input type="tel" name="vehiculo_${vIndex}_inicio" class="time-input-masked" required
+            placeholder="HH:MM" maxlength="5" value="${datos.inicio || ''}"
+            onblur="applyTimeMask(this, '${inicioId}');">
+          <span id="${inicioId}" class="time-display"></span>
         </div>
-    </form>
+        <div>
+          <label class="time-label">Hora Final (HH:MM):</label>
+          <input type="tel" name="vehiculo_${vIndex}_fin" class="time-input-masked" required
+            placeholder="HH:MM" maxlength="5" value="${datos.fin || ''}"
+            onblur="applyTimeMask(this, '${finId}');">
+          <span id="${finId}" class="time-display"></span>
+        </div>
+      </div>
+      <label style="margin-top:5px;">Motivo:</label>
+      <select id="${motivoSelectId}" name="vehiculo_${vIndex}_motivo" required>
+        <option value="">Seleccione</option>
+        <option value="cargue" ${datos.motivo === 'cargue' ? 'selected' : ''}>Cargue</option>
+        <option value="descargue" ${datos.motivo === 'descargue' ? 'selected' : ''}>Descargue</option>
+        <option value="otro" ${datos.motivo === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      <input type="text" name="vehiculo_${vIndex}_otro_motivo" placeholder="Especifique otro motivo" class="otro-input" value="${datos.otro_motivo || ''}">
+    </div>
+    <hr style="margin-top:25px; border-style:dashed;">
+    <label>Muelle:</label>
+    <select name="vehiculo_${vIndex}_muelle" required>
+      <option value="">Seleccione</option>
+      <option value="3" ${datos.muelle === '3' ? 'selected' : ''}>3</option>
+      <option value="11" ${datos.muelle === '11' ? 'selected' : ''}>11</option>
+      <option value="12" ${datos.muelle === '12' ? 'selected' : ''}>12</option>
+      <option value="13" ${datos.muelle === '13' ? 'selected' : ''}>13</option>
+      <option value="14" ${datos.muelle === '14' ? 'selected' : ''}>14</option>
+      <option value="17" ${datos.muelle === '17' ? 'selected' : ''}>17</option>
+      <option value="18" ${datos.muelle === '18' ? 'selected' : ''}>18</option>
+      <option value="19" ${datos.muelle === '19' ? 'selected' : ''}>19</option>
+      <option value="20" ${datos.muelle === '20' ? 'selected' : ''}>20</option>
+      <option value="otro" ${datos.muelle === 'otro' ? 'selected' : ''}>Otro</option>
+    </select>
+    <input type="number" name="vehiculo_${vIndex}_otro_muelle_num" id="otro_muelle_${vIndex}" class="otro-input" placeholder="N° muelle" min="1" max="999" value="${datos.otro_muelle_num || ''}">
+    <label>Placa:</label>
+    <input type="text" name="vehiculo_${vIndex}_placa" required placeholder="Ej: ABC123, 123ABC o A12345" maxlength="6"
+      value="${datos.placa || ''}"
+      oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0,6); guardarProgreso();">
+    <label>Tipo De Vehiculo:</label>
+    <select name="vehiculo_${vIndex}_tipo_vehi" required id="tipo_vehi_${vIndex}">
+      <option value="">Seleccione</option>
+      <option value="Van extralargo" ${datos.tipo_vehi === 'Van extralargo' ? 'selected' : ''}>Van extralargo</option>
+      <option value="Camion sencillo furgonado" ${datos.tipo_vehi === 'Camion sencillo furgonado' ? 'selected' : ''}>Camión sencillo furgonado</option>
+      <option value="Camabaja furgonado" ${datos.tipo_vehi === 'Camabaja furgonado' ? 'selected' : ''}>Camabaja furgonado</option>
+      <option value="Tractomula furgonado" ${datos.tipo_vehi === 'Tractomula furgonado' ? 'selected' : ''}>Tractomula furgonado</option>
+      <option value="Exportacion 35" ${datos.tipo_vehi === 'Exportacion 35' ? 'selected' : ''}>Exportacion 35</option>
+      <option value="Exportacion 40" ${datos.tipo_vehi === 'Exportacion 40' ? 'selected' : ''}>Exportacion 40</option>
+      <option value="Cama baja con topes" ${datos.tipo_vehi === 'Cama baja con topes' ? 'selected' : ''}>Cama baja con topes</option>
+      <option value="Camion sencillo carpado" ${datos.tipo_vehi === 'Camion sencillo carpado' ? 'selected' : ''}>Camión Sencillo Carpado</option>
+      <option value="Camabaja estandar" ${datos.tipo_vehi === 'Camabaja estandar' ? 'selected' : ''}>Camabaja estandar</option>
+      <option value="otro" ${datos.tipo_vehi === 'otro' ? 'selected' : ''}>Otro</option>
+    </select>
+    <input type="text" name="vehiculo_${vIndex}_otro_tipo" id="otro_tipo_${vIndex}" class="otro-input" placeholder="Especifique tipo" value="${datos.otro_tipo || ''}">
+    <div class="form-group-custom" id="destino-group-${vIndex}" style="${(datos.motivo === 'cargue') ? 'display:block;' : 'display:none;'}">
+      <label style="margin-top:0;">Destino:</label>
+      <select id="destino-select-${vIndex}" name="vehiculo_${vIndex}_destino">
+        <option value="">Seleccione Destino</option>
+        <option value="guarner_medellin" ${datos.destino === 'guarner_medellin' ? 'selected' : ''}>Guarne/Medellin</option>
+        <option value="cali" ${datos.destino === 'cali' ? 'selected' : ''}>Cali</option>
+        <option value="barranquilla" ${datos.destino === 'barranquilla' ? 'selected' : ''}>Barranquilla</option>
+        <option value="pereira" ${datos.destino === 'pereira' ? 'selected' : ''}>Pereira</option>
+        <option value="bucaramanga" ${datos.destino === 'bucaramanga' ? 'selected' : ''}>Bucaramanga</option>
+        <option value="monteria" ${datos.destino === 'monteria' ? 'selected' : ''}>Montería</option>
+        <option value="peru" ${datos.destino === 'peru' ? 'selected' : ''}>Perú</option>
+        <option value="otro" ${datos.destino === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      <input type="text" name="vehiculo_${vIndex}_otro_destino" id="otro_destino_${vIndex}" class="otro-input" placeholder="Especifique otro destino" value="${datos.otro_destino || ''}">
+    </div>
+    <div class="form-group-custom" id="remitente-group-${vIndex}" style="${(datos.motivo === 'descargue') ? 'display:block;' : 'display:none;'}">
+      <label style="margin-top:0;">Origen / Remitente:</label>
+      <input type="text" id="remitente-input-${vIndex}" name="vehiculo_${vIndex}_origen" placeholder="Ej: Zona Franca" value="${datos.origen || ''}" oninput="guardarProgreso()">
+    </div>
+    <label>Total De Personas:</label>
+    <input type="number" name="vehiculo_${vIndex}_personas" min="1" required value="${datos.personas || ''}" oninput="guardarProgreso()">
+    <label>Cajas Movidas:</label>
+    <input type="number" name="vehiculo_${vIndex}_cajas" class="cajas-input-js" min="0" required
+      value="${datos.cajas || ''}"
+      oninput="actualizarTotalCajas(); guardarProgreso();">
+    <label>Justificación del retraso o incidencia:</label>
+    <select name="vehiculo_${vIndex}_justificacion" onchange="mostrarTiempoMuerto(this, ${vIndex})">
+      <option value="">Seleccione motivo</option>
+      <option value="faltante_producto" ${datos.justificacion === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
+      <option value="otro" ${datos.justificacion === 'otro' ? 'selected' : ''}>Otro</option>
+    </select>
+    <input type="text" name="vehiculo_${vIndex}_otro_justificacion" id="otro_justificacion_${vIndex}" class="otro-input" placeholder="Especifique la incidencia" value="${datos.otro_justificacion || ''}">
+    
+    <!-- NUEVO: Tiempo Muerto (siempre visible si hay justificación) -->
+    <div class="time-row" id="tiempo-muerto-${vIndex}" style="display:${datos.justificacion ? 'flex' : 'none'};">
+      <div>
+        <label class="time-label">Tiempo Muerto Inicio:</label>
+        <input type="tel" name="vehiculo_${vIndex}_tiempo_muerto_inicio" class="time-input-masked"
+          placeholder="HH:MM" maxlength="5" value="${datos.tiempo_muerto_inicio || ''}"
+          onblur="applyTimeMask(this, 'muerto-inicio-${vIndex}')">
+        <span id="muerto-inicio-${vIndex}" class="time-display"></span>
+      </div>
+      <div>
+        <label class="time-label">Tiempo Muerto Final:</label>
+        <input type="tel" name="vehiculo_${vIndex}_tiempo_muerto_final" class="time-input-masked"
+          placeholder="HH:MM" maxlength="5" value="${datos.tiempo_muerto_final || ''}"
+          onblur="applyTimeMask(this, 'muerto-final-${vIndex}')">
+        <span id="muerto-final-${vIndex}" class="time-display"></span>
+      </div>
+    </div>
+    
+    <label>Foto De vehiculo:</label>
+    <input type="file" name="vehiculo_${vIndex}_foto" id="${fotoInputId}" accept="image/*" capture="environment">
+    <div class="preview-foto" id="${previewFotoId}"></div>
+    <input type="hidden" name="vehiculo_${vIndex}_foto_url" id="foto_url_${vIndex}" value="${datos.foto_url || ''}">
+    <p style="font-size:0.85em; color:#6c757d; margin-top:5px;">
+      📸 <strong>La foto se sube automáticamente.</strong> No necesita hacer nada más.
+    </p>
+  `;
 
-    <script>
-        let vehiculoIndexCounter = 0;
+  registro.innerHTML = html;
+  contenedor.appendChild(registro);
 
-        function renumerarVehiculos() {
-            const vehiculos = document.querySelectorAll('.registro-vehiculo');
-            vehiculos.forEach((vehiculo, index) => {
-                const nuevoNumero = index + 1;
-                const titulo = vehiculo.querySelector('h4');
-                if (titulo) titulo.textContent = `VEHÍCULO #${nuevoNumero}`;
-                const btnEliminar = vehiculo.querySelector('.btn-eliminar-registro');
-                if (btnEliminar) btnEliminar.textContent = `Eliminar Vehículo #${nuevoNumero}`;
-            });
-        }
+  const motivoSelect = document.getElementById(motivoSelectId);
+  motivoSelect.addEventListener('change', () => {
+    alternarDestinoRemitente(motivoSelect, vIndex);
+    manejarOtroCampo(motivoSelect);
+    guardarProgreso();
+  });
 
-        function guardarProgreso() {
-            const form = document.getElementById('formPepsico');
-            const data = {};
-            const formData = new FormData(form);
-            
-            data._numVehiculos = document.querySelectorAll('.registro-vehiculo').length;
-            data._numParadasOp = document.querySelectorAll('#operacion-contenedor .parada-group').length;
+  const selects = registro.querySelectorAll('select');
+  selects.forEach(sel => {
+    const otro = sel.nextElementSibling;
+    if (otro && otro.classList.contains('otro-input')) {
+      if (sel.value === 'otro') otro.style.display = 'block';
+      sel.addEventListener('change', () => manejarOtroCampo(sel));
+    }
+  });
 
-            formData.forEach((value, key) => {
-                if (!(value instanceof File)) {
-                    if (data[key]) {
-                        if (!Array.isArray(data[key])) data[key] = [data[key]];
-                        data[key].push(value);
-                    } else {
-                        data[key] = value;
-                    }
-                }
-            });
-            localStorage.setItem('pepsico_persist', JSON.stringify(data));
-        }
+  alternarDestinoRemitente(motivoSelect, vIndex);
 
-        function cargarProgreso() {
-            const raw = localStorage.getItem('pepsico_persist');
-            if (!raw) {
-                agregarRegistroVehiculo();
-                agregarCampoParada('operacion');
-                return;
-            }
-            const data = JSON.parse(raw);
+  // 👇 Activar tiempo muerto si ya había justificación
+  const justificacionSelect = registro.querySelector(`select[name="vehiculo_${vIndex}_justificacion"]`);
+  if (justificacionSelect) {
+    justificacionSelect.addEventListener('change', () => mostrarTiempoMuerto(justificacionSelect, vIndex));
+  }
 
-            for(let i=0; i<data._numVehiculos; i++) agregarRegistroVehiculo();
-            for(let i=0; i<(data._numParadasOp || 0); i++) agregarCampoParada('operacion');
+  document.getElementById(fotoInputId).addEventListener('change', function() {
+    let fechaInput = document.getElementById('fecha').value;
+    if (!fechaInput) fechaInput = new Date().toISOString().split('T')[0];
+    const [yyyy, mm, dd] = fechaInput.split('-');
+    const fechaFormateada = `${dd}.${mm}.${yyyy}`;
+    const tipoVehiculo = (datos.tipo_vehi || 'vehiculo').replace(/ /g, '_');
+    const nombrePersonalizado = `${fechaFormateada}.${tipoVehiculo}.vehiculo_${vIndex}`;
+    setupFotoPreview(fotoInputId, previewFotoId, nombrePersonalizado);
+  });
+}
 
-            const form = document.getElementById('formPepsico');
-            Object.keys(data).forEach(key => {
-                if (key.startsWith('_')) return;
-                
-                const elements = document.getElementsByName(key);
-                if (elements.length > 0) {
-                    if (Array.isArray(data[key])) {
-                        elements.forEach((el, idx) => { if(data[key][idx]) el.value = data[key][idx]; });
-                    } else {
-                        elements[0].value = data[key];
-                    }
-                    elements.forEach(el => {
-                        if (el.tagName === 'SELECT') el.dispatchEvent(new Event('change'));
-                        if (el.classList.contains('time-input-masked')) {
-                            const match = el.getAttribute('onblur').match(/'([^']+)'/);
-                            if(match) convertirHoraMilitar(el, match[1]);
-                        }
-                    });
-                }
-            });
-            actualizarTotalCajas();
-        }
+function agregarCampoParada(tipo) {
+  const contenedor = document.getElementById('operacion-contenedor');
+  const index = contenedor.children.length;
+  const div = document.createElement('div');
+  div.className = 'parada-group';
+  div.dataset.index = index;
 
-        function borrarTodoDefinitivo() {
-            if(confirm("¿Seguro que quieres borrar todo el formulario?")) {
-                localStorage.clear();
-                location.reload();
-            }
-        }
+  const botonEliminar = document.createElement('button');
+  botonEliminar.type = 'button';
+  botonEliminar.className = 'btn-eliminar';
+  botonEliminar.textContent = 'Eliminar';
+  botonEliminar.onclick = function() {
+    div.remove();
+    const paradas = contenedor.getElementsByClassName('parada-group');
+    for (let i = 0; i < paradas.length; i++) {
+      const span = paradas[i].querySelector('.numero-parada');
+      if (span) span.textContent = i + 1;
+    }
+    guardarProgreso();
+  };
 
-        function actualizarCampos() {
-            const lugar = document.getElementById("lugar").value;
-            const coord = document.getElementById("coordinador");
-            const turno = document.getElementById("turno");
-            const liderPepsico = document.getElementById("lider_pepsico");
+  const dInicio = `operacion-inicio-${index}`;
+  const dFin = `operacion-fin-${index}`;
+  div.innerHTML = `
+    <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #<span class="numero-parada">${index + 1}</span> (Operación)</p>
+    <div class="time-row">
+      <div>
+        <label class="time-label">Hora Inicio (HH:MM):</label>
+        <input type="tel" name="parada_inicio_operacion_${index}" class="time-input-masked"
+          placeholder="HH:MM" maxlength="5"
+          onblur="applyTimeMask(this, '${dInicio}')">
+        <span id="${dInicio}" class="time-display"></span>
+      </div>
+      <div>
+        <label class="time-label">Hora Final (HH:MM):</label>
+        <input type="tel" name="parada_fin_operacion_${index}" class="time-input-masked"
+          placeholder="HH:MM" maxlength="5"
+          onblur="applyTimeMask(this, '${dFin}')">
+        <span id="${dFin}" class="time-display"></span>
+      </div>
+    </div>
+    <label style="margin-top:5px;">Motivo:</label>
+    <select name="parada_motivo_operacion_${index}">
+      <option value="">Seleccione</option>
+      <option value="pausas_activas">Pausas Activas y/o Charla</option>
+      <option value="liberacion_calidad">Liberacion De Calidad</option>
+      <option value="desayuno_almuerzo_cena">Desayuno/Almuerzo/Cena</option>
+      <option value="aseo">Aseo</option>
+      <option value="faltante_insumos">Faltante (Canastillas, vinipel, estibas, etc)</option>
+      <option value="danos_equipo">Daños (Electricos, montacargas, etc)</option>
+      <option value="otro">Otro</option>
+    </select>
+    <input type="text" name="parada_otro_motivo_operacion_${index}" placeholder="Especifique" class="otro-input">
+  `;
+  div.appendChild(botonEliminar);
+  contenedor.appendChild(div);
 
-            if (lugar === "Funza") {
-                coord.value = "Jeison Aranda";
-                liderPepsico.value = "Alejandro Monroy";
+  const motivoSelect = div.querySelector(`select[name="parada_motivo_operacion_${index}"]`);
+  if (motivoSelect) {
+    motivoSelect.addEventListener('change', () => manejarOtroCampo(motivoSelect));
+    if (motivoSelect.value === 'otro') {
+      const otroInput = div.querySelector('.otro-input');
+      if (otroInput) otroInput.style.display = 'block';
+    }
+  }
+  guardarProgreso();
+}
 
-                const h = new Date().getHours();
-                turno.value = (h >= 6 && h < 14) ?
-                "Manana" : (h >= 14 && h < 22) ? "Tarde" : "Noche";
-            }
-            actualizarTotalCajas();
-            guardarProgreso();
-        }
+function setupFotoPreview(inputId, previewId, nombrePersonalizado) {
+  const input = document.getElementById(inputId);
+  const preview = document.getElementById(previewId);
+  if (!input || !preview) return;
 
-        function manejarOtroCampo(select, otroId) {
-            const otro = otroId ? document.getElementById(otroId) : select.nextElementSibling;
-            if (!otro) return;
-            
-            if (select.value === 'otro') {
-                otro.style.display = 'block';
-                otro.required = true;
-            } else {
-                otro.style.display = 'none';
-                otro.required = false;
-                otro.value = '';
-            }
-            guardarProgreso();
-        }
-        
-        function alternarDestinoRemitente(selectMotivo, vIndex) {
-            const motivo = selectMotivo.value;
-            const destinoGroup = document.getElementById(`destino-group-${vIndex}`);
-            const destinoSelect = document.getElementById(`destino-select-${vIndex}`);
-            const otroDestinoInput = document.getElementById(`otro_destino_${vIndex}`);
-            const remitenteGroup = document.getElementById(`remitente-group-${vIndex}`);
-            const remitenteInput = document.getElementById(`remitente-input-${vIndex}`);
-            
-            destinoSelect.removeAttribute('required');
-            remitenteInput.removeAttribute('required');
-            destinoGroup.style.display = 'none';
-            remitenteGroup.style.display = 'none';
-            otroDestinoInput.style.display = 'none';
-            otroDestinoInput.removeAttribute('required');
-            
-            if (motivo === 'cargue') {
-                destinoGroup.style.display = 'block';
-                destinoSelect.setAttribute('required', 'required');
-                if (destinoSelect.value === 'otro') {
-                    manejarOtroCampo(destinoSelect, `otro_destino_${vIndex}`);
-                }
-            } else if (motivo === 'descargue') {
-                remitenteGroup.style.display = 'block';
-                remitenteInput.setAttribute('required', 'required');
-            }
-            
-            manejarOtroCampo(selectMotivo, `otro_motivo_vehiculo_${vIndex}`);
-            guardarProgreso();
-        }
+  const file = input.files[0];
+  if (!file || !file.type.match('image.*') || file.size > 5 * 1024 * 1024) {
+    input.value = '';
+    preview.innerHTML = '';
+    if (file && !file.type.match('image.*')) alert('Solo imágenes (JPG/PNG).');
+    if (file && file.size > 5 * 1024 * 1024) alert('Máx. 5 MB.');
+    return;
+  }
 
-        function setupFotoPreview(inputId, previewId) {
-            const input = document.getElementById(inputId);
-            const preview = document.getElementById(previewId);
-            if (!input || !preview) return;
-            input.addEventListener('change', function() {
-                const file = this.files[0];
-                if (!file || !file.type.match('image.*') || file.size > 5 * 1024 * 1024) {
-                    this.value = '';
-                    preview.innerHTML = '';
-                    return;
-                }
-                const reader = new FileReader();
-                reader.onload = e => preview.innerHTML = `<img src="${e.target.result}" alt="Vista previa">`;
-                reader.readAsDataURL(file);
-            });
-        }
+  const reader = new FileReader();
+  reader.onload = e => preview.innerHTML = `<img src="${e.target.result}" alt="Vista previa">`;
+  reader.readAsDataURL(file);
 
-        function applyTimeMask(input, displayId) {
-            let value = input.value.replace(/[^0-9]/g, '');
-            if (value.length === 1 && value > '2') value = '0' + value;
-            if (value.length === 2 && value > '23') value = '23';
-            if (value.length === 3 && value[2] > '5') value = value.substring(0,2) + '5';
-            if (value.length >= 4) {
-                value = value.substring(0,4).padStart(4,'0');
-                let m = value.substring(2,4);
-                if (m > '59') m = '59';
-                value = value.substring(0,2) + m;
-            }
-            let formatted = value.length >= 2 ?
-            value.substring(0,2) + ':' + (value.length > 2 ? value.substring(2,4) : '00') : '';
-            input.value = formatted;
-            convertirHoraMilitar(input, displayId);
-            guardarProgreso();
-        }
+  const formData = new FormData();
+  formData.append('image', file);
+  formData.append('key', '7aa1cd8e8d0a3558833f225cbeba96ac');
+  formData.append('name', nombrePersonalizado);
 
-        function convertirHoraMilitar(input, displayId) {
-            const value = input.value;
-            const display = document.getElementById(displayId);
-            if (!display) return;
-            if (value.length === 5 && value.includes(':')) {
-                const [h, m] = value.split(':').map(Number);
-                if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
-                    const ampm = h >= 12 ? 'P.M.' : 'A.M.';
-                    const h12 = (h % 12) || 12;
-                    display.style.color = '#155724';
-                    display.innerHTML = `Hora Normal: ${String(h12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
-                    return;
-                }
-            }
-            display.style.color = value.length > 0 && value.length < 5 ? '#dc3545' : '#155724';
-            display.innerHTML = value.length > 0 && value.length < 5 ? '❌ Formato incompleto. HH:MM' : '';
-        }
+  fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        const vIdx = nombrePersonalizado.split('.').pop().replace('vehiculo_', '');
+        const urlInput = document.getElementById(`foto_url_${vIdx}`);
+        if (urlInput) urlInput.value = data.data.url;
+        alert(`✅ Foto subida: ${nombrePersonalizado}`);
+        guardarProgreso();
+      } else {
+        throw new Error(data.error.message || 'Error al subir la foto');
+      }
+    })
+    .catch(error => {
+      alert("❌ No se pudo subir la foto.");
+      console.error(error);
+    });
+}
 
-        function agregarCampoParada(tipo, vIndex = null) {
-            let contenedor, nameInicio, nameFin, titulo;
-            if (tipo === 'operacion') {
-                contenedor = document.getElementById('operacion-contenedor');
-                nameInicio = `parada_inicio_operacion[]`;
-                nameFin = `parada_fin_operacion[]`;
-                titulo = 'Operación';
-                vIndex = null;
-            } else { return; }
+function actualizarCampos() {
+  const lugar = document.getElementById("lugar").value;
+  const coord = document.getElementById("coordinador");
+  const turno = document.getElementById("turno");
+  const liderPepsico = document.getElementById("lider_pepsico");
+  const fechaInput = document.getElementById("fecha");
+  if (lugar === "Funza") {
+    coord.value = "Jeison Aranda";
+    const h = new Date().getHours();
+    turno.value = (h >= 6 && h < 14) ? "Manana" : (h >= 14 && h < 22) ? "Tarde" : "Noche";
+    if (!liderPepsico.dataset.manualChange) {
+      liderPepsico.value = "Alejandro Monroy";
+    }
+  } else {
+    coord.value = "";
+    if (!liderPepsico.dataset.manualChange) liderPepsico.value = "";
+  }
+  if (!fechaInput.value) fechaInput.value = new Date().toISOString().split('T')[0];
+  actualizarTotalCajas();
+  guardarProgreso();
+}
 
-            const div = document.createElement('div');
-            div.className = 'parada-group';
-            const botonEliminar = document.createElement('button');
-            botonEliminar.type = 'button';
-            botonEliminar.className = 'btn-eliminar';
-            botonEliminar.textContent = 'Eliminar';
-            botonEliminar.onclick = function() {
-                div.remove();
-                const paradas = document.getElementById('operacion-contenedor').getElementsByClassName('parada-group');
-                for (let i = 0; i < paradas.length; i++) {
-                    const span = paradas[i].querySelector('.numero-parada');
-                    if (span) span.textContent = i + 1;
-                }
-                guardarProgreso();
-            };
+function applyTimeMask(input, displayId) {
+  let value = input.value.replace(/[^0-9]/g, '');
+  if (value.length === 1 && value > '2') value = '0' + value;
+  if (value.length === 2 && value > '23') value = '23';
+  if (value.length === 3 && value[2] > '5') value = value.substring(0,2) + '5';
+  if (value.length >= 4) {
+    value = value.substring(0,4).padStart(4,'0');
+    let m = value.substring(2,4);
+    if (m > '59') m = '59';
+    value = value.substring(0,2) + m;
+  }
+  let formatted = value.length >= 2 ? value.substring(0,2) + ':' + (value.length > 2 ? value.substring(2,4) : '00') : '';
+  input.value = formatted;
+  convertirHoraMilitar(input, displayId);
+  guardarProgreso();
+}
 
-            const index = contenedor.children.length + 1;
-            const dInicio = `operacion-inicio-${index}`;
-            const dFin = `operacion-fin-${index}`;
+function convertirHoraMilitar(input, displayId) {
+  const value = input.value;
+  const display = document.getElementById(displayId);
+  if (!display) return;
+  if (value.length === 5 && value.includes(':')) {
+    const [h, m] = value.split(':').map(Number);
+    if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+      const ampm = h >= 12 ? 'P.M.' : 'A.M.';
+      const h12 = (h % 12) || 12;
+      display.style.color = '#155724';
+      display.innerHTML = `Hora Normal: ${String(h12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
+      return;
+    }
+  }
+  display.style.color = value.length > 0 && value.length < 5 ? '#dc3545' : '#155724';
+  display.innerHTML = value.length > 0 && value.length < 5 ? '❌ Formato incompleto. HH:MM' : '';
+}
 
-            div.innerHTML = `
-                <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #<span class="numero-parada">${index}</span> (${titulo})</p>
-                <div class="time-row">
-                    <div>
-                        <label class="time-label">Hora Inicio:</label>
-                        <input type="tel" name="${nameInicio}" class="time-input-masked" placeholder="HH:MM" maxlength="5" onblur="applyTimeMask(this, '${dInicio}')">
-                        <span id="${dInicio}" class="time-display"></span>
-                    </div>
-                    <div>
-                        <label class="time-label">Hora Final:</label>
-                        <input type="tel" name="${nameFin}" class="time-input-masked" placeholder="HH:MM" maxlength="5" onblur="applyTimeMask(this, '${dFin}')">
-                        <span id="${dFin}" class="time-display"></span>
-                    </div>
-                </div>
-                <label style="margin-top:5px;">Motivo:</label>
-                <select name="parada_motivo_operacion[]" onchange="manejarOtroCampo(this)">
-                    <option value="">Seleccione</option>
-                    <option value="pausas_activas">Pausas Activas y/o Charla</option>
-                    <option value="liberacion_de_calidad">Liberación De Calidad</option>
-                    <option value="desayuno_almuerzo_cena">Desayuno/Almuerzo/Cena</option>
-                    <option value="aseo">Aseo</option>
-                    <option value="faltante_insumos">Faltante (Canastillas, vinipel, estibas, etc)</option>
-                    <option value="danos_equipo">Daños (Electricos, montacargas, etc)</option>
-                    <option value="otro">Otro</option>
-                </select>
-                <input type="text" name="parada_otro_motivo_operacion[]" placeholder="Especifique" class="otro-input">
-            `;
-            div.appendChild(botonEliminar);
-            contenedor.appendChild(div);
-            guardarProgreso();
-        }
+function actualizarTotalCajas() {
+  const camposCajas = document.querySelectorAll('.cajas-input-js');
+  const totalCajasInput = document.getElementById('cajas_totales');
+  let total = 0;
+  camposCajas.forEach(input => {
+    const valor = parseInt(input.value, 10);
+    if (!isNaN(valor)) total += valor;
+  });
+  if(totalCajasInput) totalCajasInput.value = total;
+}
 
-        function agregarRegistroVehiculo() {
-            const cont = document.getElementById('vehiculos-contenedor');
-            const vIndex = vehiculoIndexCounter++;
-            const inicioId = `cargue-inicio-${vIndex}`;
-            const finId = `cargue-fin-${vIndex}`;
-            const fotoInputId = `foto_vehiculo_${vIndex}`;
-            const previewFotoId = `preview_foto_${vIndex}`;
-            const motivoSelectId = `motivo-cargue-descargue-${vIndex}`;
+function convertirATextoMayusculas() {
+  const textInputs = document.querySelectorAll('input[type="text"], textarea');
+  textInputs.forEach(input => {
+    if (input.value.trim() !== '') input.value = input.value.toUpperCase();
+  });
+}
 
-            const registro = document.createElement('div');
-            registro.className = 'registro-vehiculo';
-            registro.innerHTML = `
-                <button type="button" class="btn-eliminar-registro" onclick="this.parentNode.remove(); renumerarVehiculos(); actualizarTotalCajas(); guardarProgreso()">Eliminar Vehículo #${vIndex + 1}</button>
-                <hr style="margin-top:25px; border-style:dashed;">
-                <h4 style="text-align:center; color:#C76E00;">VEHÍCULO #${vIndex + 1}</h4>
-                <div class="parada-group">
-                    <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #1 (Cargue/Descargue)</p>
-                    <div class="time-row">
-                        <div>
-                            <label class="time-label">Hora Inicio:</label>
-                            <input type="tel" name="vehiculos[${vIndex}][inicio]" class="time-input-masked" required placeholder="HH:MM" maxlength="5" onblur="applyTimeMask(this, '${inicioId}')">
-                            <span id="${inicioId}" class="time-display"></span>
-                        </div>
-                        <div>
-                            <label class="time-label">Hora Final:</label>
-                            <input type="tel" name="vehiculos[${vIndex}][fin]" class="time-input-masked" required placeholder="HH:MM" maxlength="5" onblur="applyTimeMask(this, '${finId}')">
-                            <span id="${finId}" class="time-display"></span>
-                        </div>
-                    </div>
-                    <label style="margin-top:5px;">Motivo:</label>
-                    <select id="${motivoSelectId}" name="vehiculos[${vIndex}][motivo_parada]" required onchange="alternarDestinoRemitente(this, ${vIndex})">
-                        <option value="">Seleccione</option>
-                        <option value="cargue">Cargue</option>
-                        <option value="descargue">Descargue</option>
-                        <option value="otro">Otro</option>
-                    </select>
-                    <input type="text" name="vehiculos[${vIndex}][otro_motivo_vehiculo]" id="otro_motivo_vehiculo_${vIndex}" class="otro-input" placeholder="Especifique motivo">
-                </div>
-                <label>Muelle:</label>
-                <select name="vehiculos[${vIndex}][muelle]" required onchange="manejarOtroCampo(this, 'otro_muelle_${vIndex}')">
-                    <option value="">Seleccione</option>
-                    <option value="3">3</option>
-                    <option value="11">11</option>
-                    <option value="12">12</option>
-                    <option value="13">13</option>
-                    <option value="14">14</option>
-                    <option value="17">17</option>
-                    <option value="18">18</option>
-                    <option value="19">19</option>
-                    <option value="20">20</option>
-                    <option value="otro">Otro</option>
-                </select>
-                <input type="number" name="vehiculos[${vIndex}][otro_muelle]" id="otro_muelle_${vIndex}" class="otro-input" placeholder="N° muelle">
-                <label>Placa:</label>
-                <input type="text" name="vehiculos[${vIndex}][placa]" required placeholder="Ej: ABC123" maxlength="6" oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); guardarProgreso()">
-                <label>Tipo:</label>
-                <select name="vehiculos[${vIndex}][tipo_vehi]" required onchange="manejarOtroCampo(this, 'otro_tipo_vehiculo_${vIndex}')">
-                    <option value="">Seleccione</option>
-                    <option value="Van extralargo">Van extralargo</option>
-                    <option value="Camion sencillo furgonado">Camión sencillo furgonado</option>
-                    <option value="Camabaja furgonado">Camabaja furgonado</option>
-                    <option value="Tractomula furgonado">Tractomula furgonado</option>
-                    <option value="Exportacion 35">Exportacion 35</option>
-                    <option value="Exportacion 40">Exportacion 40</option>
-                    <option value="Cama baja con topes">Cama baja con topes</option>
-                    <option value="Camion Sencillo Carpado">Camión Sencillo Carpado</option>
-                    <option value="Camabaja estandar">Camabaja estandar</option>
-                    <option value="otro">Otro</option>
-                </select>
-                <input type="text" name="vehiculos[${vIndex}][otro_tipo_vehiculo]" id="otro_tipo_vehiculo_${vIndex}" class="otro-input" placeholder="Especifique tipo">
+function guardarProgreso() {
+  const form = document.forms['formulario-pepsico'];
+  const formData = new FormData(form);
+  const data = {};
+  formData.forEach((value, key) => {
+    if (!(value instanceof File) && key !== 'form-name') data[key] = value;
+  });
+  data._numVehiculos = vehiculosData.length;
+  data._numParadas = document.getElementById('operacion-contenedor').children.length;
+  localStorage.setItem('pepsico_data', JSON.stringify(data));
+}
 
-                <div class="form-group-custom" id="destino-group-${vIndex}" style="display:none;">
-                    <label>Destino:</label>
-                    <select id="destino-select-${vIndex}" name="vehiculos[${vIndex}][destino]" onchange="manejarOtroCampo(this, 'otro_destino_${vIndex}')">
-                        <option value="">Seleccione Destino</option>
-                        <option value="guarne_medellin">Guarne/Medellin</option>
-                        <option value="cali">Cali</option>
-                        <option value="barranquilla">Barranquilla</option>
-                        <option value="pereira">Pereira</option>
-                        <option value="bucaramanga">Bucaramanga</option>
-                        <option value="monteria">Montería</option>
-                        <option value="peru">Perú</option>
-                        <option value="otro">Otro</option>
-                    </select>
-                    <input type="text" name="vehiculos[${vIndex}][otro_destino]" id="otro_destino_${vIndex}" class="otro-input" placeholder="Especifique">
-                </div>
-                <div class="form-group-custom" id="remitente-group-${vIndex}" style="display:none;">
-                    <label>Origen:</label>
-                    <input type="text" id="remitente-input-${vIndex}" name="vehiculos[${vIndex}][origen_remitente]">
-                </div>
-                <label>Total De Personas:</label>
-                <input type="number" name="vehiculos[${vIndex}][total_personas_vehi]" min="1" required placeholder="Personas en este vehículo">
-                <label>Cajas Movidas:</label>
-                <input type="number" name="vehiculos[${vIndex}][cajas_movidas]" min="0" required oninput="actualizarTotalCajas()">
-                
-                <label>Justificación del retraso o incidencia:</label>
-                <select name="vehiculos[${vIndex}][justificacion_incidencia]" onchange="manejarOtroCampo(this, 'otro_justificacion_${vIndex}')">
-                    <option value="">Seleccione motivo</option>
-                    <option value="Faltante de producto">Faltante de producto</option>
-                    <option value="otro">Otro</option>
-                </select>
-                <input type="text" name="vehiculos[${vIndex}][otro_justificacion]" id="otro_justificacion_${vIndex}" class="otro-input" placeholder="Escriba el motivo de la incidencia">
+function limpiarTodo() {
+  if (confirm("¿Estás seguro de borrar toda la información?")) {
+    localStorage.removeItem('pepsico_data');
+    location.reload();
+  }
+}
 
-                <label>Foto:</label>
-                <input type="file" name="vehiculos[${vIndex}][foto]" id="${fotoInputId}" accept="image/*" capture="environment">
-                <div class="preview-foto" id="${previewFotoId}"></div>
-            `;
-            cont.appendChild(registro);
-            setupFotoPreview(fotoInputId, previewFotoId);
-            renumerarVehiculos();
-            actualizarTotalCajas();
-            guardarProgreso();
-        }
+function enviarFormulario(event) {
+  event.preventDefault();
 
-        function actualizarTotalCajas() {
-            const camposCajas = document.querySelectorAll('input[name$="[cajas_movidas]"]');
-            const totalCajasInput = document.getElementById('cajas_totales');
-            let total = 0;
-            camposCajas.forEach(input => {
-                const valor = parseInt(input.value, 10);
-                if (!isNaN(valor)) total += valor;
-            });
-            totalCajasInput.value = total;
-            guardarProgreso();
-        }
+  const camposObligatorios = [
+    { id: 'lugar', nombre: 'Lugar de operación' },
+    { id: 'lider', nombre: 'Líder Asignado' },
+    { id: 'lider_pepsico', nombre: 'Líder De Pepsico' },
+    { id: 'fecha', nombre: 'Fecha' },
+    { id: 'turno', nombre: 'Turno' },
+    { id: 'total_personas', nombre: 'Total Personas En El Turno' },
+    { id: 'cajas_totales', nombre: 'Total Cajas Movidas' }
+  ];
+  for (const campo of camposObligatorios) {
+    const valor = document.getElementById(campo.id).value.trim();
+    if (!valor) {
+      alert(`❌ Por favor, complete el campo: "${campo.nombre}".`);
+      return;
+    }
+  }
+  if (!validarSolapamientoVehiculos() || !validarSolapamientoParadas()) return;
 
-        // ✅ FUNCIÓN ACTUALIZADA Y CORREGIDA PARA ENVIAR A GOOGLE APPS SCRIPT
-        async function validarYEnviar(event) {
-            event.preventDefault();
-            
-            const vehiculos = document.querySelectorAll('.registro-vehiculo');
-            if (vehiculos.length === 0) {
-                alert("❌ Registre al menos un vehículo.");
-                return;
-            }
+  sincronizarVehiculosDesdeDOM();
 
-            const form = document.getElementById('formPepsico');
-            const formData = new FormData();
+  const vehiculosForm = [...vehiculosData];
+  const paradasForm = [];
+  const cont = document.getElementById('operacion-contenedor');
+  const grupos = cont.querySelectorAll('.parada-group');
 
-            // Datos generales
-            formData.append('lugar', form.lugar.value || '');
-            formData.append('lider', (form.lider.value || '').toUpperCase().trim());
-            formData.append('coordinador', (form.coordinador.value || '').toUpperCase().trim());
-            formData.append('lider_pepsico', form.lider_pepsico.value || '');
-            formData.append('fecha', form.fecha.value || '');
-            formData.append('turno', form.turno.value || '');
-            formData.append('total_personas', form.total_personas.value || '');
-            formData.append('cajas_totales', form.cajas_totales.value || '');
+  grupos.forEach(grupo => {
+    const idx = grupo.dataset.index;
+    const inicio = grupo.querySelector(`input[name="parada_inicio_operacion_${idx}"]`)?.value || '';
+    const fin = grupo.querySelector(`input[name="parada_fin_operacion_${idx}"]`)?.value || '';
+    const motivo = grupo.querySelector(`select[name="parada_motivo_operacion_${idx}"]`)?.value || '';
+    const otro_motivo = grupo.querySelector(`input[name="parada_otro_motivo_operacion_${idx}"]`)?.value || '';
+    paradasForm.push({ inicio, fin, motivo, otro_motivo });
+  });
 
-            // Vehículos y fotos
-            let vehiculoIndex = 0;
-            document.querySelectorAll('.registro-vehiculo').forEach(div => {
-                const placaInput = div.querySelector('[name$="[placa]"]');
-                if (!placaInput || !placaInput.value.trim()) return; // Ignorar vehículos sin placa
+  document.getElementById('datos_vehiculos').value = JSON.stringify(vehiculosForm);
+  document.getElementById('datos_paradas_operacion').value = JSON.stringify(paradasForm);
+  convertirATextoMayusculas();
+  localStorage.removeItem('pepsico_data');
+  event.target.submit();
+}
 
-                const fields = div.querySelectorAll('[name]');
-                fields.forEach(field => {
-                    if (field.type !== 'file' && field.name.startsWith('vehiculos[')) {
-                        const match = field.name.match(/vehiculos\[\d+\]\[([^\]]+)\]/);
-                        if (match) {
-                            let key = match[1];
-                            let value = field.value || '';
-                            if (typeof value === 'string' && !/^\d+$/.test(value.trim())) {
-                                value = value.toUpperCase().trim();
-                            }
-                            formData.append(`vehiculo_${vehiculoIndex}_${key}`, value);
-                        }
-                    }
-                });
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.querySelector('form');
+  const savedData = localStorage.getItem('pepsico_data');
 
-                const fileInput = div.querySelector('input[type="file"]');
-                if (fileInput && fileInput.files[0]) {
-                    formData.append(`foto_vehiculo_${vehiculoIndex}`, fileInput.files[0]);
-                }
+  if (savedData) {
+    const data = JSON.parse(savedData);
+    const nVehiculos = data._numVehiculos || 1;
+    document.getElementById('vehiculos-contenedor').innerHTML = '';
+    vehiculosData = [];
+    for(let i=0; i<nVehiculos; i++) {
+      vehiculosData.push({
+        inicio: data[`vehiculo_${i}_inicio`],
+        fin: data[`vehiculo_${i}_fin`],
+        motivo: data[`vehiculo_${i}_motivo`],
+        otro_motivo: data[`vehiculo_${i}_otro_motivo`] || '',
+        muelle: data[`vehiculo_${i}_muelle`],
+        otro_muelle_num: data[`vehiculo_${i}_otro_muelle_num`] || '',
+        placa: data[`vehiculo_${i}_placa`],
+        tipo_vehi: data[`vehiculo_${i}_tipo_vehi`],
+        otro_tipo: data[`vehiculo_${i}_otro_tipo`] || '',
+        destino: data[`vehiculo_${i}_destino`] || '',
+        otro_destino: data[`vehiculo_${i}_otro_destino`] || '',
+        origen: data[`vehiculo_${i}_origen`] || '',
+        personas: data[`vehiculo_${i}_personas`],
+        cajas: data[`vehiculo_${i}_cajas`],
+        justificacion: data[`vehiculo_${i}_justificacion`],
+        otro_justificacion: data[`vehiculo_${i}_otro_justificacion`] || '',
+        tiempo_muerto_inicio: data[`vehiculo_${i}_tiempo_muerto_inicio`] || '',
+        tiempo_muerto_final: data[`vehiculo_${i}_tiempo_muerto_final`] || '',
+        foto_url: data[`vehiculo_${i}_foto_url`]
+      });
+      crearVehiculoHTML(document.getElementById('vehiculos-contenedor'), i, vehiculosData[i]);
+    }
 
-                vehiculoIndex++;
-            });
+    const nParadas = data._numParadas || 0;
+    for(let i=0; i<nParadas; i++) agregarCampoParada('operacion');
 
-            // Paradas de operación
-            let paradaIndex = 0;
-            document.querySelectorAll('#operacion-contenedor .parada-group').forEach(div => {
-                const inputs = div.querySelectorAll('input[placeholder="HH:MM"]');
-                const select = div.querySelector('select');
-                const otro = div.querySelector('.otro-input');
-                formData.append(`parada_op_${paradaIndex}_inicio`, inputs[0]?.value || '');
-                formData.append(`parada_op_${paradaIndex}_fin`, inputs[1]?.value || '');
-                formData.append(`parada_op_${paradaIndex}_motivo`, (select?.value || '').toUpperCase());
-                formData.append(`parada_op_${paradaIndex}_otro`, (otro?.value || '').toUpperCase());
-                paradaIndex++;
-            });
+    for (const key in data) {
+      if (key.startsWith('_') || key.startsWith('vehiculo_') || key.startsWith('parada_')) continue;
+      const el = form.elements[key];
+      if (el) el.value = data[key];
+    }
+  } else {
+    agregarRegistroVehiculo();
+    agregarCampoParada('operacion');
+    actualizarCampos();
+  }
 
-            const btn = form.querySelector('button[type="submit"]');
-            btn.disabled = true;
-            btn.textContent = "Enviando...";
-
-            try {
-                // 🔑 URL CORREGIDA: SIN ESPACIOS AL FINAL
-                const scriptUrl = "https://script.google.com/macros/s/AKfycbx73TuSxIL_PH8AZmn6FxJDg7bMUUg91ydqXhgldgIlqhnDG7wbVglDUy4g9KNj8QPANg/exec";
-                const response = await fetch(scriptUrl, {
-                    method: "POST",
-                    body: formData
-                    // ⚠️ NO incluir 'headers' con FormData
-                });
-
-                if (response.ok) {
-                    localStorage.clear();
-                    window.location.href = "aceptacion.html";
-                } else {
-                    throw new Error("El servidor respondió con error.");
-                }
-
-            } catch (error) {
-                console.error("Error de envío:", error);
-                alert("❌ Error al enviar: " + error.message);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = "Enviar";
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
-            document.getElementById('formPepsico').addEventListener('submit', validarYEnviar);
-            document.getElementById('formPepsico').addEventListener('input', guardarProgreso);
-            document.getElementById('formPepsico').addEventListener('change', guardarProgreso);
-            cargarProgreso();
-            actualizarCampos();
-        });
-    </script>
+  form.addEventListener('submit', enviarFormulario);
+  form.addEventListener('input', guardarProgreso);
+});
+</script>
 </body>
-</html>
-
+</html>    
