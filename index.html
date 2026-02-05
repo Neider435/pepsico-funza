@@ -223,6 +223,7 @@ placeholder="Cantidad total de cajas movidas" oninput="actualizarTotalCajas()">
 </form>
 <script>
 let vehiculosData = [];
+
 // ✅ FUNCIÓN PARA GENERAR CAMPOS DE NOMBRES POR VEHÍCULO (NUEVO)
 function generarCamposNombresVehiculo(vIndex) {
 const totalInput = document.querySelector(`input[name="vehiculo_${vIndex}_personas"]`);
@@ -267,12 +268,14 @@ container.appendChild(div);
 }
 guardarProgreso();
 }
+
 function horaAMinutos(horaStr) {
 if (!horaStr || !horaStr.includes(':')) return null;
 const [h, m] = horaStr.split(':').map(Number);
 if (isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) return null;
 return h * 60 + m;
 }
+
 function rangosSeSolapan(inicio1, fin1, inicio2, fin2) {
 const i1 = horaAMinutos(inicio1);
 const f1 = horaAMinutos(fin1);
@@ -281,6 +284,7 @@ const f2 = horaAMinutos(fin2);
 if (i1 === null || f1 === null || i2 === null || f2 === null) return false;
 return i1 < f2 && i2 < f1;
 }
+
 function validarSolapamientoVehiculos() {
 const agrupados = {};
 for (let idx = 0; idx < vehiculosData.length; idx++) {
@@ -304,6 +308,7 @@ return false;
 }
 return true;
 }
+
 function validarSolapamientoParadas() {
 const paradas = [];
 const cont = document.getElementById('operacion-contenedor');
@@ -325,6 +330,7 @@ return false;
 }
 return true;
 }
+
 function eliminarRegistroVehiculo(index) {
 if (vehiculosData.length <= 1) {
 alert("Debe haber al menos un vehículo.");
@@ -336,6 +342,7 @@ reindexarVehiculos();
 actualizarTotalCajas();
 guardarProgreso();
 }
+
 function reindexarVehiculos() {
 const contenedor = document.getElementById('vehiculos-contenedor');
 contenedor.innerHTML = '';
@@ -343,6 +350,7 @@ for (let i = 0; i < vehiculosData.length; i++) {
 crearVehiculoHTML(contenedor, i, vehiculosData[i]);
 }
 }
+
 function agregarRegistroVehiculo() {
 const vIndex = vehiculosData.length;
 vehiculosData.push({});
@@ -351,6 +359,7 @@ crearVehiculoHTML(contenedor, vIndex, {});
 actualizarTotalCajas();
 guardarProgreso();
 }
+
 function sincronizarVehiculosDesdeDOM() {
 const contenedor = document.getElementById('vehiculos-contenedor');
 const registros = contenedor.querySelectorAll('.registro-vehiculo');
@@ -395,6 +404,7 @@ foto_url: getValue(`vehiculo_${i}_foto_url`)
 };
 }
 }
+
 function manejarOtroLiderPepsico() {
 const otroInput = document.getElementById('lider_pepsico_otro');
 if (document.getElementById('lider_pepsico').value === 'otro') {
@@ -407,6 +417,7 @@ otroInput.value = '';
 }
 guardarProgreso();
 }
+
 function manejarOtroCampo(select) {
 const otro = select.nextElementSibling;
 if (!otro || !otro.classList.contains('otro-input')) return;
@@ -420,6 +431,7 @@ otro.value = '';
 }
 guardarProgreso();
 }
+
 function manejarOtroCoordinador() {
 const otroInput = document.getElementById('coordinador_otro');
 if (document.getElementById('coordinador').value === 'otro') {
@@ -432,6 +444,7 @@ otroInput.value = '';
 }
 guardarProgreso();
 }
+
 function alternarDestinoRemitente(selectMotivo, vIndex) {
 const motivo = selectMotivo.value;
 const destinoGroup = document.getElementById(`destino-group-${vIndex}`);
@@ -446,6 +459,7 @@ destinoSelect.setAttribute('required', 'required');
 remitenteInput.required = motivo === 'descargue';
 }
 }
+
 function mostrarTiempoMuerto(select, vIndex) {
 const div = document.getElementById(`tiempo-muerto-${vIndex}`);
 if (select.value !== "") {
@@ -459,6 +473,7 @@ if (fin) fin.value = '';
 }
 guardarProgreso();
 }
+
 function crearVehiculoHTML(contenedor, vIndex, datos = {}) {
 const inicioId = `cargue-inicio-${vIndex}`;
 const finId = `cargue-fin-${vIndex}`;
@@ -658,7 +673,7 @@ nombresContainer.appendChild(div);
 // ✅ Generar campos si hay valor en total personas (CORREGIDO)
 const totalPersonas = datos.personas;
 if (totalPersonas && parseInt(totalPersonas) > 0 && (!datos.nombres_personal || datos.nombres_personal.length === 0)) {
-    generarCamposNombresVehiculo(vIndex);
+generarCamposNombresVehiculo(vIndex);
 }
 document.getElementById(fotoInputId).addEventListener('change', function() {
 let fechaInput = document.getElementById('fecha').value;
@@ -670,6 +685,7 @@ const nombrePersonalizado = `${fechaFormateada}.${tipoVehiculo}.vehiculo_${vInde
 setupFotoPreview(fotoInputId, previewFotoId, nombrePersonalizado);
 });
 }
+
 function agregarCampoParada(tipo, datos = {}) {
 const contenedor = document.getElementById('operacion-contenedor');
 const index = contenedor.children.length;
@@ -733,6 +749,7 @@ if (otroInput) otroInput.style.display = 'block';
 }
 }
 }
+
 function setupFotoPreview(inputId, previewId, nombrePersonalizado) {
 const input = document.getElementById(inputId);
 const preview = document.getElementById(previewId);
@@ -770,6 +787,7 @@ alert("❌ No se pudo subir la foto.");
 console.error(error);
 });
 }
+
 function actualizarCampos() {
 const lugar = document.getElementById("lugar").value;
 const turno = document.getElementById("turno");
@@ -796,6 +814,7 @@ fechaInput.value = new Date().toISOString().split('T')[0];
 actualizarTotalCajas();
 guardarProgreso();
 }
+
 function applyTimeMask(input, displayId) {
 let value = input.value.replace(/[^0-9]/g, '');
 if (value.length === 1 && value > '2') value = '0' + value;
@@ -829,6 +848,7 @@ return;
 convertirHoraMilitar(input, displayId);
 guardarProgreso();
 }
+
 function convertirHoraMilitar(input, displayId) {
 const value = input.value;
 const display = document.getElementById(displayId);
@@ -846,6 +866,7 @@ return;
 display.style.color = value.length > 0 && value.length < 5 ? '#dc3545' : '#155724';
 display.innerHTML = value.length > 0 && value.length < 5 ? '❌ Formato incompleto. HH:MM' : '';
 }
+
 function actualizarTotalCajas() {
 const camposCajas = document.querySelectorAll('.cajas-input-js');
 const totalCajasInput = document.getElementById('cajas_totales');
@@ -856,12 +877,14 @@ if (!isNaN(valor)) total += valor;
 });
 if(totalCajasInput) totalCajasInput.value = total;
 }
+
 function convertirATextoMayusculas() {
 const textInputs = document.querySelectorAll('input[type="text"], textarea');
 textInputs.forEach(input => {
 if (input.value.trim() !== '') input.value = input.value.toUpperCase();
 });
 }
+
 function guardarProgreso() {
 const form = document.forms['formulario-pepsico'];
 if(!form) return;
@@ -894,12 +917,14 @@ data._numVehiculos = vehiculosData.length;
 data._paradasDetalle = paradasData;
 localStorage.setItem('pepsico_data', JSON.stringify(data));
 }
+
 function limpiarTodo() {
 if (confirm("¿Estás seguro de borrar toda la información?")) {
 localStorage.removeItem('pepsico_data');
 location.reload();
 }
 }
+
 function validarPlacas() {
 const regexPlaca = /^([A-Z]{3}[0-9]{3}|[0-9]{3}[A-Z]{3}|[A-Z]{1}[0-9]{5})$/;
 const contenedor = document.getElementById('vehiculos-contenedor');
@@ -920,12 +945,12 @@ return false;
 }
 return true;
 }
-// ✅ FUNCIÓN MODIFICADA PARA ENVIAR A GOOGLE SHEETS
+
+// ✅ FUNCIÓN MODIFICADA PARA ENVIAR A GOOGLE SHEETS - SOLUCIÓN CORS
 function enviarFormulario(event) {
 event.preventDefault();
-  
 sincronizarVehiculosDesdeDOM();
-  
+
 // Validaciones existentes
 const camposObligatorios = [
 { id: 'lugar', nombre: 'Lugar de operación' },
@@ -936,7 +961,6 @@ const camposObligatorios = [
 { id: 'total_personas', nombre: 'Total Personas En El Turno' },
 { id: 'cajas_totales', nombre: 'Total Cajas Movidas' }
 ];
-  
 for (const campo of camposObligatorios) {
 const el = document.getElementById(campo.id);
 if (el && !el.value.trim()) {
@@ -944,7 +968,7 @@ alert(`❌ Por favor, complete el campo: "${campo.nombre}".`);
 return;
 }
 }
-  
+
 // --- RESTRICCIÓN DE NOMBRES SI TOTAL > 0 ---
 const totalPersonas = parseInt(document.getElementById('total_personas').value) || 0;
 if (totalPersonas > 0) {
@@ -958,7 +982,7 @@ return;
 }
 }
 }
-  
+
 // ✅ Validar nombres del personal en cada vehículo (NUEVO)
 for (let i = 0; i < vehiculosData.length; i++) {
 const vehiculo = vehiculosData[i];
@@ -977,24 +1001,24 @@ return;
 }
 }
 }
-  
+
 if (!validarPlacas()) return;
 if (!validarSolapamientoVehiculos() || !validarSolapamientoParadas()) return;
-  
-// Preparar datos para enviar a Google Sheets
-const formData = {
-fecha: document.getElementById('fecha').value,
-lugar: document.getElementById('lugar').value,
-lider_asignado: document.getElementById('lider').value.toUpperCase(),
-coordinador: document.getElementById('coordinador').value,
-coordinador_otro: document.getElementById('coordinador_otro').value,
-lider_pepsico: document.getElementById('lider_pepsico').value,
-lider_pepsico_otro: document.getElementById('lider_pepsico_otro').value,
-turno: document.getElementById('turno').value,
-total_personas: document.getElementById('total_personas').value,
-cajas_totales: document.getElementById('cajas_totales').value,
-datos_vehiculos: JSON.stringify(vehiculosData),
-datos_paradas_operacion: JSON.stringify(
+
+// ✅ PREPARAR DATOS COMO FORMDATA (SOLUCIÓN CORS)
+const formData = new FormData();
+formData.append('fecha', document.getElementById('fecha').value);
+formData.append('lugar', document.getElementById('lugar').value);
+formData.append('lider_asignado', document.getElementById('lider').value.toUpperCase());
+formData.append('coordinador', document.getElementById('coordinador').value);
+formData.append('coordinador_otro', document.getElementById('coordinador_otro').value);
+formData.append('lider_pepsico', document.getElementById('lider_pepsico').value);
+formData.append('lider_pepsico_otro', document.getElementById('lider_pepsico_otro').value);
+formData.append('turno', document.getElementById('turno').value);
+formData.append('total_personas', document.getElementById('total_personas').value);
+formData.append('cajas_totales', document.getElementById('cajas_totales').value);
+formData.append('datos_vehiculos', JSON.stringify(vehiculosData));
+formData.append('datos_paradas_operacion', JSON.stringify(
 Array.from(document.querySelectorAll('#operacion-contenedor .parada-group')).map(grupo => {
 return {
 inicio: grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '',
@@ -1003,19 +1027,15 @@ motivo: grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value |
 otro_motivo: grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || ''
 };
 })
-)
-};
-  
+));
+
 // ⚠️ REEMPLAZA ESTA URL CON LA DE TU GOOGLE APPS SCRIPT
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzMjF6geUyORQJwD2dJWX6Mjq-1ijNqJZizolxOBoVPtkecdf48U13BIU5xL7s6yyhd/exec';
-  
-// Enviar a Google Sheets
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw6tB7fOJItz59kP5B2dl1D4t9kDHjvhf-5nirwAbKuNIBWh0iOmFQckXOI1oKoM7bLrA/exec';
+
+// ✅ ENVIAR COMO FORMDATA (SIN CONTENT-TYPE HEADER)
 fetch(GOOGLE_SCRIPT_URL, {
 method: 'POST',
-headers: {
-'Content-Type': 'application/json',
-},
-body: JSON.stringify(formData)
+body: formData  // ✅ SIN headers - FormData lo maneja automáticamente
 })
 .then(response => response.json())
 .then(result => {
@@ -1035,6 +1055,7 @@ alert('❌ Error de conexión. Por favor, inténtalo de nuevo.');
 console.error('Error:', error);
 });
 }
+
 function generarCamposNombres() {
 const totalInput = document.getElementById('total_personas');
 if (!totalInput) return;
@@ -1068,6 +1089,7 @@ container.appendChild(div);
 }
 guardarProgreso();
 }
+
 document.addEventListener('DOMContentLoaded', function() {
 const form = document.querySelector('form');
 const savedData = localStorage.getItem('pepsico_data');
@@ -1141,8 +1163,3 @@ this.dataset.manualChange = 'true';
 </script>
 </body>
 </html>
-
-
-
-
-
