@@ -223,61 +223,50 @@ placeholder="Cantidad total de cajas movidas" oninput="actualizarTotalCajas()">
 </form>
 <script>
 let vehiculosData = [];
-
 // ✅ FUNCIÓN PARA GENERAR CAMPOS DE NOMBRES POR VEHÍCULO (NUEVO)
 function generarCamposNombresVehiculo(vIndex) {
-    const totalInput = document.querySelector(`input[name="vehiculo_${vIndex}_personas"]`);
-    if (!totalInput) return;
-    
-    const total = parseInt(totalInput.value) || 0;
-    const container = document.getElementById(`nombres-personal-${vIndex}`);
-    
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    if (total > 0) {
-        const label = document.createElement('label');
-        label.textContent = 'Nombres del Personal:';
-        label.style.display = 'block';
-        label.style.fontWeight = 'bold';
-        label.style.marginTop = '15px';
-        container.appendChild(label);
-    }
-    
-    for (let i = 1; i <= total; i++) {
-        const div = document.createElement('div');
-        div.style.marginBottom = '10px';
-        
-        const label = document.createElement('label');
-        label.textContent = `Nombre persona ${i}:`;
-        label.style.display = 'block';
-        label.style.fontWeight = 'bold';
-        label.style.marginBottom = '5px';
-        label.style.fontSize = '0.9em';
-        label.htmlFor = `vehiculo_${vIndex}_nombre_persona_${i}`;
-        
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.id = `vehiculo_${vIndex}_nombre_persona_${i}`;
-        input.name = `vehiculo_${vIndex}_nombre_persona_${i}`;
-        input.placeholder = `Nombre del trabajador ${i}`;
-        input.required = true;
-        input.style.width = '100%';
-        input.style.padding = '8px';
-        input.style.border = '1px solid #170303';
-        input.style.borderRadius = '8px';
-        input.style.boxSizing = 'border-box';
-        input.oninput = guardarProgreso;
-        
-        div.appendChild(label);
-        div.appendChild(input);
-        container.appendChild(div);
-    }
-    
-    guardarProgreso();
+const totalInput = document.querySelector(`input[name="vehiculo_${vIndex}_personas"]`);
+if (!totalInput) return;
+const total = parseInt(totalInput.value) || 0;
+const container = document.getElementById(`nombres-personal-${vIndex}`);
+if (!container) return;
+container.innerHTML = '';
+if (total > 0) {
+const label = document.createElement('label');
+label.textContent = 'Nombres del Personal:';
+label.style.display = 'block';
+label.style.fontWeight = 'bold';
+label.style.marginTop = '15px';
+container.appendChild(label);
 }
-
+for (let i = 1; i <= total; i++) {
+const div = document.createElement('div');
+div.style.marginBottom = '10px';
+const label = document.createElement('label');
+label.textContent = `Nombre persona ${i}:`;
+label.style.display = 'block';
+label.style.fontWeight = 'bold';
+label.style.marginBottom = '5px';
+label.style.fontSize = '0.9em';
+label.htmlFor = `vehiculo_${vIndex}_nombre_persona_${i}`;
+const input = document.createElement('input');
+input.type = 'text';
+input.id = `vehiculo_${vIndex}_nombre_persona_${i}`;
+input.name = `vehiculo_${vIndex}_nombre_persona_${i}`;
+input.placeholder = `Nombre del trabajador ${i}`;
+input.required = true;
+input.style.width = '100%';
+input.style.padding = '8px';
+input.style.border = '1px solid #170303';
+input.style.borderRadius = '8px';
+input.style.boxSizing = 'border-box';
+input.oninput = guardarProgreso;
+div.appendChild(label);
+div.appendChild(input);
+container.appendChild(div);
+}
+guardarProgreso();
+}
 function horaAMinutos(horaStr) {
 if (!horaStr || !horaStr.includes(':')) return null;
 const [h, m] = horaStr.split(':').map(Number);
@@ -381,7 +370,6 @@ inputsNombres.forEach((input, idx) => {
 nombresPersonal.push(input.value || '');
 });
 }
-
 vehiculosData[i] = {
 inicio: getValue(`vehiculo_${i}_inicio`),
 fin: getValue(`vehiculo_${i}_fin`),
@@ -667,6 +655,7 @@ nombresContainer.appendChild(div);
 }
 }
 // ✅ Generar campos si hay valor en total personas (NUEVO)
+// ✅ Generar campos si hay valor en total personas (CORREGIDO)
 const totalPersonas = datos.personas;
 if (totalPersonas && parseInt(totalPersonas) > 0 && (!datos.nombres_personal || datos.nombres_personal.length === 0)) {
     generarCamposNombresVehiculo(vIndex);
@@ -931,9 +920,13 @@ return false;
 }
 return true;
 }
+// ✅ FUNCIÓN MODIFICADA PARA ENVIAR A GOOGLE SHEETS
 function enviarFormulario(event) {
 event.preventDefault();
+  
 sincronizarVehiculosDesdeDOM();
+  
+// Validaciones existentes
 const camposObligatorios = [
 { id: 'lugar', nombre: 'Lugar de operación' },
 { id: 'lider', nombre: 'Líder Asignado' },
@@ -943,6 +936,7 @@ const camposObligatorios = [
 { id: 'total_personas', nombre: 'Total Personas En El Turno' },
 { id: 'cajas_totales', nombre: 'Total Cajas Movidas' }
 ];
+  
 for (const campo of camposObligatorios) {
 const el = document.getElementById(campo.id);
 if (el && !el.value.trim()) {
@@ -950,6 +944,7 @@ alert(`❌ Por favor, complete el campo: "${campo.nombre}".`);
 return;
 }
 }
+  
 // --- RESTRICCIÓN DE NOMBRES SI TOTAL > 0 ---
 const totalPersonas = parseInt(document.getElementById('total_personas').value) || 0;
 if (totalPersonas > 0) {
@@ -963,6 +958,7 @@ return;
 }
 }
 }
+  
 // ✅ Validar nombres del personal en cada vehículo (NUEVO)
 for (let i = 0; i < vehiculosData.length; i++) {
 const vehiculo = vehiculosData[i];
@@ -981,24 +977,63 @@ return;
 }
 }
 }
+  
 if (!validarPlacas()) return;
 if (!validarSolapamientoVehiculos() || !validarSolapamientoParadas()) return;
-const vehiculosForm = [...vehiculosData];
-const paradasForm = [];
-const cont = document.getElementById('operacion-contenedor');
-const grupos = cont.querySelectorAll('.parada-group');
-grupos.forEach(grupo => {
-const inicio = grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '';
-const fin = grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '';
-const motivo = grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '';
-const otro_motivo = grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || '';
-paradasForm.push({ inicio, fin, motivo, otro_motivo });
-});
-document.getElementById('datos_vehiculos').value = JSON.stringify(vehiculosForm);
-document.getElementById('datos_paradas_operacion').value = JSON.stringify(paradasForm);
-convertirATextoMayusculas();
+  
+// Preparar datos para enviar a Google Sheets
+const formData = {
+fecha: document.getElementById('fecha').value,
+lugar: document.getElementById('lugar').value,
+lider_asignado: document.getElementById('lider').value.toUpperCase(),
+coordinador: document.getElementById('coordinador').value,
+coordinador_otro: document.getElementById('coordinador_otro').value,
+lider_pepsico: document.getElementById('lider_pepsico').value,
+lider_pepsico_otro: document.getElementById('lider_pepsico_otro').value,
+turno: document.getElementById('turno').value,
+total_personas: document.getElementById('total_personas').value,
+cajas_totales: document.getElementById('cajas_totales').value,
+datos_vehiculos: JSON.stringify(vehiculosData),
+datos_paradas_operacion: JSON.stringify(
+Array.from(document.querySelectorAll('#operacion-contenedor .parada-group')).map(grupo => {
+return {
+inicio: grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '',
+fin: grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '',
+motivo: grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '',
+otro_motivo: grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || ''
+};
+})
+)
+};
+  
+// ⚠️ REEMPLAZA ESTA URL CON LA DE TU GOOGLE APPS SCRIPT
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx9mmwN0IdohVMprIDTv1cD47HmTy5nD5QPJUQSe5X4ePdENxnvTW3he_BBQPV-36sY3Q/exec';
+  
+// Enviar a Google Sheets
+fetch(GOOGLE_SCRIPT_URL, {
+method: 'POST',
+headers: {
+'Content-Type': 'application/json',
+},
+body: JSON.stringify(formData)
+})
+.then(response => response.json())
+.then(result => {
+if (result.success) {
+alert('✅ Datos guardados correctamente en Excel!');
 localStorage.removeItem('pepsico_data');
-event.target.submit();
+// Opcional: Limpiar formulario
+document.querySelector('form').reset();
+// Opcional: Recargar página
+// location.reload();
+} else {
+alert('❌ Error al guardar: ' + result.error);
+}
+})
+.catch(error => {
+alert('❌ Error de conexión. Por favor, inténtalo de nuevo.');
+console.error('Error:', error);
+});
 }
 function generarCamposNombres() {
 const totalInput = document.getElementById('total_personas');
