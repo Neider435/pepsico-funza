@@ -158,7 +158,7 @@ font-weight: bold;
 <img src="prueba.png" alt="Logo de la Empresa">
 </div>
 <h2 style="text-align:center;">FORMULARIO - PEPSICO FUNZA</h2>
-<form name="formulario-pepsico" method="POST" data-netlify="true">
+<form name="formulario-pepsico" onsubmit="enviarFormulario(event); return false;">
 <input type="hidden" name="form-name" value="formulario-pepsico" />
 <label for="lugar">Lugar de operación:</label>
 <select name="lugar" id="lugar" required onchange="actualizarCampos()">
@@ -1141,4 +1141,5 @@ this.dataset.manualChange = 'true';
 </script>
 </body>
 </html>
+
 
