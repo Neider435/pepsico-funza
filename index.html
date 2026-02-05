@@ -168,13 +168,20 @@ button[type="submit"]:hover {
   <label for="lider">Líder Asignado:</label>
   <input type="text" name="lider_asignado" id="lider" required placeholder="Primer Nombre y Primer Apellido">
   <label for="coordinador">Coordinador Asignado:</label>
-  <input type="text" name="coordinador" id="coordinador" readonly required>
+  <select name="coordinador" id="coordinador" required onchange="manejarOtroCoordinador()">
+    <option value="">Seleccione coordinador</option>
+    <option value="Jeison Aranda">Jeison Aranda</option>
+    <option value="Julian Espitia">Julian Espitia</option>
+    <option value="otro">Otro</option>
+  </select>
+  <input type="text" name="coordinador_otro" id="coordinador_otro" class="otro-input" placeholder="Especifique el coordinador">
   <label for="lider_pepsico">Líder De Pepsico:</label>
   <select name="lider_pepsico" id="lider_pepsico" required>
     <option value="">Seleccione un líder</option>
     <option value="Alejandro Ariza">Alejandro Ariza</option>
     <option value="Alejandro Monroy">Alejandro Monroy</option>
     <option value="Carlos Ruiz">Carlos Ruiz</option>
+    <option value="otro">Otro</option>
   </select>
   <label for="fecha">Fecha:</label>
   <input type="date" name="fecha" id="fecha" required>
@@ -212,6 +219,7 @@ button[type="submit"]:hover {
     <button type="button" class="btn-borrar-todo" style="flex: 1;" onclick="limpiarTodo()">Borrar Todo</button>
   </div>
 </form>
+
 <script>
 let vehiculosData = [];
 
@@ -221,6 +229,7 @@ function horaAMinutos(horaStr) {
   if (isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) return null;
   return h * 60 + m;
 }
+
 function rangosSeSolapan(inicio1, fin1, inicio2, fin2) {
   const i1 = horaAMinutos(inicio1);
   const f1 = horaAMinutos(fin1);
@@ -245,7 +254,7 @@ function validarSolapamientoVehiculos() {
     for (let i = 0; i < regs.length; i++) {
       for (let j = i + 1; j < regs.length; j++) {
         if (rangosSeSolapan(regs[i].inicio, regs[i].fin, regs[j].inicio, regs[j].fin)) {
-          alert(`¡Conflicto en muelle ${muelle}! Vehículos #${regs[i].idx + 1} y #${regs[j].idx + 1} se superponen.`);
+          alert(`¡Conflicto en muelle ${muelle}! Vehículos #${regs[i].idx + 1} y #${regs[j].idx + 1} se superponen en el mismo horario.`);
           return false;
         }
       }
@@ -253,14 +262,17 @@ function validarSolapamientoVehiculos() {
   }
   return true;
 }
+
 function validarSolapamientoParadas() {
   const paradas = [];
   const cont = document.getElementById('operacion-contenedor');
   const grupos = cont.querySelectorAll('.parada-group');
   grupos.forEach((grupo, idx) => {
-    const inicio = grupo.querySelector(`input[name="parada_inicio_operacion_${grupo.dataset.index}"]`).value;
-    const fin = grupo.querySelector(`input[name="parada_fin_operacion_${grupo.dataset.index}"]`).value;
-    if (inicio && fin) paradas.push({ inicio, fin, idx });
+    const inicioInput = grupo.querySelector(`input[name^="parada_inicio_operacion_"]`);
+    const finInput = grupo.querySelector(`input[name^="parada_fin_operacion_"]`);
+    if (inicioInput && finInput && inicioInput.value && finInput.value) {
+      paradas.push({ inicio: inicioInput.value, fin: finInput.value, idx });
+    }
   });
   for (let i = 0; i < paradas.length; i++) {
     for (let j = i + 1; j < paradas.length; j++) {
@@ -335,6 +347,18 @@ function sincronizarVehiculosDesdeDOM() {
     };
   }
 }
+function manejarOtroLiderPepsico() {
+  const otroInput = document.getElementById('lider_pepsico_otro');
+  if (document.getElementById('lider_pepsico').value === 'otro') {
+    otroInput.style.display = 'block';
+    otroInput.required = true;
+  } else {
+    otroInput.style.display = 'none';
+    otroInput.required = false;
+    otroInput.value = '';
+  }
+  guardarProgreso();
+}
 
 function manejarOtroCampo(select) {
   const otro = select.nextElementSibling;
@@ -346,6 +370,19 @@ function manejarOtroCampo(select) {
     otro.style.display = 'none';
     otro.required = false;
     otro.value = '';
+  }
+  guardarProgreso();
+}
+
+function manejarOtroCoordinador() {
+  const otroInput = document.getElementById('coordinador_otro');
+  if (document.getElementById('coordinador').value === 'otro') {
+    otroInput.style.display = 'block';
+    otroInput.required = true;
+  } else {
+    otroInput.style.display = 'none';
+    otroInput.required = false;
+    otroInput.value = '';
   }
   guardarProgreso();
 }
@@ -365,14 +402,12 @@ function alternarDestinoRemitente(selectMotivo, vIndex) {
   }
 }
 
-// ✅ FUNCIÓN ACTUALIZADA: muestra tiempo muerto para CUALQUIER opción seleccionada
 function mostrarTiempoMuerto(select, vIndex) {
   const div = document.getElementById(`tiempo-muerto-${vIndex}`);
   if (select.value !== "") {
     div.style.display = 'flex';
   } else {
     div.style.display = 'none';
-    // Limpiar valores
     const inicio = document.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_inicio"]`);
     const fin = document.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_final"]`);
     if (inicio) inicio.value = '';
@@ -391,7 +426,6 @@ function crearVehiculoHTML(contenedor, vIndex, datos = {}) {
   const registro = document.createElement('div');
   registro.className = 'registro-vehiculo';
   registro.dataset.index = vIndex;
-
   const html = `
     <button type="button" class="btn-eliminar-registro" onclick="eliminarRegistroVehiculo(${vIndex})">
       Eliminar Vehículo #${vIndex + 1}
@@ -443,7 +477,7 @@ function crearVehiculoHTML(contenedor, vIndex, datos = {}) {
     </select>
     <input type="number" name="vehiculo_${vIndex}_otro_muelle_num" id="otro_muelle_${vIndex}" class="otro-input" placeholder="N° muelle" min="1" max="999" value="${datos.otro_muelle_num || ''}">
     <label>Placa:</label>
-    <input type="text" name="vehiculo_${vIndex}_placa" required placeholder="Ej: ABC123, 123ABC o A12345" maxlength="6"
+    <input type="text" name="vehiculo_${vIndex}_placa" required placeholder="ABC123, 123ABC o A12345" maxlength="6"
       value="${datos.placa || ''}"
       oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0,6); guardarProgreso();">
     <label>Tipo De Vehiculo:</label>
@@ -472,6 +506,11 @@ function crearVehiculoHTML(contenedor, vIndex, datos = {}) {
         <option value="bucaramanga" ${datos.destino === 'bucaramanga' ? 'selected' : ''}>Bucaramanga</option>
         <option value="monteria" ${datos.destino === 'monteria' ? 'selected' : ''}>Montería</option>
         <option value="peru" ${datos.destino === 'peru' ? 'selected' : ''}>Perú</option>
+        <option value="ecuador" ${datos.destino === 'ecuador' ? 'selected' : ''}>Ecuador</option>
+        <option value="funza" ${datos.destino === 'funza' ? 'selected' : ''}>Funza</option>
+        <option value="santo_domingo" ${datos.destino === 'santo_domingo' ? 'selected' : ''}>Santo Domingo</option>
+        <option value="innova" ${datos.destino === 'innova' ? 'selected' : ''}>Innova</option>
+        <option value="villavicencio" ${datos.destino === 'villavicencio' ? 'selected' : ''}>Villavicencio</option>
         <option value="otro" ${datos.destino === 'otro' ? 'selected' : ''}>Otro</option>
       </select>
       <input type="text" name="vehiculo_${vIndex}_otro_destino" id="otro_destino_${vIndex}" class="otro-input" placeholder="Especifique otro destino" value="${datos.otro_destino || ''}">
@@ -494,7 +533,6 @@ function crearVehiculoHTML(contenedor, vIndex, datos = {}) {
     </select>
     <input type="text" name="vehiculo_${vIndex}_otro_justificacion" id="otro_justificacion_${vIndex}" class="otro-input" placeholder="Especifique la incidencia" value="${datos.otro_justificacion || ''}">
     
-    <!-- NUEVO: Tiempo Muerto (siempre visible si hay justificación) -->
     <div class="time-row" id="tiempo-muerto-${vIndex}" style="display:${datos.justificacion ? 'flex' : 'none'};">
       <div>
         <label class="time-label">Tiempo Muerto Inicio:</label>
@@ -542,7 +580,6 @@ function crearVehiculoHTML(contenedor, vIndex, datos = {}) {
 
   alternarDestinoRemitente(motivoSelect, vIndex);
 
-  // 👇 Activar tiempo muerto si ya había justificación
   const justificacionSelect = registro.querySelector(`select[name="vehiculo_${vIndex}_justificacion"]`);
   if (justificacionSelect) {
     justificacionSelect.addEventListener('change', () => mostrarTiempoMuerto(justificacionSelect, vIndex));
@@ -559,7 +596,7 @@ function crearVehiculoHTML(contenedor, vIndex, datos = {}) {
   });
 }
 
-function agregarCampoParada(tipo) {
+function agregarCampoParada(tipo, datos = {}) {
   const contenedor = document.getElementById('operacion-contenedor');
   const index = contenedor.children.length;
   const div = document.createElement('div');
@@ -588,14 +625,14 @@ function agregarCampoParada(tipo) {
       <div>
         <label class="time-label">Hora Inicio (HH:MM):</label>
         <input type="tel" name="parada_inicio_operacion_${index}" class="time-input-masked"
-          placeholder="HH:MM" maxlength="5"
+          placeholder="HH:MM" maxlength="5" value="${datos.inicio || ''}"
           onblur="applyTimeMask(this, '${dInicio}')">
         <span id="${dInicio}" class="time-display"></span>
       </div>
       <div>
         <label class="time-label">Hora Final (HH:MM):</label>
         <input type="tel" name="parada_fin_operacion_${index}" class="time-input-masked"
-          placeholder="HH:MM" maxlength="5"
+          placeholder="HH:MM" maxlength="5" value="${datos.fin || ''}"
           onblur="applyTimeMask(this, '${dFin}')">
         <span id="${dFin}" class="time-display"></span>
       </div>
@@ -603,15 +640,15 @@ function agregarCampoParada(tipo) {
     <label style="margin-top:5px;">Motivo:</label>
     <select name="parada_motivo_operacion_${index}">
       <option value="">Seleccione</option>
-      <option value="pausas_activas">Pausas Activas y/o Charla</option>
-      <option value="liberacion_calidad">Liberacion De Calidad</option>
-      <option value="desayuno_almuerzo_cena">Desayuno/Almuerzo/Cena</option>
-      <option value="aseo">Aseo</option>
-      <option value="faltante_insumos">Faltante (Canastillas, vinipel, estibas, etc)</option>
-      <option value="danos_equipo">Daños (Electricos, montacargas, etc)</option>
-      <option value="otro">Otro</option>
+      <option value="pausas_activas" ${datos.motivo === 'pausas_activas' ? 'selected' : ''}>Pausas Activas y/o Charla</option>
+      <option value="liberacion_calidad" ${datos.motivo === 'liberacion_calidad' ? 'selected' : ''}>Liberacion De Calidad</option>
+      <option value="desayuno_almuerzo_cena" ${datos.motivo === 'desayuno_almuerzo_cena' ? 'selected' : ''}>Desayuno/Almuerzo/Cena</option>
+      <option value="aseo" ${datos.motivo === 'aseo' ? 'selected' : ''}>Aseo</option>
+      <option value="faltante_insumos" ${datos.motivo === 'faltante_insumos' ? 'selected' : ''}>Faltante (Canastillas, vinipel, estibas, etc)</option>
+      <option value="danos_equipo" ${datos.motivo === 'danos_equipo' ? 'selected' : ''}>Daños (Electricos, montacargas, etc)</option>
+      <option value="otro" ${datos.motivo === 'otro' ? 'selected' : ''}>Otro</option>
     </select>
-    <input type="text" name="parada_otro_motivo_operacion_${index}" placeholder="Especifique" class="otro-input">
+    <input type="text" name="parada_otro_motivo_operacion_${index}" placeholder="Especifique" class="otro-input" value="${datos.otro_motivo || ''}">
   `;
   div.appendChild(botonEliminar);
   contenedor.appendChild(div);
@@ -624,7 +661,6 @@ function agregarCampoParada(tipo) {
       if (otroInput) otroInput.style.display = 'block';
     }
   }
-  guardarProgreso();
 }
 
 function setupFotoPreview(inputId, previewId, nombrePersonalizado) {
@@ -644,12 +680,10 @@ function setupFotoPreview(inputId, previewId, nombrePersonalizado) {
   const reader = new FileReader();
   reader.onload = e => preview.innerHTML = `<img src="${e.target.result}" alt="Vista previa">`;
   reader.readAsDataURL(file);
-
   const formData = new FormData();
   formData.append('image', file);
-  formData.append('key', '7aa1cd8e8d0a3558833f225cbeba96ac');
+  formData.append('key', 'e1d938a9ff4815f178c880552cd33a34');
   formData.append('name', nombrePersonalizado);
-
   fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData })
     .then(response => response.json())
     .then(data => {
@@ -671,22 +705,30 @@ function setupFotoPreview(inputId, previewId, nombrePersonalizado) {
 
 function actualizarCampos() {
   const lugar = document.getElementById("lugar").value;
-  const coord = document.getElementById("coordinador");
   const turno = document.getElementById("turno");
   const liderPepsico = document.getElementById("lider_pepsico");
   const fechaInput = document.getElementById("fecha");
+  const coordSelect = document.getElementById("coordinador");
+
   if (lugar === "Funza") {
-    coord.value = "Jeison Aranda";
-    const h = new Date().getHours();
-    turno.value = (h >= 6 && h < 14) ? "Manana" : (h >= 14 && h < 22) ? "Tarde" : "Noche";
-    if (!liderPepsico.dataset.manualChange) {
-      liderPepsico.value = "Alejandro Monroy";
+    if (!coordSelect.value) {
+      coordSelect.value = "Jeison Aranda";
+      manejarOtroCoordinador();
     }
-  } else {
-    coord.value = "";
-    if (!liderPepsico.dataset.manualChange) liderPepsico.value = "";
+    const h = new Date().getHours();
+    if (!turno.value) {
+      turno.value = (h >= 6 && h < 14) ? "Manana" : (h >= 14 && h < 22) ? "Tarde" : "Noche";
+    }
+    if (!liderPepsico.value) {
+      liderPepsico.value = "Alejandro Monroy";
+      manejarOtroLiderPepsico();
+    }
+  } 
+  
+  if (!fechaInput.value) {
+    fechaInput.value = new Date().toISOString().split('T')[0];
   }
-  if (!fechaInput.value) fechaInput.value = new Date().toISOString().split('T')[0];
+  
   actualizarTotalCajas();
   guardarProgreso();
 }
@@ -704,6 +746,25 @@ function applyTimeMask(input, displayId) {
   }
   let formatted = value.length >= 2 ? value.substring(0,2) + ':' + (value.length > 2 ? value.substring(2,4) : '00') : '';
   input.value = formatted;
+  
+  const parent = input.closest('.time-row');
+  if(parent) {
+      const inputs = parent.querySelectorAll('input');
+      if(inputs.length === 2) {
+          const hInicio = inputs[0].value;
+          const hFin = inputs[1].value;
+          if(hInicio.length === 5 && hFin.length === 5) {
+              if(horaAMinutos(hFin) < horaAMinutos(hInicio)) {
+                  alert("❌ Error de Seguridad: La Hora Final no puede ser menor que la Hora Inicio.");
+                  input.value = ""; 
+                  const display = document.getElementById(displayId);
+                  if(display) display.innerHTML = "";
+                  return;
+              }
+          }
+      }
+  }
+
   convertirHoraMilitar(input, displayId);
   guardarProgreso();
 }
@@ -738,7 +799,7 @@ function actualizarTotalCajas() {
 }
 
 function convertirATextoMayusculas() {
-  const textInputs = document.querySelectorAll('input[type="text"], textarea');
+  const textInputs = document.querySelectorAll('input[type=\"text\"], textarea');
   textInputs.forEach(input => {
     if (input.value.trim() !== '') input.value = input.value.toUpperCase();
   });
@@ -746,13 +807,23 @@ function convertirATextoMayusculas() {
 
 function guardarProgreso() {
   const form = document.forms['formulario-pepsico'];
+  if(!form) return;
   const formData = new FormData(form);
   const data = {};
   formData.forEach((value, key) => {
     if (!(value instanceof File) && key !== 'form-name') data[key] = value;
   });
+  const paradasData = [];
+  document.querySelectorAll('#operacion-contenedor .parada-group').forEach(grupo => {
+    const idx = grupo.dataset.index;
+    const inicio = grupo.querySelector(`input[name^=\"parada_inicio_operacion_\"]`)?.value || '';
+    const fin = grupo.querySelector(`input[name^=\"parada_fin_operacion_\"]`)?.value || '';
+    const motivo = grupo.querySelector(`select[name^=\"parada_motivo_operacion_\"]`)?.value || '';
+    const otro_motivo = grupo.querySelector(`input[name^=\"parada_otro_motivo_operacion_\"]`)?.value || '';
+    paradasData.push({ inicio, fin, motivo, otro_motivo });
+  });
   data._numVehiculos = vehiculosData.length;
-  data._numParadas = document.getElementById('operacion-contenedor').children.length;
+  data._paradasDetalle = paradasData; 
   localStorage.setItem('pepsico_data', JSON.stringify(data));
 }
 
@@ -763,9 +834,26 @@ function limpiarTodo() {
   }
 }
 
+function validarPlacas() {
+  const regexPlaca = /^([A-Z]{3}[0-9]{3}|[0-9]{3}[A-Z]{3}|[A-Z]{1}[0-9]{5})$/;
+  const contenedor = document.getElementById('vehiculos-contenedor');
+  const registros = contenedor.querySelectorAll('.registro-vehiculo');
+  for (let i = 0; i < registros.length; i++) {
+    const placaInput = registros[i].querySelector(`input[name=\"vehiculo_${i}_placa\"]`);
+    if (placaInput) {
+      const valor = placaInput.value.toUpperCase().trim();
+      if (!regexPlaca.test(valor)) {
+        alert(`❌ Placa del Vehículo #${i+1} no válida.\nDebe cumplir:\n- 3 letras y 3 números (ABC123)\n- 3 números y 3 letras (123ABC)\n- 1 letra y 5 números (A12345)`);
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 function enviarFormulario(event) {
   event.preventDefault();
-
+  sincronizarVehiculosDesdeDOM();
   const camposObligatorios = [
     { id: 'lugar', nombre: 'Lugar de operación' },
     { id: 'lider', nombre: 'Líder Asignado' },
@@ -776,30 +864,25 @@ function enviarFormulario(event) {
     { id: 'cajas_totales', nombre: 'Total Cajas Movidas' }
   ];
   for (const campo of camposObligatorios) {
-    const valor = document.getElementById(campo.id).value.trim();
-    if (!valor) {
-      alert(`❌ Por favor, complete el campo: "${campo.nombre}".`);
+    const el = document.getElementById(campo.id);
+    if (el && !el.value.trim()) {
+      alert(`❌ Por favor, complete el campo: \"${campo.nombre}\".`);
       return;
     }
   }
+  if (!validarPlacas()) return;
   if (!validarSolapamientoVehiculos() || !validarSolapamientoParadas()) return;
-
-  sincronizarVehiculosDesdeDOM();
-
   const vehiculosForm = [...vehiculosData];
   const paradasForm = [];
   const cont = document.getElementById('operacion-contenedor');
   const grupos = cont.querySelectorAll('.parada-group');
-
   grupos.forEach(grupo => {
-    const idx = grupo.dataset.index;
-    const inicio = grupo.querySelector(`input[name="parada_inicio_operacion_${idx}"]`)?.value || '';
-    const fin = grupo.querySelector(`input[name="parada_fin_operacion_${idx}"]`)?.value || '';
-    const motivo = grupo.querySelector(`select[name="parada_motivo_operacion_${idx}"]`)?.value || '';
-    const otro_motivo = grupo.querySelector(`input[name="parada_otro_motivo_operacion_${idx}"]`)?.value || '';
+    const inicio = grupo.querySelector(`input[name^=\"parada_inicio_operacion_\"]`)?.value || '';
+    const fin = grupo.querySelector(`input[name^=\"parada_fin_operacion_\"]`)?.value || '';
+    const motivo = grupo.querySelector(`select[name^=\"parada_motivo_operacion_\"]`)?.value || '';
+    const otro_motivo = grupo.querySelector(`input[name^=\"parada_otro_motivo_operacion_\"]`)?.value || '';
     paradasForm.push({ inicio, fin, motivo, otro_motivo });
   });
-
   document.getElementById('datos_vehiculos').value = JSON.stringify(vehiculosForm);
   document.getElementById('datos_paradas_operacion').value = JSON.stringify(paradasForm);
   convertirATextoMayusculas();
@@ -810,53 +893,60 @@ function enviarFormulario(event) {
 document.addEventListener('DOMContentLoaded', function() {
   const form = document.querySelector('form');
   const savedData = localStorage.getItem('pepsico_data');
-
   if (savedData) {
     const data = JSON.parse(savedData);
     const nVehiculos = data._numVehiculos || 1;
     document.getElementById('vehiculos-contenedor').innerHTML = '';
     vehiculosData = [];
     for(let i=0; i<nVehiculos; i++) {
-      vehiculosData.push({
-        inicio: data[`vehiculo_${i}_inicio`],
-        fin: data[`vehiculo_${i}_fin`],
-        motivo: data[`vehiculo_${i}_motivo`],
+      const vObj = {
+        inicio: data[`vehiculo_${i}_inicio`] || '',
+        fin: data[`vehiculo_${i}_fin`] || '',
+        motivo: data[`vehiculo_${i}_motivo`] || '',
         otro_motivo: data[`vehiculo_${i}_otro_motivo`] || '',
-        muelle: data[`vehiculo_${i}_muelle`],
+        muelle: data[`vehiculo_${i}_muelle`] || '',
         otro_muelle_num: data[`vehiculo_${i}_otro_muelle_num`] || '',
-        placa: data[`vehiculo_${i}_placa`],
-        tipo_vehi: data[`vehiculo_${i}_tipo_vehi`],
+        placa: data[`vehiculo_${i}_placa`] || '',
+        tipo_vehi: data[`vehiculo_${i}_tipo_vehi`] || '',
         otro_tipo: data[`vehiculo_${i}_otro_tipo`] || '',
         destino: data[`vehiculo_${i}_destino`] || '',
         otro_destino: data[`vehiculo_${i}_otro_destino`] || '',
         origen: data[`vehiculo_${i}_origen`] || '',
-        personas: data[`vehiculo_${i}_personas`],
-        cajas: data[`vehiculo_${i}_cajas`],
-        justificacion: data[`vehiculo_${i}_justificacion`],
+        personas: data[`vehiculo_${i}_personas`] || '',
+        cajas: data[`vehiculo_${i}_cajas`] || '',
+        justificacion: data[`vehiculo_${i}_justificacion`] || '',
         otro_justificacion: data[`vehiculo_${i}_otro_justificacion`] || '',
         tiempo_muerto_inicio: data[`vehiculo_${i}_tiempo_muerto_inicio`] || '',
         tiempo_muerto_final: data[`vehiculo_${i}_tiempo_muerto_final`] || '',
-        foto_url: data[`vehiculo_${i}_foto_url`]
-      });
-      crearVehiculoHTML(document.getElementById('vehiculos-contenedor'), i, vehiculosData[i]);
+        foto_url: data[`vehiculo_${i}_foto_url`] || ''
+      };
+      vehiculosData.push(vObj);
+      crearVehiculoHTML(document.getElementById('vehiculos-contenedor'), i, vObj);
     }
-
-    const nParadas = data._numParadas || 0;
-    for(let i=0; i<nParadas; i++) agregarCampoParada('operacion');
-
+    document.getElementById('operacion-contenedor').innerHTML = '';
+    if (data._paradasDetalle) {
+      data._paradasDetalle.forEach(p => agregarCampoParada('operacion', p));
+    }
     for (const key in data) {
       if (key.startsWith('_') || key.startsWith('vehiculo_') || key.startsWith('parada_')) continue;
       const el = form.elements[key];
-      if (el) el.value = data[key];
+      if (el) {
+        el.value = data[key];
+        if (el.id === 'coordinador') manejarOtroCoordinador();
+      }
     }
+    actualizarTotalCajas();
   } else {
     agregarRegistroVehiculo();
     agregarCampoParada('operacion');
     actualizarCampos();
   }
-
   form.addEventListener('submit', enviarFormulario);
   form.addEventListener('input', guardarProgreso);
+  form.addEventListener('change', guardarProgreso);ç
+  document.getElementById('lider_pepsico').addEventListener('change', function() {
+  this.dataset.manualChange = 'true';
+});
 });
 </script>
 </body>
