@@ -274,61 +274,27 @@
         let vehicleIndex = null;
         
         // ============================================
-        // SISTEMA DE ALMACENAMIENTO MULTIPLE (SessionStorage + Cookie fallback)
+        // MANEJADOR DE ALMACENAMIENTO (sessionStorage para Netlify)
         // ============================================
-        const StorageManager = {
-            // Intentar guardar en sessionStorage, si falla usar cookies
+        const Storage = {
+            // sessionStorage es más confiable en Netlify para flujos de formulario
             setItem: function(key, value) {
                 try {
                     sessionStorage.setItem(key, value);
-                    console.log('✅ Guardado en sessionStorage:', key);
                     return true;
                 } catch (e) {
-                    console.warn('⚠️ sessionStorage falló, usando cookies...');
-                    this.setCookie(key, value);
-                    return true;
+                    console.error('❌ Error sessionStorage:', e);
+                    return false;
                 }
             },
             
-            // Intentar obtener de sessionStorage, si falla buscar en cookies
             getItem: function(key) {
                 try {
-                    const value = sessionStorage.getItem(key);
-                    if (value) {
-                        console.log('✅ Obtenido de sessionStorage:', key);
-                        return value;
-                    }
+                    return sessionStorage.getItem(key);
                 } catch (e) {
-                    console.warn('⚠️ sessionStorage no disponible');
+                    console.error('❌ Error sessionStorage:', e);
+                    return null;
                 }
-                
-                // Fallback a cookies
-                return this.getCookie(key);
-            },
-            
-            // Eliminar de sessionStorage y cookies
-            removeItem: function(key) {
-                try {
-                    sessionStorage.removeItem(key);
-                } catch (e) {}
-                this.deleteCookie(key);
-            },
-            
-            // Cookies fallback
-            setCookie: function(name, value, days = 365) {
-                const expires = new Date(Date.now() + days * 864e5).toUTCString();
-                document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/; SameSite=Lax';
-            },
-            
-            getCookie: function(name) {
-                return document.cookie.split('; ').reduce((r, v) => {
-                    const parts = v.split('=');
-                    return parts[0] === name ? decodeURIComponent(parts[1]) : r;
-                }, '');
-            },
-            
-            deleteCookie: function(name) {
-                document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/;';
             }
         };
         
@@ -341,26 +307,22 @@
         }
         
         // ============================================
-        // GUARDAR DATOS DEL VEHÍCULO
+        // GUARDAR DETALLES DEL VEHÍCULO
         // ============================================
-        function guardarDetallesVehiculo(vehicleIndex, detalles) {
+        function guardarDetalles(vehicleIndex, detalles) {
             try {
-                // Obtener datos existentes de index.html
-                let mainData = StorageManager.getItem('pepsico_data');
-                let data = {};
+                // Obtener datos existentes del formulario principal
+                let mainData = Storage.getItem('pepsico_data');
+                let data = mainData ? JSON.parse(mainData) : {};
                 
-                if (mainData) {
-                    data = JSON.parse(mainData);
-                }
+                // Guardar detalles del vehículo específico
+                const key = `vehiculo_${vehicleIndex}_detalles`;
+                data[key] = JSON.stringify(detalles);
                 
-                // Guardar los detalles del vehículo específico
-                const detallesKey = `vehiculo_${vehicleIndex}_detalles`;
-                data[detallesKey] = JSON.stringify(detalles);
+                // Guardar todo de vuelta
+                Storage.setItem('pepsico_data', JSON.stringify(data));
                 
-                // Guardar de vuelta
-                StorageManager.setItem('pepsico_data', JSON.stringify(data));
-                
-                console.log('✅ Detalles guardados:', detallesKey);
+                console.log('✅ Detalles guardados:', key);
                 return true;
             } catch (error) {
                 console.error('❌ Error al guardar:', error);
@@ -369,28 +331,17 @@
         }
         
         // ============================================
-        // CARGAR DATOS DEL VEHÍCULO
+        // CARGAR DETALLES DEL VEHÍCULO
         // ============================================
-        function cargarDetallesVehiculo(vehicleIndex) {
+        function cargarDetalles(vehicleIndex) {
             try {
-                const mainData = StorageManager.getItem('pepsico_data');
-                
-                if (!mainData) {
-                    console.log('ℹ️ No hay datos guardados');
-                    return null;
-                }
+                const mainData = Storage.getItem('pepsico_data');
+                if (!mainData) return null;
                 
                 const data = JSON.parse(mainData);
-                const detallesKey = `vehiculo_${vehicleIndex}_detalles`;
+                const key = `vehiculo_${vehicleIndex}_detalles`;
                 
-                if (data[detallesKey]) {
-                    const detalles = JSON.parse(data[detallesKey]);
-                    console.log('✅ Detalles cargados:', detalles);
-                    return detalles;
-                } else {
-                    console.log('ℹ️ No hay detalles para este vehículo');
-                    return null;
-                }
+                return data[key] ? JSON.parse(data[key]) : null;
             } catch (error) {
                 console.error('❌ Error al cargar:', error);
                 return null;
@@ -398,161 +349,121 @@
         }
         
         // ============================================
-        // CARGAR DATOS GUARDADOS SI EXISTEN
+        // CARGAR DATOS AL INICIAR
         // ============================================
         function cargarDatosGuardados() {
-            const detalles = cargarDetallesVehiculo(vehicleIndex);
+            const detalles = cargarDetalles(vehicleIndex);
             
             if (detalles) {
-                // Rellenar los campos con los datos guardados
-                if (detalles.estado_carpa) {
-                    document.querySelector(`input[name="estado_carpa"][value="${detalles.estado_carpa}"]`).checked = true;
-                }
-                if (detalles.carpa_limpia) {
-                    document.querySelector(`input[name="carpa_limpia"][value="${detalles.carpa_limpia}"]`).checked = true;
-                }
-                if (detalles.estibas) {
-                    document.querySelector(`input[name="estibas"][value="${detalles.estibas}"]`).checked = true;
-                }
-                if (detalles.estibas_estado) {
-                    document.querySelector(`input[name="estibas_estado"][value="${detalles.estibas_estado}"]`).checked = true;
-                }
-                if (detalles.canastillas) {
-                    document.querySelector(`input[name="canastillas"][value="${detalles.canastillas}"]`).checked = true;
-                }
-                if (detalles.canastillas_estado) {
-                    document.querySelector(`input[name="canastillas_estado"][value="${detalles.canastillas_estado}"]`).checked = true;
-                }
-                if (detalles.vinipel) {
-                    document.querySelector(`input[name="vinipel"][value="${detalles.vinipel}"]`).checked = true;
-                }
+                // Rellenar campos
+                ['estado_carpa', 'carpa_limpia', 'estibas', 'estibas_estado', 'canastillas', 'canastillas_estado', 'vinipel'].forEach(campo => {
+                    if (detalles[campo]) {
+                        const input = document.querySelector(`input[name="${campo}"][value="${detalles[campo]}"]`);
+                        if (input) input.checked = true;
+                    }
+                });
                 
-                console.log('✅ Datos cargados correctamente');
-                showSuccess('Datos cargados correctamente');
-            } else {
-                console.log('ℹ️ No se encontraron detalles');
+                showSuccess('✅ Datos cargados correctamente');
             }
         }
         
         // ============================================
-        // GUARDAR AUTOMÁTICAMENTE AL SELECCIONAR
-        // ============================================
-        function autoSave() {
-            const campos = [
-                'estado_carpa', 'carpa_limpia', 'estibas', 
-                'estibas_estado', 'canastillas', 'canastillas_estado', 'vinipel'
-            ];
-            
-            const detalles = {};
-            let todosSeleccionados = true;
-            
-            for (let campo of campos) {
-                const seleccionado = document.querySelector(`input[name="${campo}"]:checked`);
-                if (seleccionado) {
-                    detalles[campo] = seleccionado.value;
-                } else {
-                    todosSeleccionados = false;
-                }
-            }
-            
-            if (todosSeleccionados) {
-                guardarDetallesVehiculo(vehicleIndex, detalles);
-            }
-        }
-        
-        // ============================================
-        // GUARDAR DATOS AL ENVIAR EL FORMULARIO
+        // FORMULARIO - ENVIAR
         // ============================================
         document.getElementById('details-form').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Validar que todos los campos estén seleccionados
-            const campos = [
-                'estado_carpa', 'carpa_limpia', 'estibas', 
-                'estibas_estado', 'canastillas', 'canastillas_estado', 'vinipel'
-            ];
+            // Validar todos los campos
+            const campos = ['estado_carpa', 'carpa_limpia', 'estibas', 'estibas_estado', 'canastillas', 'canastillas_estado', 'vinipel'];
+            const errores = [];
             
-            for (let campo of campos) {
-                const seleccionado = document.querySelector(`input[name="${campo}"]:checked`);
-                if (!seleccionado) {
-                    showError(`Por favor, seleccione una opción para "${campo.replace('_', ' ')}"`);
-                    return;
+            campos.forEach(campo => {
+                if (!document.querySelector(`input[name="${campo}"]:checked`)) {
+                    errores.push(campo.replace('_', ' '));
                 }
+            });
+            
+            if (errores.length > 0) {
+                showError(`⚠️ Complete todos los campos: ${errores.join(', ')}`);
+                return;
             }
             
-            // Obtener los valores seleccionados
-            const detalles = {
-                estado_carpa: document.querySelector('input[name="estado_carpa"]:checked').value,
-                carpa_limpia: document.querySelector('input[name="carpa_limpia"]:checked').value,
-                estibas: document.querySelector('input[name="estibas"]:checked').value,
-                estibas_estado: document.querySelector('input[name="estibas_estado"]:checked').value,
-                canastillas: document.querySelector('input[name="canastillas"]:checked').value,
-                canastillas_estado: document.querySelector('input[name="canastillas_estado"]:checked').value,
-                vinipel: document.querySelector('input[name="vinipel"]:checked').value
-            };
+            // Obtener valores
+            const detalles = {};
+            campos.forEach(campo => {
+                detalles[campo] = document.querySelector(`input[name="${campo}"]:checked`).value;
+            });
             
-            console.log('💾 Guardando detalles:', detalles);
-            
-            // Guardar en almacenamiento
-            const guardado = guardarDetallesVehiculo(vehicleIndex, detalles);
-            
-            if (guardado) {
+            // Guardar
+            if (guardarDetalles(vehicleIndex, detalles)) {
                 showSuccess('✅ Inspección guardada correctamente');
-                
-                // Esperar un momento antes de redirigir
                 setTimeout(() => {
                     window.location.href = 'index.html';
                 }, 1500);
             } else {
-                showError('❌ Error al guardar. Por favor, inténtelo de nuevo.');
+                showError('❌ Error al guardar. Intente nuevamente.');
             }
         });
         
         // ============================================
-        // FUNCIONES DE MENSAJES
+        // MENSAJES
         // ============================================
-        function showSuccess(message) {
-            const successMsg = document.getElementById('success-message');
-            successMsg.textContent = message;
-            successMsg.style.display = 'block';
-            
-            setTimeout(() => {
-                successMsg.style.display = 'none';
-            }, 3000);
+        function showSuccess(msg) {
+            const el = document.getElementById('success-message');
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 3000);
         }
         
-        function showError(message) {
-            const errorMsg = document.getElementById('error-message');
-            errorMsg.textContent = message;
-            errorMsg.style.display = 'block';
-            
-            setTimeout(() => {
-                errorMsg.style.display = 'none';
-            }, 5000);
+        function showError(msg) {
+            const el = document.getElementById('error-message');
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 5000);
         }
         
         // ============================================
-        // INICIALIZACIÓN AL CARGAR LA PÁGINA
+        // INICIALIZAR
         // ============================================
-        window.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function() {
             vehicleIndex = getVehicleIndex();
             document.getElementById('vehicle-number').textContent = vehicleIndex + 1;
             document.getElementById('vehicle-title').textContent = `Vehículo #${vehicleIndex + 1}`;
             
-            console.log('🚗 Iniciando formulario para vehículo:', vehicleIndex);
+            console.log('🚗 Vehículo:', vehicleIndex);
             
-            // Cargar datos guardados
+            // Cargar datos existentes
             cargarDatosGuardados();
             
-            // Auto-guardar al cambiar cualquier opción
-            const radios = document.querySelectorAll('input[type="radio"]');
-            radios.forEach(radio => {
-                radio.addEventListener('change', autoSave);
+            // Guardar automáticamente al cambiar opciones
+            document.querySelectorAll('input[type="radio"]').forEach(radio => {
+                radio.addEventListener('change', () => {
+                    const campos = ['estado_carpa', 'carpa_limpia', 'estibas', 'estibas_estado', 'canastillas', 'canastillas_estado', 'vinipel'];
+                    const detalles = {};
+                    let completado = true;
+                    
+                    campos.forEach(campo => {
+                        const sel = document.querySelector(`input[name="${campo}"]:checked`);
+                        if (sel) detalles[campo] = sel.value;
+                        else completado = false;
+                    });
+                    
+                    if (completado) {
+                        guardarDetalles(vehicleIndex, detalles);
+                        console.log('💾 Auto-guardado');
+                    }
+                });
             });
             
-            // Verificar disponibilidad de almacenamiento
-            console.log('📊 sessionStorage disponible:', typeof sessionStorage !== 'undefined');
-            console.log('🍪 Cookies disponibles:', navigator.cookieEnabled);
+            // Verificar sessionStorage
+            try {
+                sessionStorage.setItem('netlify_test', 'ok');
+                sessionStorage.removeItem('netlify_test');
+                console.log('✅ sessionStorage disponible en Netlify');
+            } catch (e) {
+                console.error('❌ sessionStorage bloqueado:', e);
+                alert('⚠️ El navegador bloquea el almacenamiento. Permita cookies para este sitio.');
+            }
         });
     </script>
 </body>
