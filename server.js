@@ -52,7 +52,7 @@ app.post('/api/registro', async (req, res) => {
       `INSERT INTO registros (
         fecha, lugar, lider_asignado, coordinador, coordinador_otro,
         lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales,
-        datos_vehiculos, detalles_vehiculos, datos_paradas_operacion, created_at
+        datos_vehiculos, detalles_vehiculos, datos_paradas_operacion
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
         fecha, lugar, lider_asignado, coordinador, coordinador_otro,
