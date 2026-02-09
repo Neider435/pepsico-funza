@@ -13,14 +13,6 @@
             margin: 0 auto;
             padding: 20px;
         }
-        .btn-borrar-todo {
-            background-color: #8B0000;
-            color: white;
-            margin-top: 20px;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-        }
         
         .logo-container {
             text-align: center;
@@ -276,9 +268,6 @@
         </form>
         
         <a href="index.html" class="back-button">← Volver al Formulario Principal</a>
-        <div style="display: flex; gap: 10px;">
-            <button type="button" class="btn-borrar-todo" style="flex: 1;" onclick="limpiarTodo()">Borrar Todo</button>
-        </div>
     </div>
     
     <script>
@@ -358,18 +347,6 @@
                 return null;
             }
         }
-
-        // ============================================
-        // LIMPIEZA TOTAL
-        // ============================================
-
-        function limpiarTodo() {
-            if (confirm("¿Estás seguro de borrar toda la información?")) {
-                localStorage.removeItem('pepsico_data');
-                location.reload();
-            }
-        }
-
         
         // ============================================
         // CARGAR DATOS AL INICIAR
@@ -491,6 +468,7 @@
     </script>
 </body>
 </html>
+
 
 
 
