@@ -359,6 +359,18 @@
                 return null;
             }
         }
+
+        // ============================================
+        // LIMPIEZA TOTAL
+        // ============================================
+
+        function limpiarTodo() {
+            if (confirm("¿Estás seguro de borrar toda la información?")) {
+                localStorage.removeItem('pepsico_data');
+                location.reload();
+            }
+        }
+
         
         // ============================================
         // CARGAR DATOS AL INICIAR
@@ -480,5 +492,6 @@
     </script>
 </body>
 </html>
+
 
 
