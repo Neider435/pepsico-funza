@@ -1179,136 +1179,145 @@ Debe cumplir:
 
         // ============================================
         // ENVÍO DEL FORMULARIO
-        // ============================================
-
-        // ✅ FUNCIÓN MODIFICADA PARA ENVIAR A GOOGLE SHEETS
+        // ===========================================
         function enviarFormulario(event) {
-            event.preventDefault();
-            sincronizarVehiculosDesdeDOM();
-            
-            // Validaciones existentes
-            const camposObligatorios = [
-                { id: 'lugar', nombre: 'Lugar de operación' },
-                { id: 'lider', nombre: 'Líder Asignado' },
-                { id: 'lider_pepsico', nombre: 'Líder De Pepsico' },
-                { id: 'fecha', nombre: 'Fecha' },
-                { id: 'turno', nombre: 'Turno' },
-                { id: 'total_personas', nombre: 'Total Personas En El Turno' },
-                { id: 'cajas_totales', nombre: 'Total Cajas Movidas' }
-            ];
-            
-            for (const campo of camposObligatorios) {
-                const el = document.getElementById(campo.id);
-                if (el && !el.value.trim()) {
-                    alert(`❌ Por favor, complete el campo: "${campo.nombre}".`);
+        event.preventDefault();
+        sincronizarVehiculosDesdeDOM();
+        
+        // Validaciones existentes
+        const camposObligatorios = [
+            { id: 'lugar', nombre: 'Lugar de operación' },
+            { id: 'lider', nombre: 'Líder Asignado' },
+            { id: 'lider_pepsico', nombre: 'Líder De Pepsico' },
+            { id: 'fecha', nombre: 'Fecha' },
+            { id: 'turno', nombre: 'Turno' },
+            { id: 'total_personas', nombre: 'Total Personas En El Turno' },
+            { id: 'cajas_totales', nombre: 'Total Cajas Movidas' }
+        ];
+        
+        for (const campo of camposObligatorios) {
+            const el = document.getElementById(campo.id);
+            if (el && !el.value.trim()) {
+            alert(`❌ Por favor, complete el campo: "${campo.nombre}".`);
+            return;
+            }
+        }
+        
+        // Validar nombres totales
+        const totalPersonas = parseInt(document.getElementById('total_personas').value) || 0;
+        if (totalPersonas > 0) {
+            const contenedorNombres = document.getElementById('nombres-contenedor');
+            const inputsNombres = contenedorNombres.querySelectorAll('input[type="text"]');
+            for (let i = 0; i < inputsNombres.length; i++) {
+            if (!inputsNombres[i].value.trim()) {
+                alert(`❌ Por favor, ingrese el nombre del trabajador ${i + 1}.`);
+                inputsNombres[i].focus();
+                return;
+            }
+            }
+        }
+        
+        // Validar nombres por vehículo
+        for (let i = 0; i < vehiculosData.length; i++) {
+            const vehiculo = vehiculosData[i];
+            const totalPersonasVeh = parseInt(vehiculo.personas) || 0;
+            if (totalPersonasVeh > 0) {
+            const nombresContainer = document.querySelector(`#nombres-personal-${i}`);
+            if (nombresContainer) {
+                const inputsNombres = nombresContainer.querySelectorAll('input[type="text"]');
+                for (let j = 0; j < inputsNombres.length; j++) {
+                if (!inputsNombres[j].value.trim()) {
+                    alert(`❌ Por favor, ingrese el nombre del trabajador ${j + 1} del Vehículo #${i + 1}.`);
+                    inputsNombres[j].focus();
                     return;
                 }
-            }
-            
-            // --- RESTRICCIÓN DE NOMBRES SI TOTAL > 0 ---
-            const totalPersonas = parseInt(document.getElementById('total_personas').value) || 0;
-            if (totalPersonas > 0) {
-                const contenedorNombres = document.getElementById('nombres-contenedor');
-                const inputsNombres = contenedorNombres.querySelectorAll('input[type="text"]');
-                for (let i = 0; i < inputsNombres.length; i++) {
-                    if (!inputsNombres[i].value.trim()) {
-                        alert(`❌ Por favor, ingrese el nombre del trabajador ${i + 1}.`);
-                        inputsNombres[i].focus();
-                        return;
-                    }
                 }
             }
-            
-            // ✅ Validar nombres del personal en cada vehículo (NUEVO)
+            }
+        }
+        
+        if (!validarPlacas()) return;
+        if (!validarSolapamientoVehiculos() || !validarSolapamientoParadas()) return;
+        
+        // Obtener detalles de vehículos desde localStorage
+        const detallesVehiculos = {};
+        const savedData = localStorage.getItem('pepsico_data');
+        if (savedData) {
+            const data = JSON.parse(savedData);
             for (let i = 0; i < vehiculosData.length; i++) {
-                const vehiculo = vehiculosData[i];
-                const totalPersonasVeh = parseInt(vehiculo.personas) || 0;
-                
-                if (totalPersonasVeh > 0) {
-                    const nombresContainer = document.querySelector(`#nombres-personal-${i}`);
-                    if (nombresContainer) {
-                        const inputsNombres = nombresContainer.querySelectorAll('input[type="text"]');
-                        for (let j = 0; j < inputsNombres.length; j++) {
-                            if (!inputsNombres[j].value.trim()) {
-                                alert(`❌ Por favor, ingrese el nombre del trabajador ${j + 1} del Vehículo #${i + 1}.`);
-                                inputsNombres[j].focus();
-                                return;
-                            }
-                        }
-                    }
-                }
+            const detallesKey = `vehiculo_${i}_detalles`;
+            if (data[detallesKey]) {
+                detallesVehiculos[detallesKey] = JSON.parse(data[detallesKey]);
             }
-            
-            if (!validarPlacas()) return;
-            if (!validarSolapamientoVehiculos() || !validarSolapamientoParadas()) return;
-            
-            // ✅ Obtener detalles de cada vehículo desde localStorage
-            const detallesVehiculos = {};
-            const savedData = localStorage.getItem('pepsico_data');
-            if (savedData) {
-                const data = JSON.parse(savedData);
-                for (let i = 0; i < vehiculosData.length; i++) {
-                    const detallesKey = `vehiculo_${i}_detalles`;
-                    if (data[detallesKey]) {
-                        detallesVehiculos[detallesKey] = JSON.parse(data[detallesKey]);
-                    }
-                }
             }
-            
-            // Preparar datos para enviar a Google Sheets
-            const formData = {
-                fecha: document.getElementById('fecha').value,
-                lugar: document.getElementById('lugar').value,
-                lider_asignado: document.getElementById('lider').value.toUpperCase(),
-                coordinador: document.getElementById('coordinador').value,
-                coordinador_otro: document.getElementById('coordinador_otro').value,
-                lider_pepsico: document.getElementById('lider_pepsico').value,
-                lider_pepsico_otro: document.getElementById('lider_pepsico_otro').value,
-                turno: document.getElementById('turno').value,
-                total_personas: document.getElementById('total_personas').value,
-                cajas_totales: document.getElementById('cajas_totales').value,
-                datos_vehiculos: JSON.stringify(vehiculosData),
-                detalles_vehiculos: JSON.stringify(detallesVehiculos),
-                datos_paradas_operacion: JSON.stringify(
-                    Array.from(document.querySelectorAll('#operacion-contenedor .parada-group')).map(grupo => {
-                        return {
-                            inicio: grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '',
-                            fin: grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '',
-                            motivo: grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '',
-                            otro_motivo: grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || ''
-                        };
-                    })
-                )
+        }
+        
+        // Preparar datos para enviar
+        const formData = {
+            fecha: document.getElementById('fecha').value,
+            lugar: document.getElementById('lugar').value,
+            lider_asignado: document.getElementById('lider').value.toUpperCase(),
+            coordinador: document.getElementById('coordinador').value,
+            coordinador_otro: document.getElementById('coordinador_otro').value,
+            lider_pepsico: document.getElementById('lider_pepsico').value,
+            lider_pepsico_otro: document.getElementById('lider_pepsico_otro').value,
+            turno: document.getElementById('turno').value,
+            total_personas: document.getElementById('total_personas').value,
+            cajas_totales: document.getElementById('cajas_totales').value,
+            datos_vehiculos: vehiculosData,
+            detalles_vehiculos: detallesVehiculos,
+            datos_paradas_operacion: Array.from(
+            document.querySelectorAll('#operacion-contenedor .parada-group')
+            ).map(grupo => {
+            return {
+                inicio: grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '',
+                fin: grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '',
+                motivo: grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '',
+                otro_motivo: grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || ''
             };
-            
-            // ⚠️ REEMPLAZA ESTA URL CON LA DE TU GOOGLE APPS SCRIPT
-            const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzMjF6geUyORQJwD2dJWX6Mjq-1ijNqJZizolxOBoVPtkecdf48U13BIU5xL7s6yyhd/exec';
-            
-            // Enviar a Google Sheets
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
             })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    alert('✅ Datos guardados correctamente en Excel!');
-                    localStorage.removeItem('pepsico_data');
-                    // Opcional: Limpiar formulario
-                    document.querySelector('form').reset();
-                    // Opcional: Recargar página
-                    // location.reload();
-                } else {
-                    alert('❌ Error al guardar: ' + result.error);
-                }
-            })
-            .catch(error => {
-                alert('❌ Error de conexión. Por favor, inténtalo de nuevo.');
-                console.error('Error:', error);
-            });
+        };
+        
+        // ⚠️ URL DE RAILWAY
+        const RAILWAY_API_URL = 'https://pepsico-funza-production.up.railway.app/api/registro';
+        
+        // Mostrar mensaje de carga
+        const submitBtn = document.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Enviando...';
+        
+        // Enviar a Railway (MySQL)
+        fetch(RAILWAY_API_URL, {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => {
+            if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(result => {
+            if (result.success) {
+            // ✅ Eliminar datos de localStorage
+            localStorage.removeItem('pepsico_data');
+            
+            // ✅ Redirigir a aceptacion.html
+            window.location.href = 'aceptacion.html';
+            } else {
+            throw new Error(result.error || 'Error desconocido');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Error al guardar: ' + error.message + '\n\nPor favor, inténtalo de nuevo.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
         }
 
         // ============================================
@@ -1442,4 +1451,3 @@ Debe cumplir:
         });
     </script>
 </body>
-</html>
