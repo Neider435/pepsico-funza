@@ -162,104 +162,111 @@
         </div>
         
         <form id="details-form">
-            <div class="section-title">ESTADO DE LA CARPA</div>
+            <!-- INTERIOR CAMIÓN -->
             <div class="form-group">
-                <label for="estado_carpa" class="required">Estado de la carpa</label>
+                <label for="interior_camion" class="required">INTERIOR CAMIÓN</label>
                 <div class="radio-group">
                     <div class="radio-option">
-                        <input type="radio" id="estado_bueno" name="estado_carpa" value="BUENO">
-                        <label for="estado_bueno">BUENO</label>
+                        <input type="radio" id="interior_bueno" name="interior_camion" value="BUENO">
+                        <label for="interior_bueno">BUENO</label>
                     </div>
                     <div class="radio-option">
-                        <input type="radio" id="estado_malo" name="estado_carpa" value="MALO">
-                        <label for="estado_malo">MALO</label>
+                        <input type="radio" id="interior_malo" name="interior_camion" value="MALO">
+                        <label for="interior_malo">MALO</label>
                     </div>
                 </div>
             </div>
             
+            <!-- ESTADO DE LA CARPA -->
             <div class="form-group">
-                <label for="carpa_limpia" class="required">Carpa limpia</label>
+                <label for="estado_carpa" class="required">ESTADO DE LA CARPA</label>
                 <div class="radio-group">
                     <div class="radio-option">
-                        <input type="radio" id="carpa_si" name="carpa_limpia" value="SI">
-                        <label for="carpa_si">SI</label>
+                        <input type="radio" id="carpa_bueno" name="estado_carpa" value="BUENO">
+                        <label for="carpa_bueno">BUENO</label>
                     </div>
                     <div class="radio-option">
-                        <input type="radio" id="carpa_no" name="carpa_limpia" value="NO">
-                        <label for="carpa_no">NO</label>
+                        <input type="radio" id="carpa_malo" name="estado_carpa" value="MALO">
+                        <label for="carpa_malo">MALO</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="carpa_na" name="estado_carpa" value="N/A">
+                        <label for="carpa_na">N/A</label>
                     </div>
                 </div>
             </div>
             
-            <div class="section-title">ESTADO DE ESTIBAS</div>
+            <!-- OLORES EXTRAÑOS -->
             <div class="form-group">
-                <label for="estibas" class="required">Estibas</label>
+                <label for="olores_extraños" class="required">OLORES EXTRAÑOS</label>
                 <div class="radio-group">
                     <div class="radio-option">
-                        <input type="radio" id="estibas_si" name="estibas" value="SI">
-                        <label for="estibas_si">SI</label>
+                        <input type="radio" id="olores_si" name="olores_extraños" value="SI">
+                        <label for="olores_si">SI</label>
                     </div>
                     <div class="radio-option">
-                        <input type="radio" id="estibas_no" name="estibas" value="NO">
-                        <label for="estibas_no">NO</label>
+                        <input type="radio" id="olores_no" name="olores_extraños" value="NO">
+                        <label for="olores_no">NO</label>
                     </div>
                 </div>
             </div>
             
+            <!-- OBJETOS EXTRAÑOS -->
             <div class="form-group">
-                <label for="estibas_estado" class="required">Estibas en buen estado</label>
+                <label for="objetos_extraños" class="required">OBJETOS EXTRAÑOS</label>
                 <div class="radio-group">
                     <div class="radio-option">
-                        <input type="radio" id="estibas_buenas_si" name="estibas_estado" value="SI">
-                        <label for="estibas_buenas_si">SI</label>
+                        <input type="radio" id="objetos_si" name="objetos_extraños" value="SI">
+                        <label for="objetos_si">SI</label>
                     </div>
                     <div class="radio-option">
-                        <input type="radio" id="estibas_buenas_no" name="estibas_estado" value="NO">
-                        <label for="estibas_buenas_no">NO</label>
+                        <input type="radio" id="objetos_no" name="objetos_extraños" value="NO">
+                        <label for="objetos_no">NO</label>
                     </div>
                 </div>
             </div>
             
-            <div class="section-title">ESTADO DE CANASTILLAS</div>
+            <!-- EVIDENCIAS DE PLAGAS -->
             <div class="form-group">
-                <label for="canastillas" class="required">Canastillas</label>
+                <label for="evidencias_plagas" class="required">EVIDENCIAS DE PLAGAS</label>
                 <div class="radio-group">
                     <div class="radio-option">
-                        <input type="radio" id="canastillas_si" name="canastillas" value="SI">
-                        <label for="canastillas_si">SI</label>
+                        <input type="radio" id="plagas_si" name="evidencias_plagas" value="SI">
+                        <label for="plagas_si">SI</label>
                     </div>
                     <div class="radio-option">
-                        <input type="radio" id="canastillas_no" name="canastillas" value="NO">
-                        <label for="canastillas_no">NO</label>
+                        <input type="radio" id="plagas_no" name="evidencias_plagas" value="NO">
+                        <label for="plagas_no">NO</label>
                     </div>
                 </div>
             </div>
             
+            <!-- ESTADO DEL SUELO -->
             <div class="form-group">
-                <label for="canastillas_estado" class="required">Canastillas en buen estado</label>
+                <label for="estado_suelo" class="required">ESTADO DEL SUELO</label>
                 <div class="radio-group">
                     <div class="radio-option">
-                        <input type="radio" id="canastillas_buenas_si" name="canastillas_estado" value="SI">
-                        <label for="canastillas_buenas_si">SI</label>
+                        <input type="radio" id="suelo_bueno" name="estado_suelo" value="BUENO">
+                        <label for="suelo_bueno">BUENO</label>
                     </div>
                     <div class="radio-option">
-                        <input type="radio" id="canastillas_buenas_no" name="canastillas_estado" value="NO">
-                        <label for="canastillas_buenas_no">NO</label>
+                        <input type="radio" id="suelo_malo" name="estado_suelo" value="MALO">
+                        <label for="suelo_malo">MALO</label>
                     </div>
                 </div>
             </div>
             
-            <div class="section-title">VINIPEL</div>
+            <!-- APROBADO -->
             <div class="form-group">
-                <label for="vinipel" class="required">Vinipel</label>
+                <label for="aprobado" class="required">APROBADO</label>
                 <div class="radio-group">
                     <div class="radio-option">
-                        <input type="radio" id="vinipel_si" name="vinipel" value="SI">
-                        <label for="vinipel_si">SI</label>
+                        <input type="radio" id="aprobado_si" name="aprobado" value="SI">
+                        <label for="aprobado_si">SI</label>
                     </div>
                     <div class="radio-option">
-                        <input type="radio" id="vinipel_no" name="vinipel" value="NO">
-                        <label for="vinipel_no">NO</label>
+                        <input type="radio" id="aprobado_no" name="aprobado" value="NO">
+                        <label for="aprobado_no">NO</label>
                     </div>
                 </div>
             </div>
@@ -356,7 +363,8 @@
             
             if (detalles) {
                 // Rellenar campos
-                ['estado_carpa', 'carpa_limpia', 'estibas', 'estibas_estado', 'canastillas', 'canastillas_estado', 'vinipel'].forEach(campo => {
+                ['interior_camion', 'estado_carpa', 'olores_extraños', 'objetos_extraños', 
+                 'evidencias_plagas', 'estado_suelo', 'aprobado'].forEach(campo => {
                     if (detalles[campo]) {
                         const input = document.querySelector(`input[name="${campo}"][value="${detalles[campo]}"]`);
                         if (input) input.checked = true;
@@ -374,7 +382,8 @@
             e.preventDefault();
             
             // Validar todos los campos
-            const campos = ['estado_carpa', 'carpa_limpia', 'estibas', 'estibas_estado', 'canastillas', 'canastillas_estado', 'vinipel'];
+            const campos = ['interior_camion', 'estado_carpa', 'olores_extraños', 'objetos_extraños', 
+                            'evidencias_plagas', 'estado_suelo', 'aprobado'];
             const errores = [];
             
             campos.forEach(campo => {
@@ -438,7 +447,8 @@
             // Guardar automáticamente al cambiar opciones
             document.querySelectorAll('input[type="radio"]').forEach(radio => {
                 radio.addEventListener('change', () => {
-                    const campos = ['estado_carpa', 'carpa_limpia', 'estibas', 'estibas_estado', 'canastillas', 'canastillas_estado', 'vinipel'];
+                    const campos = ['interior_camion', 'estado_carpa', 'olores_extraños', 'objetos_extraños', 
+                                    'evidencias_plagas', 'estado_suelo', 'aprobado'];
                     const detalles = {};
                     let completado = true;
                     
