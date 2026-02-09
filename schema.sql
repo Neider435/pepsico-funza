@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS registros (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  fecha DATE NOT NULL,
+  lugar VARCHAR(100) NOT NULL,
+  lider_asignado VARCHAR(200) NOT NULL,
+  coordinador VARCHAR(200),
+  coordinador_otro VARCHAR(200),
+  lider_pepsico VARCHAR(200),
+  lider_pepsico_otro VARCHAR(200),
+  turno VARCHAR(50) NOT NULL,
+  total_personas INT NOT NULL,
+  cajas_totales INT NOT NULL,
+  datos_vehiculos JSON,
+  detalles_vehiculos JSON,
+  datos_paradas_operacion JSON,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_fecha (fecha),
+  INDEX idx_lugar (lugar),
+  INDEX idx_turno (turno)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
