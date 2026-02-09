@@ -47,13 +47,13 @@ app.post('/api/registro', async (req, res) => {
       datos_paradas_operacion
     } = req.body;
 
-    // Insertar registro principal
+    // Insertar registro principal (CORREGIDO - sin created_at y sin NOW())
     const [result] = await pool.query(
       `INSERT INTO registros (
         fecha, lugar, lider_asignado, coordinador, coordinador_otro,
         lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales,
         datos_vehiculos, detalles_vehiculos, datos_paradas_operacion
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         fecha, lugar, lider_asignado, coordinador, coordinador_otro,
         lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales,
