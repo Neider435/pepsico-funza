@@ -1202,20 +1202,7 @@ Debe cumplir:
             return;
             }
         }
-        
-        // Validar nombres totales
-        const totalPersonas = parseInt(document.getElementById('total_personas').value) || 0;
-        if (totalPersonas > 0) {
-            const contenedorNombres = document.getElementById('nombres-contenedor');
-            const inputsNombres = contenedorNombres.querySelectorAll('input[type="text"]');
-            for (let i = 0; i < inputsNombres.length; i++) {
-            if (!inputsNombres[i].value.trim()) {
-                alert(`❌ Por favor, ingrese el nombre del trabajador ${i + 1}.`);
-                inputsNombres[i].focus();
-                return;
-            }
-            }
-        }
+    
         
         // Validar nombres por vehículo
         for (let i = 0; i < vehiculosData.length; i++) {
