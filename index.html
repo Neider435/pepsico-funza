@@ -729,6 +729,8 @@
                 <select name="vehiculo_${vIndex}_justificacion" onchange="mostrarTiempoMuerto(this, ${vIndex})">
                     <option value="">Seleccione motivo</option>
                     <option value="faltante_producto" ${datos.justificacion === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
+                    <option value="liberacion_calidad" ${datos.justificacion === 'liberacion_calidad' ? 'selected' : ''}>Liberacion de calidad</option>
+                    <option value="Daños" ${datos.justificacion === 'Daños' ? 'selected' : ''}>Daños(electricos, muelle, montacargas, etc.)</option>
                     <option value="otro" ${datos.justificacion === 'otro' ? 'selected' : ''}>Otro</option>
                 </select>
                 <input type="text" name="vehiculo_${vIndex}_otro_justificacion" id="otro_justificacion_${vIndex}" class="otro-input" placeholder="Especifique la incidencia" value="${datos.otro_justificacion || ''}">
@@ -1438,3 +1440,4 @@ Debe cumplir:
         });
     </script>
 </body>
+
