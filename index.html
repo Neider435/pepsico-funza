@@ -1217,18 +1217,61 @@ Debe cumplir:
         // ============================================
         // ENVÍO DEL FORMULARIO
         // ===========================================
-        function enviarFormulario(event) {
-        event.preventDefault();
-        sincronizarVehiculosDesdeDOM();
+        async function enviarFormulario(e) {
+    e.preventDefault();
+    
+    // 1. Sincronizar datos de los inputs de vehículos
+    sincronizarVehiculosDesdeDOM();
+    
+    // Log para depuración (opcional, para ver que los nombres van bien)
+    console.log('📊 Datos a enviar:', vehiculosData);
+
+    const form = e.target;
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    // 2. RECOLECTAR DETALLES: Esta es la parte que te faltaba
+    const detallesVehiculos = [];
+    vehiculosData.forEach((_, index) => {
+        // Buscamos en el sessionStorage lo que guardó detalles.html
+        const detalle = sessionStorage.getItem(`vehiculo_detalles_${index}`);
+        detallesVehiculos.push(detalle ? JSON.parse(detalle) : null);
+    });
+
+    // 3. CONSTRUIR PAYLOAD: Juntamos todo en un solo objeto JSON
+    const payload = {
+        ...data,
+        datos_vehiculos: vehiculosData,
+        detalles_vehiculos: detallesVehiculos, // <--- Aquí van los detalles (carpa, olores, etc.)
+        datos_paradas_operacion: obtenerParadasDeOperacion()
+    };
+
+    try {
+        // 4. ENVIAR AL SERVIDOR (Asegúrate que la URL sea la de tu Railway)
+        const response = await fetch('TU_URL_DE_RAILWAY/api/registro', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('✅ Registro guardado con éxito en la base de datos');
             
-        console.log('📊 Vehículos con nombres del personal:');
-          vehiculosData.forEach((vehiculo, index) => {
-            console.log(`Vehículo ${index}:`, {
-              placa: vehiculo.placa,
-              personas: vehiculo.personas,
-              nombres: vehiculo.nombres_personal
-            });
-          });
+            // 5. LIMPIEZA: Muy importante borrar el storage después de guardar
+            if (typeof limpiarTodo === 'function') {
+                limpiarTodo();
+            }
+            sessionStorage.clear(); // Borra los detalles para el siguiente registro
+        } else {
+            alert('❌ Error del servidor: ' + result.error);
+        }
+    } catch (error) {
+        console.error("❌ Error en la conexión:", error);
+        alert('Error al conectar con el servidor. Revisa la consola.');
+    }
+}
         
         // Validaciones existentes
         const camposObligatorios = [
@@ -1489,3 +1532,4 @@ Debe cumplir:
         });
     </script>
 </body>
+
