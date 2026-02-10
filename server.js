@@ -29,7 +29,46 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-// Endpoint para recibir datos del formulario
+// ============================================
+// ALMACENAMIENTO TEMPORAL DE INSPECCIONES
+// ============================================
+const inspeccionesTemporales = {}; // { vehiculo_index: { detalles... } }
+
+// ============================================
+// ENDPOINT: RECIBIR INSPECCIÓN DE VEHÍCULO
+// ============================================
+app.post('/api/inspeccion', async (req, res) => {
+  try {
+    const { vehiculo_index, ...detalles } = req.body;
+
+    if (typeof vehiculo_index !== 'number' || vehiculo_index < 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Índice de vehículo inválido' 
+      });
+    }
+
+    // Guardar temporalmente en memoria (asociado al índice, no al ID de BD)
+    inspeccionesTemporales[vehiculo_index] = detalles;
+    
+    console.log(`✅ Inspección recibida para vehículo índice ${vehiculo_index}:`, detalles);
+    
+    res.json({ 
+      success: true, 
+      message: 'Inspección guardada temporalmente' 
+    });
+  } catch (error) {
+    console.error('❌ Error en /api/inspeccion:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+// ============================================
+// ENDPOINT: RECIBIR DATOS DEL FORMULARIO COMPLETO
+// ============================================
 app.post('/api/registro', async (req, res) => {
   let connection;
   try {
@@ -51,13 +90,11 @@ app.post('/api/registro', async (req, res) => {
       total_personas,
       cajas_totales,
       datos_vehiculos,
-      detalles_vehiculos,
       datos_paradas_operacion
     } = req.body;
 
     console.log('📊 Datos recibidos:');
     console.log('- Vehículos:', datos_vehiculos.length);
-    console.log('- Detalles vehículos:', Object.keys(detalles_vehiculos || {}).length);
     console.log('- Paradas operación:', datos_paradas_operacion.length);
 
     // 1. Insertar registro principal
@@ -118,13 +155,11 @@ app.post('/api/registro', async (req, res) => {
 
       // 3. Insertar detalles del vehículo (si existen)
       // USAR EL ÍNDICE (i) EN LUGAR DEL ID DE BASE DE DATOS
-      const detallesKey = `vehiculo_${i}_detalles`;
+      const inspeccionTemporal = inspeccionesTemporales[i];
       
-      if (detalles_vehiculos && detalles_vehiculos[detallesKey]) {
-        const detalles = detalles_vehiculos[detallesKey];
-        
-        console.log(`   🔍 Detalles encontrados para vehículo #${i + 1}:`);
-        console.log('   ', JSON.stringify(detalles, null, 2));
+      if (inspeccionTemporal) {
+        console.log(`   🔍 Encontrada inspección para vehículo índice ${i}`);
+        console.log('   ', JSON.stringify(inspeccionTemporal, null, 2));
 
         await connection.query(
           `INSERT INTO detalles_vehiculos (
@@ -133,18 +168,21 @@ app.post('/api/registro', async (req, res) => {
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             vehiculoId,
-            detalles.interior_camion || '',
-            detalles.estado_carpa || '',
-            detalles.olores_extraños || '', // CORREGIDO: plural "olores_extraños"
-            detalles.objetos_extraños || '',
-            detalles.evidencias_plagas || '',
-            detalles.estado_suelo || '',
-            detalles.aprobado || ''
+            inspeccionTemporal.interior_camion || '',
+            inspeccionTemporal.estado_carpa || '',
+            inspeccionTemporal.olores_extraños || '', // ✅ Correcto: plural
+            inspeccionTemporal.objetos_extraños || '',
+            inspeccionTemporal.evidencias_plagas || '',
+            inspeccionTemporal.estado_suelo || '',
+            inspeccionTemporal.aprobado || ''
           ]
         );
-        console.log(`   ✅ Detalles de inspección guardados para vehículo #${i + 1}`);
+        console.log(`   ✅ Inspección guardada en MySQL para vehículo ID ${vehiculoId}`);
+        
+        // Eliminar de memoria temporal
+        delete inspeccionesTemporales[i];
       } else {
-        console.log(`   ⚠️ No se encontraron detalles para vehículo #${i + 1} (clave: ${detallesKey})`);
+        console.log(`   ⚠️ No se encontró inspección para vehículo índice ${i}`);
       }
 
       // 4. Insertar nombres del personal (si existen)
@@ -192,8 +230,7 @@ app.post('/api/registro', async (req, res) => {
       success: true,
       message: 'Registro guardado correctamente',
       id: registroId,
-      vehiculos: datos_vehiculos.length,
-      detalles_guardados: Object.keys(detalles_vehiculos || {}).length
+      vehiculos: datos_vehiculos.length
     });
 
   } catch (error) {
@@ -215,7 +252,9 @@ app.post('/api/registro', async (req, res) => {
   }
 });
 
-// Endpoint para obtener registros (opcional, para debugging)
+// ============================================
+// ENDPOINT: OBTENER ÚLTIMOS REGISTROS (OPCIONAL)
+// ============================================
 app.get('/api/registros', async (req, res) => {
   try {
     const connection = await pool.getConnection();
@@ -244,7 +283,9 @@ app.get('/api/registros', async (req, res) => {
   }
 });
 
-// Endpoint para obtener detalles de un vehículo específico
+// ============================================
+// ENDPOINT: OBTENER DETALLES DE VEHÍCULO ESPECÍFICO
+// ============================================
 app.get('/api/vehiculo/:id/detalles', async (req, res) => {
   try {
     const vehiculoId = req.params.id;
@@ -277,7 +318,9 @@ app.get('/api/vehiculo/:id/detalles', async (req, res) => {
   }
 });
 
-// Health check mejorado
+// ============================================
+// HEALTH CHECK
+// ============================================
 app.get('/health', async (req, res) => {
   try {
     const connection = await pool.getConnection();
@@ -318,7 +361,9 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// Endpoint de prueba para verificar recepción de datos
+// ============================================
+// ENDPOINT DE PRUEBA
+// ============================================
 app.post('/api/test', (req, res) => {
   console.log('🧪 TEST - Datos recibidos:');
   console.log('Body:', JSON.stringify(req.body, null, 2));
@@ -328,13 +373,14 @@ app.post('/api/test', (req, res) => {
     message: 'Test recibido correctamente',
     received: {
       vehiculos: req.body.datos_vehiculos?.length || 0,
-      detalles: req.body.detalles_vehiculos ? Object.keys(req.body.detalles_vehiculos).length : 0,
       paradas: req.body.datos_paradas_operacion?.length || 0
     }
   });
 });
 
-// Manejador de errores global
+// ============================================
+// MANEJADOR DE ERRORES GLOBAL
+// ============================================
 app.use((err, req, res, next) => {
   console.error('Error global:', err);
   res.status(500).json({
@@ -344,7 +390,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Ruta 404
+// ============================================
+// RUTA 404
+// ============================================
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -352,6 +400,9 @@ app.use((req, res) => {
   });
 });
 
+// ============================================
+// INICIAR SERVIDOR
+// ============================================
 app.listen(port, () => {
   console.log('╔══════════════════════════════════════════════════════╗');
   console.log('║         🚀 SERVIDOR INICIADO EXITOSAMENTE          ║');
@@ -362,6 +413,7 @@ app.listen(port, () => {
   console.log('╚══════════════════════════════════════════════════════╝');
   console.log('');
   console.log('Endpoints disponibles:');
+  console.log('  POST   /api/inspeccion         - Guardar inspección temporal');
   console.log('  POST   /api/registro           - Guardar registro completo');
   console.log('  GET    /api/registros          - Obtener últimos registros');
   console.log('  GET    /api/vehiculo/:id/detalles - Obtener detalles de vehículo');
