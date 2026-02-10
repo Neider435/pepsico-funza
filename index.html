@@ -206,10 +206,10 @@
         
         <!-- SECCIÓN: DATOS GENERALES -->
         <label for="lugar">Lugar de operación:</label>
-        <select name="lugar" id="lugar" required onchange="actualizarCampos()">
+        <select name="lugar" id="lugar" required onchange="actualizarCampos(); filtrarCoordinadores()">
             <option value="">Seleccione una opción</option>
             <option value="Funza">Pepsico Funza</option>
-            <option value="Funza">Santo Domingo</option>
+            <option value="SantoDomingo">Santo Domingo</option> 
         </select>
         
         <label for="lider">Líder Asignado:</label>
@@ -217,14 +217,18 @@
         
         <label for="coordinador">Coordinador Asignado:</label>
         <select name="coordinador" id="coordinador" required onchange="manejarOtroCoordinador()">
-            <option value="">Seleccione coordinador</option>
-            <option value="Jeison Aranda">Jeison Aranda</option>
-            <option value="Arnold Ospina">Arnold Ospina</option>
-            <option value="Leonor Nariño">Leonor Nariño</option>
-            <option value="Olga Valdez">Olga Valdez</option>
-            <option value="Ingrid Lisarazo">Ingrid Lisarazo</option>
-            <option value="Javier Torres">Javier Torres</option>
-            <option value="otro">Otro</option>
+          <option value="">Seleccione coordinador</option>
+          <!-- Opciones para Funza -->
+          <option value="Jeison Aranda" data-lugar="Funza">Jeison Aranda</option>
+          <option value="Julian Espitia" data-lugar="Funza">Julian Espitia</option>
+          <!-- Opciones para Santo Domingo -->
+          <option value="Olga Valdez" data-lugar="SantoDomingo">Olga Valdez</option>
+          <option value="Arnold Ospina" data-lugar="SantoDomingo">Arnold Ospina</option>
+          <option value="Jeison Aranda" data-lugar="SantoDomingo">Jeison Aranda</option>
+          <option value="Leonor Nariño" data-lugar="SantoDomingo">Leonor Nariño</option>
+          <option value="Javier Torres" data-lugar="SantoDomingo">Javier Torres</option>
+          <option value="Ingrid Lisarazo" data-lugar="SantoDomingo">Ingrid Lisarazo</option>
+          <option value="otro">Otro</option>
         </select>
         <input type="text" name="coordinador_otro" id="coordinador_otro" class="otro-input" placeholder="Especifique el coordinador">
         
@@ -471,53 +475,55 @@
         }
 
         function sincronizarVehiculosDesdeDOM() {
-            const contenedor = document.getElementById('vehiculos-contenedor');
-            const registros = contenedor.querySelectorAll('.registro-vehiculo');
-            
-            for (let i = 0; i < registros.length; i++) {
-                const reg = registros[i];
-                if (vehiculosData[i] === undefined) vehiculosData[i] = {};
-                
-                const getValue = name => {
-                    const el = reg.querySelector(`[name="${name}"]`);
-                    return el ? el.value || '' : '';
-                };
-                
-                // ✅ Obtener datos de nombres del personal (NUEVO)
-                const nombresPersonal = [];
-                const nombresContainer = reg.querySelector(`#nombres-personal-${i}`);
-                if (nombresContainer) {
-                    const inputsNombres = nombresContainer.querySelectorAll('input[type="text"]');
-                    inputsNombres.forEach((input, idx) => {
-                        nombresPersonal.push(input.value || '');
-                    });
-                }
-                
-                vehiculosData[i] = {
-                    inicio: getValue(`vehiculo_${i}_inicio`),
-                    fin: getValue(`vehiculo_${i}_fin`),
-                    motivo: getValue(`vehiculo_${i}_motivo`),
-                    otro_motivo: getValue(`vehiculo_${i}_otro_motivo`),
-                    muelle: getValue(`vehiculo_${i}_muelle`),
-                    otro_muelle_num: getValue(`vehiculo_${i}_otro_muelle_num`),
-                    placa: getValue(`vehiculo_${i}_placa`),
-                    tipo_vehi: getValue(`vehiculo_${i}_tipo_vehi`),
-                    otro_tipo: getValue(`vehiculo_${i}_otro_tipo`),
-                    destino: getValue(`vehiculo_${i}_destino`),
-                    otro_destino: getValue(`vehiculo_${i}_otro_destino`),
-                    origen: getValue(`vehiculo_${i}_origen`),
-                    personas: getValue(`vehiculo_${i}_personas`),
-                    // ✅ Guardar nombres del personal (NUEVO)
-                    nombres_personal: nombresPersonal,
-                    cajas: getValue(`vehiculo_${i}_cajas`),
-                    justificacion: getValue(`vehiculo_${i}_justificacion`),
-                    otro_justificacion: getValue(`vehiculo_${i}_otro_justificacion`),
-                    tiempo_muerto_inicio: getValue(`vehiculo_${i}_tiempo_muerto_inicio`),
-                    tiempo_muerto_final: getValue(`vehiculo_${i}_tiempo_muerto_final`),
-                    foto_url: getValue(`vehiculo_${i}_foto_url`)
-                };
-            }
-        }
+  const contenedor = document.getElementById('vehiculos-contenedor');
+  const registros = contenedor.querySelectorAll('.registro-vehiculo');
+  
+  for (let i = 0; i < registros.length; i++) {
+    const reg = registros[i];
+    if (vehiculosData[i] === undefined) vehiculosData[i] = {};
+    
+    const getValue = name => {
+      const el = reg.querySelector(`[name="${name}"]`);
+      return el ? el.value || '' : '';
+    };
+    
+    // ✅ Obtener datos de nombres del personal (NUEVO)
+    const nombresPersonal = [];
+    const nombresContainer = reg.querySelector(`#nombres-personal-${i}`);
+    if (nombresContainer) {
+      const inputsNombres = nombresContainer.querySelectorAll('input[type="text"]');
+      inputsNombres.forEach((input, idx) => {
+        nombresPersonal.push(input.value || '');
+      });
+    }
+    
+    vehiculosData[i] = {
+      inicio: getValue(`vehiculo_${i}_inicio`),
+      fin: getValue(`vehiculo_${i}_fin`),
+      motivo: getValue(`vehiculo_${i}_motivo`),
+      otro_motivo: getValue(`vehiculo_${i}_otro_motivo`),
+      muelle: getValue(`vehiculo_${i}_muelle`),
+      otro_muelle_num: getValue(`vehiculo_${i}_otro_muelle_num`),
+      placa: getValue(`vehiculo_${i}_placa`),
+      tipo_vehi: getValue(`vehiculo_${i}_tipo_vehi`),
+      otro_tipo: getValue(`vehiculo_${i}_otro_tipo`),
+      destino: getValue(`vehiculo_${i}_destino`),
+      otro_destino: getValue(`vehiculo_${i}_otro_destino`),
+      origen: getValue(`vehiculo_${i}_origen`),
+      personas: getValue(`vehiculo_${i}_personas`),
+      // ✅ Guardar nombres del personal (NUEVO)
+      nombres_personal: nombresPersonal,
+      cajas: getValue(`vehiculo_${i}_cajas`),
+      justificacion: getValue(`vehiculo_${i}_justificacion`),
+      otro_justificacion: getValue(`vehiculo_${i}_otro_justificacion`),
+      tiempo_muerto_inicio: getValue(`vehiculo_${i}_tiempo_muerto_inicio`),
+      tiempo_muerto_final: getValue(`vehiculo_${i}_tiempo_muerto_final`),
+      foto_url: getValue(`vehiculo_${i}_foto_url`),
+      // ✅ Nuevo campo para Santo Domingo
+      tipo_operacion: getValue(`vehiculo_${i}_tipo_operacion`)
+    };
+  }
+}
 
         // ============================================
         // MANEJO DE CAMPOS "OTRO"
@@ -568,22 +574,29 @@
         // FUNCIONES DE VISUALIZACIÓN CONDICIONAL
         // ============================================
 
-        function alternarDestinoRemitente(selectMotivo, vIndex) {
-            const motivo = selectMotivo.value;
-            const destinoGroup = document.getElementById(`destino-group-${vIndex}`);
-            const remitenteGroup = document.getElementById(`remitente-group-${vIndex}`);
-            
-            if (destinoGroup) destinoGroup.style.display = motivo === 'cargue' ? 'block' : 'none';
-            if (remitenteGroup) remitenteGroup.style.display = motivo === 'descargue' ? 'block' : 'none';
-            
-            const destinoSelect = document.getElementById(`destino-select-${vIndex}`);
-            const remitenteInput = document.getElementById(`remitente-input-${vIndex}`);
-            
-            if (motivo === 'cargue' && destinoSelect) {
-                destinoSelect.setAttribute('required', 'required');
-            } else if (remitenteInput) {
-                remitenteInput.required = motivo === 'descargue';
-            }
+       function alternarDestinoRemitente(selectMotivo, vIndex) {
+          const motivo = selectMotivo.value;
+          const destinoGroup = document.getElementById(`destino-group-${vIndex}`);
+          const remitenteGroup = document.getElementById(`remitente-group-${vIndex}`);
+          const tipoOperacionGroup = document.getElementById(`tipo-operacion-group-${vIndex}`);
+          
+          if (destinoGroup) destinoGroup.style.display = motivo === 'cargue' ? 'block' : 'none';
+          if (remitenteGroup) remitenteGroup.style.display = motivo === 'descargue' ? 'block' : 'none';
+          
+          // Mostrar tipo operación solo si es Santo Domingo
+          const lugar = document.getElementById('lugar').value;
+          if (tipoOperacionGroup) {
+            tipoOperacionGroup.style.display = (lugar === 'SantoDomingo' && motivo !== '') ? 'block' : 'none';
+          }
+          
+          const destinoSelect = document.getElementById(`destino-select-${vIndex}`);
+          const remitenteInput = document.getElementById(`remitente-input-${vIndex}`);
+          
+          if (motivo === 'cargue' && destinoSelect) {
+            destinoSelect.removeAttribute('required'); // Destino opcional
+          } else if (remitenteInput) {
+            remitenteInput.required = motivo === 'descargue';
+          }
         }
 
         function mostrarTiempoMuerto(select, vIndex) {
@@ -653,6 +666,15 @@
                         <option value="otro" ${datos.motivo === 'otro' ? 'selected' : ''}>Otro</option>
                     </select>
                     <input type="text" name="vehiculo_${vIndex}_otro_motivo" placeholder="Especifique otro motivo" class="otro-input" value="${datos.otro_motivo || ''}">
+
+                    <div class="form-group-custom" id="tipo-operacion-group-${vIndex}" style="display:none;">
+                      <label style="margin-top:0;">Tipo de Operación:</label>
+                      <select id="tipo-operacion-${vIndex}" name="vehiculo_${vIndex}_tipo_operacion">
+                        <option value="">Seleccione tipo</option>
+                        <option value="3PD">3PD</option>
+                        <option value="MQ">MQ</option>
+                      </select>
+                    </div>
                 </div>
                 
                 <hr style="margin-top:25px; border-style:dashed;">
@@ -985,37 +1007,81 @@
         // ACTUALIZACIÓN DE CAMPOS
         // ============================================
 
-        function actualizarCampos() {
-            const lugar = document.getElementById("lugar").value;
-            const turno = document.getElementById("turno");
-            const liderPepsico = document.getElementById("lider_pepsico");
-            const fechaInput = document.getElementById("fecha");
-            const coordSelect = document.getElementById("coordinador");
-            
-            if (lugar === "Funza") {
-                if (!coordSelect.value) {
-                    coordSelect.value = "Julian Espitia";
-                    manejarOtroCoordinador();
-                }
-                
-                const h = new Date().getHours();
-                if (!turno.value) {
-                    turno.value = (h >= 6 && h < 14) ? "Manana" : (h >= 14 && h < 22) ? "Tarde" : "Noche";
-                }
-                
-                if (!liderPepsico.value) {
-                    liderPepsico.value = "Alejandro Monroy";
-                    manejarOtroLiderPepsico();
-                }
-            }
-            
-            if (!fechaInput.value) {
-                fechaInput.value = new Date().toISOString().split('T')[0];
-            }
-            
-            actualizarTotalCajas();
-            guardarProgreso();
-        }
+        // ============================================
+// FILTRAR COORDINADORES POR LUGAR
+// ============================================
+function filtrarCoordinadores() {
+  const lugar = document.getElementById('lugar').value;
+  const coordinadorSelect = document.getElementById('coordinador');
+  const opciones = coordinadorSelect.querySelectorAll('option');
+  
+  // Mostrar/Ocultar opciones según el lugar
+  opciones.forEach(opcion => {
+    const dataLugar = opcion.getAttribute('data-lugar');
+    
+    if (dataLugar) {
+      if (lugar === '') {
+        opcion.style.display = 'none'; // Ocultar todas si no hay lugar seleccionado
+      } else if (dataLugar === lugar || lugar === '') {
+        opcion.style.display = 'block';
+      } else {
+        opcion.style.display = 'none';
+      }
+    } else if (opcion.value === 'otro' || opcion.value === '') {
+      opcion.style.display = 'block'; // Siempre mostrar "Seleccione" y "Otro"
+    }
+  });
+  
+  // Resetear selección si el coordinador actual no corresponde al lugar
+  const coordinadorSeleccionado = coordinadorSelect.value;
+  const opcionSeleccionada = Array.from(opciones).find(opt => 
+    opt.value === coordinadorSeleccionado && opt.style.display !== 'none'
+  );
+  
+  if (!opcionSeleccionada) {
+    coordinadorSelect.value = ''; // Limpiar si no es válido
+  }
+  
+  manejarOtroCoordinador(); // Actualizar campo "otro"
+  guardarProgreso();
+}
+
+// Modificar actualizarCampos para incluir filtrado
+function actualizarCampos() {
+  const lugar = document.getElementById("lugar").value;
+  const turno = document.getElementById("turno");
+  const liderPepsico = document.getElementById("lider_pepsico");
+  const fechaInput = document.getElementById("fecha");
+  const coordSelect = document.getElementById("coordinador");
+  
+  if (lugar === "Funza") {
+    if (!coordSelect.value || coordSelect.value === '') {
+      coordSelect.value = "Julian Espitia";
+      manejarOtroCoordinador();
+    }
+    const h = new Date().getHours();
+    if (!turno.value) {
+      turno.value = (h >= 6 && h < 14) ? "Manana" : (h >= 14 && h < 22) ? "Tarde" : "Noche";
+    }
+    if (!liderPepsico.value) {
+      liderPepsico.value = "Alejandro Monroy";
+      manejarOtroLiderPepsico();
+    }
+  } else if (lugar === "SantoDomingo") {
+    // No establecer valores por defecto para Santo Domingo
+    if (!turno.value) {
+      const h = new Date().getHours();
+      turno.value = (h >= 6 && h < 14) ? "Manana" : (h >= 14 && h < 22) ? "Tarde" : "Noche";
+    }
+  }
+  
+  if (!fechaInput.value) {
+    fechaInput.value = new Date().toISOString().split('T')[0];
+  }
+  
+  actualizarTotalCajas();
+  guardarProgreso();
+}
 
         // ============================================
         // MÁSCARA DE TIEMPO
@@ -1495,5 +1561,6 @@ Debe cumplir:
         });
     </script>
 </body>
+
 
 
