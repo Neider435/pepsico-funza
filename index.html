@@ -193,6 +193,100 @@
             font-weight: bold;
         }
     </style>
+    <!-- QuaggaJS para escaneo de códigos de barras -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+
+<!-- Estilos para el escáner -->
+<style>
+.scanner-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 8px;
+  width: 100%;
+}
+
+.scanner-btn:hover {
+  opacity: 0.9;
+}
+
+.scanner-btn:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.scanned-display {
+  background: #e9f7fe;
+  padding: 8px;
+  border-radius: 5px;
+  margin-top: 8px;
+  font-size: 12px;
+  display: none;
+}
+
+.scanned-display.show {
+  display: block;
+}
+
+#scanner-container {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.9);
+  z-index: 1000;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#scanner-video {
+  width: 90%;
+  max-width: 500px;
+  border: 3px solid #001855;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+.scanner-overlay {
+  position: absolute;
+  width: 90%;
+  max-width: 500px;
+  height: 300px;
+  border: 3px solid #00ff00;
+  border-radius: 5px;
+  pointer-events: none;
+}
+
+.scanner-controls {
+  margin-top: 20px;
+  display: flex;
+  gap: 15px;
+}
+
+.scanner-btn-cancel {
+  background-color: #dc3545;
+}
+
+.scanner-btn-flash {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.scanner-total {
+  font-size: 24px;
+  font-weight: bold;
+  color: #001855;
+  margin-top: 15px;
+  text-align: center;
+}
+</style>
 </head>
 <body>
     <div class="logo-container">
@@ -749,9 +843,24 @@
                 <div id="nombres-personal-${vIndex}" style="margin-top: 15px;"></div>
                 
                 <label>Cajas Movidas:</label>
-                <input type="number" name="vehiculo_${vIndex}_cajas" class="cajas-input-js" min="0" required
-                    value="${datos.cajas || ''}"
-                    oninput="actualizarTotalCajas(); guardarProgreso();">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+  <input type="number" name="vehiculo_${vIndex}_cajas" class="cajas-input-js" min="0" required
+         value="${datos.cajas || ''}"
+         oninput="actualizarTotalCajas(); guardarProgreso();">
+  
+  <button type="button" class="scanner-btn" onclick="abrirEscannerVehiculo(${vIndex})">
+    📱 Escanear Código (Picking)
+  </button>
+  
+  <div class="scanned-display" id="scanned-display-${vIndex}">
+    <strong>📦 Cajas escaneadas:</strong> <span id="scanned-count-${vIndex}">0</span>
+    <button type="button" onclick="limpiarEscaneoVehiculo(${vIndex})" 
+            style="background-color: #dc3545; color: white; border: none; 
+                   padding: 3px 8px; border-radius: 3px; font-size: 10px; margin-left: 8px;">
+      Limpiar
+    </button>
+  </div>
+</div>
                 
                 <label>Justificación del retraso o incidencia:</label>
                 <select name="vehiculo_${vIndex}_justificacion" onchange="mostrarTiempoMuerto(this, ${vIndex})">
@@ -1002,10 +1111,6 @@
                     console.error(error);
                 });
         }
-
-        // ============================================
-        // ACTUALIZACIÓN DE CAMPOS
-        // ============================================
 
         // ============================================
 // FILTRAR COORDINADORES POR LUGAR
@@ -1285,6 +1390,196 @@ Debe cumplir:
             }
             return true;
         }
+
+        // ============================================
+// ESCÁNER DE CÓDIGOS DE BARRAS POR VEHÍCULO
+// ============================================
+
+let quaggaInitialized = false;
+let scannerActive = false;
+let currentVehicleIndex = null;
+let vehicleScannedCount = {}; // Contador de cajas escaneadas por vehículo
+
+// Abrir escáner para vehículo específico
+function abrirEscannerVehiculo(vehicleIndex) {
+  currentVehicleIndex = vehicleIndex;
+  
+  // Inicializar contador si no existe
+  if (!vehicleScannedCount[vehicleIndex]) {
+    vehicleScannedCount[vehicleIndex] = 0;
+  }
+  
+  // Mostrar contenedor del escáner
+  document.getElementById('scanner-container').style.display = 'flex';
+  
+  // Iniciar Quagga si no está inicializado
+  if (!quaggaInitialized) {
+    iniciarQuagga();
+  } else {
+    reanudarEscanner();
+  }
+  
+  // Mostrar contador de escaneo
+  document.getElementById(`scanned-display-${vehicleIndex}`).classList.add('show');
+}
+
+// Cerrar escáner y actualizar vehículo específico
+function cerrarEscanner() {
+  if (scannerActive) {
+    Quagga.stop();
+    scannerActive = false;
+  }
+  
+  document.getElementById('scanner-container').style.display = 'none';
+  
+  if (currentVehicleIndex !== null) {
+    // Actualizar el campo de cajas del vehículo específico
+    const cajasInput = document.getElementById(`vehiculo_${currentVehicleIndex}_cajas`);
+    if (cajasInput) {
+      const valorActual = parseInt(cajasInput.value) || 0;
+      const totalEscaneado = vehicleScannedCount[currentVehicleIndex] || 0;
+      cajasInput.value = valorActual + totalEscaneado;
+      
+      // Actualizar visualización
+      document.getElementById(`scanned-count-${currentVehicleIndex}`).textContent = totalEscaneado;
+      document.getElementById(`scanned-display-${currentVehicleIndex}`).classList.add('show');
+      
+      actualizarTotalCajas();
+      guardarProgreso();
+    }
+    
+    console.log(`✅ Vehículo ${currentVehicleIndex}: ${vehicleScannedCount[currentVehicleIndex]} cajas escaneadas`);
+    currentVehicleIndex = null;
+  }
+}
+
+// Limpiar escaneo de vehículo específico
+function limpiarEscaneoVehiculo(vehicleIndex) {
+  vehicleScannedCount[vehicleIndex] = 0;
+  document.getElementById(`scanned-count-${vehicleIndex}`).textContent = '0';
+  document.getElementById(`scanned-display-${vehicleIndex}`).classList.remove('show');
+  console.log(`🧹 Escaneo limpiado para vehículo ${vehicleIndex}`);
+}
+
+// Iniciar QuaggaJS
+function iniciarQuagga() {
+  Quagga.init({
+    inputStream: {
+      name: "Live",
+      type: "LiveStream",
+      target: document.querySelector('#scanner-video'),
+      constraints: {
+        width: { min: 640 },
+        height: { min: 480 },
+        facingMode: "environment" // Cámara trasera
+      }
+    },
+    decoder: {
+      readers: [
+        "code_128_reader",
+        "ean_reader",
+        "ean_8_reader",
+        "upc_reader",
+        "upc_e_reader",
+        "code_39_reader",
+        "code_39_vin_reader",
+        "codabar_reader",
+        "i2of5_reader"
+      ]
+    },
+    locator: {
+      patchSize: "medium",
+      halfSample: true
+    },
+    numOfWorkers: 2,
+    frequency: 10
+  }, function(err) {
+    if (err) {
+      console.error("❌ Error iniciando Quagga:", err);
+      alert("Error al iniciar la cámara. Por favor, permite el acceso a la cámara.");
+      cerrarEscanner();
+      return;
+    }
+    
+    console.log("✅ QuaggaJS iniciado correctamente");
+    quaggaInitialized = true;
+    scannerActive = true;
+    Quagga.start();
+    
+    // Evento de detección de código
+    Quagga.onDetected(handleCodeDetection);
+  });
+}
+
+// Manejar detección de código
+function handleCodeDetection(result) {
+  if (currentVehicleIndex === null) return;
+  
+  const code = result.codeResult.code;
+  const vehicleIndex = currentVehicleIndex;
+  
+  // Incrementar contador
+  if (!vehicleScannedCount[vehicleIndex]) {
+    vehicleScannedCount[vehicleIndex] = 0;
+  }
+  
+  vehicleScannedCount[vehicleIndex]++;
+  
+  // Actualizar visualización
+  const countElement = document.getElementById(`scanned-count-${vehicleIndex}`);
+  if (countElement) {
+    countElement.textContent = vehicleScannedCount[vehicleIndex];
+    document.getElementById(`scanned-display-${vehicleIndex}`).classList.add('show');
+  }
+  
+  // Actualizar total en pantalla del escáner
+  const scannerTotal = document.getElementById('scanner-total');
+  if (scannerTotal) {
+    scannerTotal.textContent = vehicleScannedCount[vehicleIndex];
+  }
+  
+  console.log(`✅ Vehículo ${vehicleIndex} - Código escaneado: ${code} - Total: ${vehicleScannedCount[vehicleIndex]}`);
+  
+  // Vibración (si está disponible)
+  if (navigator.vibrate) {
+    navigator.vibrate(100);
+  }
+  
+  // Feedback visual
+  const overlay = document.querySelector('.scanner-overlay');
+  if (overlay) {
+    overlay.style.borderColor = '#ff0000';
+    setTimeout(() => {
+      overlay.style.borderColor = '#00ff00';
+    }, 200);
+  }
+}
+
+// Reanudar escáner
+function reanudarEscanner() {
+  if (!scannerActive) {
+    Quagga.start();
+    scannerActive = true;
+    console.log('▶️ Escáner reanudado');
+  }
+}
+
+// Pausar escáner
+function pausarEscanner() {
+  if (scannerActive) {
+    Quagga.stop();
+    scannerActive = false;
+    console.log('⏸️ Escáner pausado');
+  } else {
+    reanudarEscanner();
+  }
+}
+
+// Alternar linterna
+function toggleFlashlight() {
+  console.log('🔦 Linterna no disponible en este navegador');
+  alert('La linterna no está disponible en este dispositivo/navegador');
+}
 
         // ============================================
         // ENVÍO DEL FORMULARIO
