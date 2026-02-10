@@ -68,9 +68,10 @@ app.post('/api/registro', async (req, res) => {
     const registroId = registroResult.insertId;
     
     // 2. Insertar vehículos
-    // 2. Insertar vehículos
-    for (let index = 0; index < datos_vehiculos.length; index++) {
-      const vehiculo = datos_vehiculos[index];
+    for (const vehiculo of datos_vehiculos) {
+      const nombresJSON = vehiculo.nombres_personal && Array.isArray(vehiculo.nombres_personal) && vehiculo.nombres_personal.length > 0 
+        ? JSON.stringify(vehiculo.nombres_personal) 
+        : null;
       
       const [vehiculoResult] = await connection.query(
         `INSERT INTO vehiculos (
@@ -107,7 +108,7 @@ app.post('/api/registro', async (req, res) => {
       const vehiculoId = vehiculoResult.insertId;
       
       // 3. Insertar detalles del vehículo (si existen)
-      const detallesKey = index;
+      const detallesKey = `vehiculo_${vehiculoId}_detalles`;
       if (detalles_vehiculos[detallesKey]) {
         const detalles = detalles_vehiculos[detallesKey];
         await connection.query(
@@ -119,7 +120,7 @@ app.post('/api/registro', async (req, res) => {
             vehiculoId,
             detalles.interior_camion,
             detalles.estado_carpa,
-            detalles.olores_extraños,
+            detalles.olor_extraños,
             detalles.objetos_extraños,
             detalles.evidencias_plagas,
             detalles.estado_suelo,
