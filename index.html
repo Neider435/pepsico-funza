@@ -1,3 +1,4 @@
+index.html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1272,6 +1273,19 @@ Debe cumplir:
         if (!validarPlacas()) return;
         if (!validarSolapamientoVehiculos() || !validarSolapamientoParadas()) return;
         
+        // Obtener detalles de vehículos desde localStorage
+        const detallesVehiculos = {};
+        const savedData = localStorage.getItem('pepsico_data');
+        if (savedData) {
+            const data = JSON.parse(savedData);
+            for (let i = 0; i < vehiculosData.length; i++) {
+            const detallesKey = `vehiculo_${i}_detalles`;
+            if (data[detallesKey]) {
+                detallesVehiculos[detallesKey] = JSON.parse(data[detallesKey]);
+            }
+            }
+        }
+        
         // Preparar datos para enviar
         // Preparar datos para enviar
         const formData = {
@@ -1286,6 +1300,7 @@ Debe cumplir:
           total_personas: document.getElementById('total_personas').value,
           cajas_totales: document.getElementById('cajas_totales').value,
           datos_vehiculos: vehiculosData,
+          detalles_vehiculos: detallesVehiculos,
           datos_paradas_operacion: Array.from(
             document.querySelectorAll('#operacion-contenedor .parada-group')
           ).map(grupo => {
@@ -1475,11 +1490,3 @@ Debe cumplir:
         });
     </script>
 </body>
-
-
-
-
-
-
-
-
