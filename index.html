@@ -1490,15 +1490,8 @@ function iniciarQuagga() {
       constraints: {
         width: { min: 640 },
         height: { min: 480 },
-        facingMode: "environment", // Cámara trasera
-        aspectRatio: { min: 1, max: 2 } // Relación de aspecto
+        facingMode: "environment",
       },
-      // Asegurar que el video se muestre
-      video: {
-        width: 640,
-        height: 480,
-        objectFit: 'cover'
-      }
     },
     decoder: {
       readers: [
@@ -1540,7 +1533,7 @@ function iniciarQuagga() {
     console.log("✅ QuaggaJS iniciado correctamente");
     quaggaInitialized = true;
     scannerActive = true;
-    Quagga.start();
+
     
     // Forzar el video a mostrar
     const video = document.getElementById('scanner-video');
@@ -1550,7 +1543,7 @@ function iniciarQuagga() {
       video.style.width = '100%';
       video.style.maxWidth = '500px';
     }
-    
+    Quagga.start();
     Quagga.onDetected(handleCodeDetection);
   });
 }
