@@ -28,12 +28,15 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-// Endpoint para recibir datos del formulario (CON TRANSACCIONES)
+// Endpoint para recibir datos del formulario
 app.post('/api/registro', async (req, res) => {
   let connection;
   
   try {
-    // Validar datos antes de insertar
+    // Obtener conexión para transacción
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    
     const {
       fecha,
       lugar,
@@ -50,142 +53,114 @@ app.post('/api/registro', async (req, res) => {
       datos_paradas_operacion
     } = req.body;
 
-    // Validaciones básicas
-    if (!fecha || !lugar || !lider_asignado || !turno || !total_personas || !cajas_totales) {
-      return res.status(400).json({
-        success: false,
-        error: 'Faltan datos obligatorios'
-      });
-    }
-
-    if (!Array.isArray(datos_vehiculos) || datos_vehiculos.length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Debe registrar al menos un vehículo'
-      });
-    }
-
-    // Obtener conexión
-    connection = await pool.getConnection();
+    // 1. Insertar registro principal
+    const [registroResult] = await connection.query(
+      `INSERT INTO registros (
+        fecha, lugar, lider_asignado, coordinador, coordinador_otro,
+        lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        fecha, lugar, lider_asignado, coordinador, coordinador_otro,
+        lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales
+      ]
+    );
     
-    // Iniciar transacción
-    await connection.beginTransaction();
-
-    try {
-      // 1. Insertar registro principal
-      const [registroResult] = await connection.query(
-        `INSERT INTO registros (
-          fecha, lugar, lider_asignado, coordinador, coordinador_otro,
-          lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    const registroId = registroResult.insertId;
+    
+    // 2. Insertar vehículos
+    for (const vehiculo of datos_vehiculos) {
+      const [vehiculoResult] = await connection.query(
+        `INSERT INTO vehiculos (
+          registro_id, inicio, fin, motivo, otro_motivo, muelle, otro_muelle_num,
+          placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, personas, cajas,
+          justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_final, foto_url
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          fecha, lugar, lider_asignado, coordinador, coordinador_otro,
-          lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales
+          registroId,
+          vehiculo.inicio,
+          vehiculo.fin,
+          vehiculo.motivo,
+          vehiculo.otro_motivo,
+          vehiculo.muelle,
+          vehiculo.otro_muelle_num,
+          vehiculo.placa,
+          vehiculo.tipo_vehi,
+          vehiculo.otro_tipo,
+          vehiculo.destino,
+          vehiculo.otro_destino,
+          vehiculo.origen,
+          vehiculo.personas,
+          vehiculo.cajas,
+          vehiculo.justificacion,
+          vehiculo.otro_justificacion,
+          vehiculo.tiempo_muerto_inicio,
+          vehiculo.tiempo_muerto_final,
+          vehiculo.foto_url
         ]
       );
       
-      const registroId = registroResult.insertId;
-
-      // 2. Insertar vehículos
-      for (const vehiculo of datos_vehiculos) {
-        const [vehiculoResult] = await connection.query(
-          `INSERT INTO vehiculos (
-            registro_id, inicio, fin, motivo, otro_motivo, muelle, otro_muelle_num,
-            placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, personas, 
-            nombres_personal, cajas, justificacion, otro_justificacion, 
-            tiempo_muerto_inicio, tiempo_muerto_final, foto_url
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      const vehiculoId = vehiculoResult.insertId;
+      
+      // 3. Insertar detalles del vehículo (si existen)
+      const detallesKey = `vehiculo_${vehiculoId}_detalles`;
+      if (detalles_vehiculos[detallesKey]) {
+        const detalles = detalles_vehiculos[detallesKey];
+        await connection.query(
+          `INSERT INTO detalles_vehiculos (
+            vehiculo_id, interior_camion, estado_carpa, olores_extraños, objetos_extraños,
+            evidencias_plagas, estado_suelo, aprobado
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
           [
-            registroId,
-            vehiculo.inicio || null,
-            vehiculo.fin || null,
-            vehiculo.motivo || null,
-            vehiculo.otro_motivo || null,
-            vehiculo.muelle || null,
-            vehiculo.otro_muelle_num || null,
-            vehiculo.placa || null,
-            vehiculo.tipo_vehi || null,
-            vehiculo.otro_tipo || null,
-            vehiculo.destino || null,
-            vehiculo.otro_destino || null,
-            vehiculo.origen || null,
-            vehiculo.personas || 0,
-            JSON.stringify(vehiculo.nombres_personal || []),
-            vehiculo.cajas || 0,
-            vehiculo.justificacion || null,
-            vehiculo.otro_justificacion || null,
-            vehiculo.tiempo_muerto_inicio || null,
-            vehiculo.tiempo_muerto_final || null,
-            vehiculo.foto_url || null
+            vehiculoId,
+            detalles.interior_camion,
+            detalles.estado_carpa,
+            detalles.olor_extraños,
+            detalles.objetos_extraños,
+            detalles.evidencias_plagas,
+            detalles.estado_suelo,
+            detalles.aprobado
           ]
         );
-        
-        const vehiculoId = vehiculoResult.insertId;
-        
-        // 3. Insertar detalles del vehículo (si existen)
-        const detallesKey = `vehiculo_${vehiculosData.indexOf(vehiculo)}_detalles`;
-        if (detalles_vehiculos && detalles_vehiculos[detallesKey]) {
-          const detalles = detalles_vehiculos[detallesKey];
-          await connection.query(
-            `INSERT INTO detalles_vehiculos (
-              vehiculo_id, estado_carpa, carpa_limpia, estibas, estibas_estado,
-              canastillas, canastillas_estado, vinipel
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              vehiculoId,
-              detalles.estado_carpa || 'N/A',
-              detalles.carpa_limpia || 'N/A',
-              detalles.estibas || 'N/A',
-              detalles.estibas_estado || 'N/A',
-              detalles.canastillas || 'N/A',
-              detalles.canastillas_estado || 'N/A',
-              detalles.vinipel || 'N/A'
-            ]
-          );
-        }
       }
-      
-      // 4. Insertar paradas de operación
-      if (Array.isArray(datos_paradas_operacion)) {
-        for (const parada of datos_paradas_operacion) {
-          await connection.query(
-            `INSERT INTO paradas_operacion (
-              registro_id, inicio, fin, motivo, otro_motivo
-            ) VALUES (?, ?, ?, ?, ?)`,
-            [
-              registroId,
-              parada.inicio || null,
-              parada.fin || null,
-              parada.motivo || null,
-              parada.otro_motivo || null
-            ]
-          );
-        }
-      }
-
-      // Confirmar transacción
-      await connection.commit();
-
-      res.json({
-        success: true,
-        message: 'Registro guardado correctamente',
-        id: registroId
-      });
-
-    } catch (error) {
-      // Revertir transacción en caso de error
-      await connection.rollback();
-      throw error;
     }
+    
+    // 4. Insertar paradas de operación
+    for (const parada of datos_paradas_operacion) {
+      await connection.query(
+        `INSERT INTO paradas_operacion (
+          registro_id, inicio, fin, motivo, otro_motivo
+        ) VALUES (?, ?, ?, ?, ?)`,
+        [
+          registroId,
+          parada.inicio,
+          parada.fin,
+          parada.motivo,
+          parada.otro_motivo
+        ]
+      );
+    }
+    
+    // Confirmar transacción
+    await connection.commit();
+    connection.release();
 
+    res.json({
+      success: true,
+      message: 'Registro guardado correctamente',
+      id: registroId
+    });
   } catch (error) {
+    // Revertir transacción en caso de error
+    if (connection) {
+      await connection.rollback();
+      connection.release();
+    }
+    
     console.error('Error al guardar:', error);
     res.status(500).json({
       success: false,
       error: error.message
     });
-  } finally {
-    if (connection) connection.release();
   }
 });
 
@@ -200,7 +175,7 @@ app.get('/health', async (req, res) => {
       message: 'API y base de datos funcionando correctamente',
       env: {
         host: process.env.MYSQLHOST ? '✅ Definido' : '❌ NO DEFINIDO',
-        port: process.env.MYSQLPORT || '3306',
+        port: process.env.MYSQLPORT || '3306 (default)',
         user: process.env.MYSQLUSER || '❌ NO DEFINIDO',
         database: process.env.MYSQLDATABASE || '❌ NO DEFINIDO'
       }
