@@ -69,12 +69,17 @@ app.post('/api/registro', async (req, res) => {
     
     // 2. Insertar vehículos
     for (const vehiculo of datos_vehiculos) {
+      const nombresJSON = vehiculo.nombres_personal && Array.isArray(vehiculo.nombres_personal) && vehiculo.nombres_personal.length > 0 
+        ? JSON.stringify(vehiculo.nombres_personal) 
+        : null;
+      
       const [vehiculoResult] = await connection.query(
         `INSERT INTO vehiculos (
           registro_id, inicio, fin, motivo, otro_motivo, muelle, otro_muelle_num,
           placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, personas, cajas,
-          justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_final, foto_url
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_final, 
+          foto_url, nombres_personal  -- ✅ Columna añadida aquí
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           registroId,
           vehiculo.inicio,
@@ -95,7 +100,8 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.otro_justificacion,
           vehiculo.tiempo_muerto_inicio,
           vehiculo.tiempo_muerto_final,
-          vehiculo.foto_url
+          vehiculo.foto_url,
+          nombresJSON
         ]
       );
       
