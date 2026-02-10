@@ -316,25 +316,43 @@
         // ============================================
         // GUARDAR DETALLES DEL VEHÍCULO
         // ============================================
-        function guardarDetalles(vehicleIndex, detalles) {
-            try {
-                // Obtener datos existentes del formulario principal
-                let mainData = Storage.getItem('pepsico_data');
-                let data = mainData ? JSON.parse(mainData) : {};
-                
-                // Guardar detalles del vehículo específico
-                const key = `vehiculo_${vehicleIndex}_detalles`;
-                data[key] = JSON.stringify(detalles);
-                
-                // Guardar todo de vuelta
-                Storage.setItem('pepsico_data', JSON.stringify(data));
-                
-                console.log('✅ Detalles guardados:', key);
-                return true;
-            } catch (error) {
-                console.error('❌ Error al guardar:', error);
-                return false;
-            }
+        // Guardar detalles de inspección en localStorage
+        function guardarDetallesInspeccion() {
+          const urlParams = new URLSearchParams(window.location.search);
+          const vehicleIndex = urlParams.get('vehicle');
+          
+          if (vehicleIndex === null) {
+            alert('❌ Error: No se especificó el vehículo');
+            return;
+          }
+          
+          // Obtener todos los valores del formulario de inspección
+          const detalles = {
+            interior_camion: document.querySelector('input[name="interior_camion"]:checked')?.value || '',
+            estado_carpa: document.querySelector('input[name="estado_carpa"]:checked')?.value || '',
+            olores_extraños: document.querySelector('input[name="olores_extraños"]:checked')?.value || '',
+            objetos_extraños: document.querySelector('input[name="objetos_extraños"]:checked')?.value || '',
+            evidencias_plagas: document.querySelector('input[name="evidencias_plagas"]:checked')?.value || '',
+            estado_suelo: document.querySelector('input[name="estado_suelo"]:checked')?.value || '',
+            aprobado: document.querySelector('input[name="aprobado"]:checked')?.value || ''
+          };
+          
+          // Guardar en localStorage con la clave correcta
+          const detallesKey = `vehiculo_${vehicleIndex}_detalles`;
+          localStorage.setItem(detallesKey, JSON.stringify(detalles));
+          
+          console.log(`✅ Detalles guardados para vehículo ${vehicleIndex}:`, detalles);
+          
+          // También guardar en pepsico_data para que se recupere al cargar
+          const savedData = localStorage.getItem('pepsico_data');
+          if (savedData) {
+            const data = JSON.parse(savedData);
+            data[detallesKey] = JSON.stringify(detalles);
+            localStorage.setItem('pepsico_data', JSON.stringify(data));
+          }
+          
+          alert('✅ Inspección guardada correctamente');
+          window.location.href = 'index.html';
         }
         
         // ============================================
@@ -478,3 +496,4 @@
     </script>
 </body>
 </html>
+
