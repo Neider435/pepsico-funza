@@ -120,7 +120,7 @@ app.post('/api/registro', async (req, res) => {
             vehiculoId,
             detalles.interior_camion,
             detalles.estado_carpa,
-            detalles.olor_extraños,
+            detalles.olores_extraños,
             detalles.objetos_extraños,
             detalles.evidencias_plagas,
             detalles.estado_suelo,
