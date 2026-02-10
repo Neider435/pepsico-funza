@@ -288,6 +288,7 @@
 }
 </style>
 
+<script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 <body>
     <div class="logo-container">
@@ -1546,6 +1547,33 @@ function iniciarQuagga() {
     Quagga.start();
     Quagga.onDetected(handleCodeDetection);
   });
+}
+
+function iniciarEscaneo(index) {
+    const scannerContainer = document.getElementById(`reader-${index}`);
+    scannerContainer.style.display = 'block'; // Mostrar el div del scanner
+
+    const html5QrCode = new Html5Qrcode(`reader-${index}`);
+    
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+    // Iniciar la cámara trasera
+    html5QrCode.start(
+        { facingMode: "environment" }, 
+        config,
+        (decodedText) => {
+            // Cuando detecta algo:
+            document.querySelector(`input[name="vehiculo_${index}_placa"]`).value = decodedText;
+            html5QrCode.stop(); // Apaga la cámara
+            scannerContainer.style.display = 'none';
+        },
+        (errorMessage) => {
+            // Error de lectura (normal mientras busca)
+        }
+    ).catch((err) => {
+        console.error("Error al iniciar cámara:", err);
+        alert("No se pudo acceder a la cámara. Asegúrate de dar permisos HTTPS.");
+    });
 }
 
 // Forzar el video a mostrar
