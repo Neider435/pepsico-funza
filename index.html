@@ -1278,45 +1278,14 @@ Debe cumplir:
         if (savedData) {
             const data = JSON.parse(savedData);
             for (let i = 0; i < vehiculosData.length; i++) {
-            const detallesKey = vehiculoIndex;
-
+            const detallesKey = `vehiculo_${i}_detalles`;
             if (data[detallesKey]) {
                 detallesVehiculos[detallesKey] = JSON.parse(data[detallesKey]);
             }
             }
         }
-
-        const detalles_vehiculos = {};
-
-        datos_vehiculos.forEach((vehiculo, index) => {
-          const key = `vehiculo_${index}_detalles`;
-          const detalles = localStorage.getItem(key);
         
-          if (detalles) {
-            detalles_vehiculos[index] = JSON.parse(detalles);
-          }
-        });
-
-        fetch('/api/registro', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    ...otrosDatos,
-    datos_vehiculos,
-    detalles_vehiculos
-  })
-})
-.then(res => res.json())
-.then(data => {
-  alert('✅ Registro guardado correctamente');
-  localStorage.clear();
-})
-.catch(err => {
-  console.error(err);
-  alert('❌ Error al guardar');
-});
-
-
+        // Preparar datos para enviar
         // Preparar datos para enviar
         const formData = {
           fecha: document.getElementById('fecha').value,
