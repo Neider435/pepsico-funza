@@ -1,504 +1,319 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalles del Vehículo - Pepsico Funza</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
-            margin: 20px;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .logo-container {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .logo-container img {
-            width: 150px;
-            height: auto;
-        }
-        
-        h2 {
-            text-align: center;
-            color: #C76E00;
-            margin-bottom: 25px;
-        }
-        
-        .form-container {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #333;
-        }
-        
-        .radio-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        
-        .radio-option {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        input[type="radio"] {
-            width: 18px;
-            height: 18px;
-        }
-        
-        .btn-submit {
-            background-color: #001855;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 16px;
-            width: 100%;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 15px;
-        }
-        
-        .btn-submit:hover {
-            background-color: #0056b3;
-        }
-        
-        .back-button {
-            display: block;
-            text-align: center;
-            margin-top: 20px;
-            color: #001855;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 16px;
-        }
-        
-        .back-button:hover {
-            text-decoration: underline;
-        }
-        
-        .vehicle-info {
-            background: #e9f7fe;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
-            border: 1px solid #c6e0f5;
-        }
-        
-        .required::after {
-            content: " *";
-            color: #ff0000;
-        }
-        
-        .section-title {
-            background-color: #f0f0f0;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            font-weight: bold;
-            color: #555;
-        }
-        
-        .success-message {
-            background-color: #d4edda;
-            color: #155724;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border: 1px solid #c3e6cb;
-            display: none;
-        }
-        
-        .error-message {
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border: 1px solid #f5c6cb;
-            display: none;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detalles del Vehículo - Pepsico Funza</title>
+<style>
+body {
+font-family: Arial, sans-serif;
+background-color: #f8f9fa;
+margin: 20px;
+max-width: 600px;
+margin: 0 auto;
+padding: 20px;
+}
+.logo-container {
+text-align: center;
+margin-bottom: 20px;
+}
+.logo-container img {
+width: 150px;
+height: auto;
+}
+h2 {
+text-align: center;
+color: #C76E00;
+margin-bottom: 25px;
+}
+.form-container {
+background: white;
+padding: 25px;
+border-radius: 10px;
+box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+.form-group {
+margin-bottom: 20px;
+}
+label {
+display: block;
+font-weight: bold;
+margin-bottom: 8px;
+color: #333;
+}
+.radio-group {
+display: flex;
+flex-direction: column;
+gap: 8px;
+}
+.radio-option {
+display: flex;
+align-items: center;
+gap: 10px;
+}
+input[type="radio"] {
+width: 18px;
+height: 18px;
+}
+.btn-submit {
+background-color: #001855;
+color: white;
+border: none;
+padding: 12px 20px;
+border-radius: 8px;
+font-size: 16px;
+width: 100%;
+cursor: pointer;
+font-weight: bold;
+margin-top: 15px;
+}
+.btn-submit:hover {
+background-color: #0056b3;
+}
+.back-button {
+display: block;
+text-align: center;
+margin-top: 20px;
+color: #001855;
+text-decoration: none;
+font-weight: bold;
+font-size: 16px;
+}
+.back-button:hover {
+text-decoration: underline;
+}
+.vehicle-info {
+background: #e9f7fe;
+padding: 15px;
+border-radius: 8px;
+margin-bottom: 20px;
+text-align: center;
+border: 1px solid #c6e0f5;
+}
+.required::after {
+content: " *";
+color: #ff0000;
+}
+.section-title {
+background-color: #f0f0f0;
+padding: 10px;
+border-radius: 5px;
+margin-bottom: 15px;
+font-weight: bold;
+color: #555;
+}
+.success-message {
+background-color: #d4edda;
+color: #155724;
+padding: 15px;
+border-radius: 5px;
+margin-bottom: 20px;
+border: 1px solid #c3e6cb;
+display: none;
+}
+.error-message {
+background-color: #f8d7da;
+color: #721c24;
+padding: 15px;
+border-radius: 5px;
+margin-bottom: 20px;
+border: 1px solid #f5c6cb;
+display: none;
+}
+</style>
 </head>
 <body>
-    <div class="logo-container">
-        <img src="prueba.png" alt="Logo de la Empresa">
-    </div>
+<div class="logo-container">
+<img src="prueba.png" alt="Logo de la Empresa">
+</div>
+<h2>INSPECCIÓN DE VEHÍCULO</h2>
+<div class="form-container">
+<div class="success-message" id="success-message">
+✅ Inspección guardada correctamente
+</div>
+<div class="error-message" id="error-message">
+❌ Error al guardar los datos
+</div>
+<div class="vehicle-info">
+<h3 id="vehicle-title">Vehículo #<span id="vehicle-number">1</span></h3>
+<p>Complete los datos de inspección para este vehículo</p>
+</div>
+<form id="details-form">
+<!-- INTERIOR CAMIÓN -->
+<div class="form-group">
+<label for="interior_camion" class="required">INTERIOR CAMIÓN</label>
+<div class="radio-group">
+<div class="radio-option">
+<input type="radio" id="interior_bueno" name="interior_camion" value="BUENO">
+<label for="interior_bueno">BUENO</label>
+</div>
+<div class="radio-option">
+<input type="radio" id="interior_malo" name="interior_camion" value="MALO">
+<label for="interior_malo">MALO</label>
+</div>
+</div>
+</div>
+<!-- ESTADO DE LA CARPA -->
+<div class="form-group">
+<label for="estado_carpa" class="required">ESTADO DE LA CARPA</label>
+<div class="radio-group">
+<div class="radio-option">
+<input type="radio" id="carpa_bueno" name="estado_carpa" value="BUENO">
+<label for="carpa_bueno">BUENO</label>
+</div>
+<div class="radio-option">
+<input type="radio" id="carpa_malo" name="estado_carpa" value="MALO">
+<label for="carpa_malo">MALO</label>
+</div>
+<div class="radio-option">
+<input type="radio" id="carpa_na" name="estado_carpa" value="N/A">
+<label for="carpa_na">N/A</label>
+</div>
+</div>
+</div>
+<!-- OLORES EXTRAÑOS -->
+<div class="form-group">
+<label for="olores_extraños" class="required">OLORES EXTRAÑOS</label>
+<div class="radio-group">
+<div class="radio-option">
+<input type="radio" id="olores_si" name="olores_extraños" value="SI">
+<label for="olores_si">SI</label>
+</div>
+<div class="radio-option">
+<input type="radio" id="olores_no" name="olores_extraños" value="NO">
+<label for="olores_no">NO</label>
+</div>
+</div>
+</div>
+<!-- OBJETOS EXTRAÑOS -->
+<div class="form-group">
+<label for="objetos_extraños" class="required">OBJETOS EXTRAÑOS</label>
+<div class="radio-group">
+<div class="radio-option">
+<input type="radio" id="objetos_si" name="objetos_extraños" value="SI">
+<label for="objetos_si">SI</label>
+</div>
+<div class="radio-option">
+<input type="radio" id="objetos_no" name="objetos_extraños" value="NO">
+<label for="objetos_no">NO</label>
+</div>
+</div>
+</div>
+<!-- EVIDENCIAS DE PLAGAS -->
+<div class="form-group">
+<label for="evidencias_plagas" class="required">EVIDENCIAS DE PLAGAS</label>
+<div class="radio-group">
+<div class="radio-option">
+<input type="radio" id="plagas_si" name="evidencias_plagas" value="SI">
+<label for="plagas_si">SI</label>
+</div>
+<div class="radio-option">
+<input type="radio" id="plagas_no" name="evidencias_plagas" value="NO">
+<label for="plagas_no">NO</label>
+</div>
+</div>
+</div>
+<!-- ESTADO DEL SUELO -->
+<div class="form-group">
+<label for="estado_suelo" class="required">ESTADO DEL SUELO</label>
+<div class="radio-group">
+<div class="radio-option">
+<input type="radio" id="suelo_bueno" name="estado_suelo" value="BUENO">
+<label for="suelo_bueno">BUENO</label>
+</div>
+<div class="radio-option">
+<input type="radio" id="suelo_malo" name="estado_suelo" value="MALO">
+<label for="suelo_malo">MALO</label>
+</div>
+</div>
+</div>
+<!-- APROBADO -->
+<div class="form-group">
+<label for="aprobado" class="required">APROBADO</label>
+<div class="radio-group">
+<div class="radio-option">
+<input type="radio" id="aprobado_si" name="aprobado" value="SI">
+<label for="aprobado_si">SI</label>
+</div>
+<div class="radio-option">
+<input type="radio" id="aprobado_no" name="aprobado" value="NO">
+<label for="aprobado_no">NO</label>
+</div>
+</div>
+</div>
+<button type="button" onclick="enviarInspeccion()"
+style="background-color: #001855; color: white; border: none; padding: 12px;
+border-radius: 8px; font-weight: bold; width: 100%; margin-top: 20px;">
+📤 ENVIAR INSPECCIÓN Y VOLVER
+</button>
+</form>
+<a href="index.html" class="back-button">← Volver al Formulario Principal</a>
+</div>
+<script>
+let vehicleIndex = null;
+
+// ============================================
+// OBTENER ÍNDICE DEL VEHÍCULO DESDE LA URL
+// ============================================
+function getVehicleIndex() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return parseInt(urlParams.get('vehicle')) || 0;
+}
+
+// ============================================
+// ENVIAR INSPECCIÓN DIRECTAMENTE A MYSQL
+// ============================================
+async function enviarInspeccion() {
+  vehicleIndex = getVehicleIndex();
+
+  // Validar que todos los campos estén seleccionados
+  const campos = ['interior_camion', 'estado_carpa', 'olores_extraños', 'objetos_extraños',
+    'evidencias_plagas', 'estado_suelo', 'aprobado'];
+  
+  const detalles = {};
+  for (const campo of campos) {
+    const radio = document.querySelector(`input[name="${campo}"]:checked`);
+    if (!radio) {
+      alert(`⚠️ Por favor, complete el campo: ${campo.replace('_', ' ')}`);
+      return;
+    }
+    detalles[campo] = radio.value;
+  }
+
+  // Enviar directamente al servidor
+  try {
+    const response = await fetch('https://pepsico-funza-production-b0f5.up.railway.app/api/inspeccion', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        vehiculo_index: vehicleIndex, // Índice del vehículo (0, 1, 2...)
+        ...detalles
+      })
+    });
+
+    const result = await response.json();
     
-    <h2>INSPECCIÓN DE VEHÍCULO</h2>
-    
-    <div class="form-container">
-        <div class="success-message" id="success-message">
-            ✅ Inspección guardada correctamente
-        </div>
-        
-        <div class="error-message" id="error-message">
-            ❌ Error al guardar los datos
-        </div>
-        
-        <div class="vehicle-info">
-            <h3 id="vehicle-title">Vehículo #<span id="vehicle-number">1</span></h3>
-            <p>Complete los datos de inspección para este vehículo</p>
-        </div>
-        
-        <form id="details-form">
-            <!-- INTERIOR CAMIÓN -->
-            <div class="form-group">
-                <label for="interior_camion" class="required">INTERIOR CAMIÓN</label>
-                <div class="radio-group">
-                    <div class="radio-option">
-                        <input type="radio" id="interior_bueno" name="interior_camion" value="BUENO">
-                        <label for="interior_bueno">BUENO</label>
-                    </div>
-                    <div class="radio-option">
-                        <input type="radio" id="interior_malo" name="interior_camion" value="MALO">
-                        <label for="interior_malo">MALO</label>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- ESTADO DE LA CARPA -->
-            <div class="form-group">
-                <label for="estado_carpa" class="required">ESTADO DE LA CARPA</label>
-                <div class="radio-group">
-                    <div class="radio-option">
-                        <input type="radio" id="carpa_bueno" name="estado_carpa" value="BUENO">
-                        <label for="carpa_bueno">BUENO</label>
-                    </div>
-                    <div class="radio-option">
-                        <input type="radio" id="carpa_malo" name="estado_carpa" value="MALO">
-                        <label for="carpa_malo">MALO</label>
-                    </div>
-                    <div class="radio-option">
-                        <input type="radio" id="carpa_na" name="estado_carpa" value="N/A">
-                        <label for="carpa_na">N/A</label>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- OLORES EXTRAÑOS -->
-            <div class="form-group">
-                <label for="olores_extraños" class="required">OLORES EXTRAÑOS</label>
-                <div class="radio-group">
-                    <div class="radio-option">
-                        <input type="radio" id="olores_si" name="olores_extraños" value="SI">
-                        <label for="olores_si">SI</label>
-                    </div>
-                    <div class="radio-option">
-                        <input type="radio" id="olores_no" name="olores_extraños" value="NO">
-                        <label for="olores_no">NO</label>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- OBJETOS EXTRAÑOS -->
-            <div class="form-group">
-                <label for="objetos_extraños" class="required">OBJETOS EXTRAÑOS</label>
-                <div class="radio-group">
-                    <div class="radio-option">
-                        <input type="radio" id="objetos_si" name="objetos_extraños" value="SI">
-                        <label for="objetos_si">SI</label>
-                    </div>
-                    <div class="radio-option">
-                        <input type="radio" id="objetos_no" name="objetos_extraños" value="NO">
-                        <label for="objetos_no">NO</label>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- EVIDENCIAS DE PLAGAS -->
-            <div class="form-group">
-                <label for="evidencias_plagas" class="required">EVIDENCIAS DE PLAGAS</label>
-                <div class="radio-group">
-                    <div class="radio-option">
-                        <input type="radio" id="plagas_si" name="evidencias_plagas" value="SI">
-                        <label for="plagas_si">SI</label>
-                    </div>
-                    <div class="radio-option">
-                        <input type="radio" id="plagas_no" name="evidencias_plagas" value="NO">
-                        <label for="plagas_no">NO</label>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- ESTADO DEL SUELO -->
-            <div class="form-group">
-                <label for="estado_suelo" class="required">ESTADO DEL SUELO</label>
-                <div class="radio-group">
-                    <div class="radio-option">
-                        <input type="radio" id="suelo_bueno" name="estado_suelo" value="BUENO">
-                        <label for="suelo_bueno">BUENO</label>
-                    </div>
-                    <div class="radio-option">
-                        <input type="radio" id="suelo_malo" name="estado_suelo" value="MALO">
-                        <label for="suelo_malo">MALO</label>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- APROBADO -->
-            <div class="form-group">
-                <label for="aprobado" class="required">APROBADO</label>
-                <div class="radio-group">
-                    <div class="radio-option">
-                        <input type="radio" id="aprobado_si" name="aprobado" value="SI">
-                        <label for="aprobado_si">SI</label>
-                    </div>
-                    <div class="radio-option">
-                        <input type="radio" id="aprobado_no" name="aprobado" value="NO">
-                        <label for="aprobado_no">NO</label>
-                    </div>
-                </div>
-            </div>
-            
-            <button type="button" onclick="guardarDetallesInspeccion()" 
-                    style="background-color: #001855; color: white; border: none; padding: 12px; 
-                           border-radius: 8px; font-weight: bold; width: 100%; margin-top: 20px;">
-              ✅ GUARDAR INSPECCIÓN Y VOLVER
-            </button>
-        </form>
-        
-        <a href="index.html" class="back-button">← Volver al Formulario Principal</a>
-    </div>
-    
-    <script>
-        let vehicleIndex = null;
-        
-        // ============================================
-        // MANEJADOR DE ALMACENAMIENTO (sessionStorage para Netlify)
-        // ============================================
-        const Storage = {
-            // sessionStorage es más confiable en Netlify para flujos de formulario
-            setItem: function(key, value) {
-                try {
-                    sessionStorage.setItem(key, value);
-                    return true;
-                } catch (e) {
-                    console.error('❌ Error sessionStorage:', e);
-                    return false;
-                }
-            },
-            
-            getItem: function(key) {
-                try {
-                    return sessionStorage.getItem(key);
-                } catch (e) {
-                    console.error('❌ Error sessionStorage:', e);
-                    return null;
-                }
-            }
-        };
-        
-        // ============================================
-        // OBTENER ÍNDICE DEL VEHÍCULO DESDE LA URL
-        // ============================================
-        function getVehicleIndex() {
-            const urlParams = new URLSearchParams(window.location.search);
-            return parseInt(urlParams.get('vehicle')) || 0;
-        }
-        
-        // ============================================
-        // GUARDAR DETALLES DEL VEHÍCULO
-        // ============================================
-        // Guardar detalles de inspección en localStorage
-        function guardarDetallesInspeccion() {
-          const urlParams = new URLSearchParams(window.location.search);
-          const vehicleIndex = urlParams.get('vehicle');
-          
-          if (vehicleIndex === null) {
-            alert('❌ Error: No se especificó el vehículo');
-            return;
-          }
-          
-          // Obtener todos los valores del formulario de inspección
-          const detalles = {
-            interior_camion: document.querySelector('input[name="interior_camion"]:checked')?.value || '',
-            estado_carpa: document.querySelector('input[name="estado_carpa"]:checked')?.value || '',
-            olores_extraños: document.querySelector('input[name="olores_extraños"]:checked')?.value || '',
-            objetos_extraños: document.querySelector('input[name="objetos_extraños"]:checked')?.value || '',
-            evidencias_plagas: document.querySelector('input[name="evidencias_plagas"]:checked')?.value || '',
-            estado_suelo: document.querySelector('input[name="estado_suelo"]:checked')?.value || '',
-            aprobado: document.querySelector('input[name="aprobado"]:checked')?.value || ''
-          };
-          
-          // Guardar en localStorage con la clave correcta
-          const detallesKey = `vehiculo_${vehicleIndex}_detalles`;
-          localStorage.setItem(detallesKey, JSON.stringify(detalles));
-          
-          console.log(`✅ Detalles guardados para vehículo ${vehicleIndex}:`, detalles);
-          
-          // También guardar en pepsico_data para que se recupere al cargar
-          const savedData = localStorage.getItem('pepsico_data');
-          if (savedData) {
-            const data = JSON.parse(savedData);
-            data[detallesKey] = JSON.stringify(detalles);
-            localStorage.setItem('pepsico_data', JSON.stringify(data));
-          }
-          
-          alert('✅ Inspección guardada correctamente');
-          window.location.href = 'index.html';
-        }
-        
-        // ============================================
-        // CARGAR DETALLES DEL VEHÍCULO
-        // ============================================
-        function cargarDetalles(vehicleIndex) {
-            try {
-                const mainData = Storage.getItem('pepsico_data');
-                if (!mainData) return null;
-                
-                const data = JSON.parse(mainData);
-                const key = `vehiculo_${vehicleIndex}_detalles`;
-                
-                return data[key] ? JSON.parse(data[key]) : null;
-            } catch (error) {
-                console.error('❌ Error al cargar:', error);
-                return null;
-            }
-        }
-        
-        // ============================================
-        // CARGAR DATOS AL INICIAR
-        // ============================================
-        function cargarDatosGuardados() {
-            const detalles = cargarDetalles(vehicleIndex);
-            
-            if (detalles) {
-                // Rellenar campos
-                ['interior_camion', 'estado_carpa', 'olores_extraños', 'objetos_extraños', 
-                 'evidencias_plagas', 'estado_suelo', 'aprobado'].forEach(campo => {
-                    if (detalles[campo]) {
-                        const input = document.querySelector(`input[name="${campo}"][value="${detalles[campo]}"]`);
-                        if (input) input.checked = true;
-                    }
-                });
-                
-                showSuccess('✅ Datos cargados correctamente');
-            }
-        }
-        
-        // ============================================
-        // FORMULARIO - ENVIAR
-        // ============================================
-        document.getElementById('details-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Validar todos los campos
-            const campos = ['interior_camion', 'estado_carpa', 'olores_extraños', 'objetos_extraños', 
-                            'evidencias_plagas', 'estado_suelo', 'aprobado'];
-            const errores = [];
-            
-            campos.forEach(campo => {
-                if (!document.querySelector(`input[name="${campo}"]:checked`)) {
-                    errores.push(campo.replace('_', ' '));
-                }
-            });
-            
-            if (errores.length > 0) {
-                showError(`⚠️ Complete todos los campos: ${errores.join(', ')}`);
-                return;
-            }
-            
-            // Obtener valores
-            const detalles = {};
-            campos.forEach(campo => {
-                detalles[campo] = document.querySelector(`input[name="${campo}"]:checked`).value;
-            });
-            
-            // Guardar
-            if (guardarDetalles(vehicleIndex, detalles)) {
-                showSuccess('✅ Inspección guardada correctamente');
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1500);
-            } else {
-                showError('❌ Error al guardar. Intente nuevamente.');
-            }
-        });
-        
-        // ============================================
-        // MENSAJES
-        // ============================================
-        function showSuccess(msg) {
-            const el = document.getElementById('success-message');
-            el.textContent = msg;
-            el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 3000);
-        }
-        
-        function showError(msg) {
-            const el = document.getElementById('error-message');
-            el.textContent = msg;
-            el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 5000);
-        }
-        
-        // ============================================
-        // INICIALIZAR
-        // ============================================
-        document.addEventListener('DOMContentLoaded', function() {
-            vehicleIndex = getVehicleIndex();
-            document.getElementById('vehicle-number').textContent = vehicleIndex + 1;
-            document.getElementById('vehicle-title').textContent = `Vehículo #${vehicleIndex + 1}`;
-            
-            console.log('🚗 Vehículo:', vehicleIndex);
-            
-            // Cargar datos existentes
-            cargarDatosGuardados();
-            
-            // Guardar automáticamente al cambiar opciones
-            document.querySelectorAll('input[type="radio"]').forEach(radio => {
-                radio.addEventListener('change', () => {
-                    const campos = ['interior_camion', 'estado_carpa', 'olores_extraños', 'objetos_extraños', 
-                                    'evidencias_plagas', 'estado_suelo', 'aprobado'];
-                    const detalles = {};
-                    let completado = true;
-                    
-                    campos.forEach(campo => {
-                        const sel = document.querySelector(`input[name="${campo}"]:checked`);
-                        if (sel) detalles[campo] = sel.value;
-                        else completado = false;
-                    });
-                    
-                    if (completado) {
-                        guardarDetalles(vehicleIndex, detalles);
-                        console.log('💾 Auto-guardado');
-                    }
-                });
-            });
-            
-            // Verificar sessionStorage
-            try {
-                sessionStorage.setItem('netlify_test', 'ok');
-                sessionStorage.removeItem('netlify_test');
-                console.log('✅ sessionStorage disponible en Netlify');
-            } catch (e) {
-                console.error('❌ sessionStorage bloqueado:', e);
-                alert('⚠️ El navegador bloquea el almacenamiento. Permita cookies para este sitio.');
-            }
-        });
-    </script>
+    if (result.success) {
+      alert('✅ Inspección enviada correctamente');
+      window.location.href = 'index.html';
+    } else {
+      throw new Error(result.error || 'Error desconocido');
+    }
+  } catch (error) {
+    console.error('❌ Error al enviar inspección:', error);
+    alert('❌ Error al guardar la inspección:\n' + error.message);
+  }
+}
+
+// ============================================
+// INICIALIZAR AL CARGAR
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+  vehicleIndex = getVehicleIndex();
+  document.getElementById('vehicle-number').textContent = vehicleIndex + 1;
+  document.getElementById('vehicle-title').textContent = `Vehículo #${vehicleIndex + 1}`;
+  console.log('🚗 Vehículo:', vehicleIndex);
+});
+</script>
 </body>
 </html>
-
-
