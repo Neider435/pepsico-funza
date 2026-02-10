@@ -1277,30 +1277,35 @@ Debe cumplir:
         }
         
         // Preparar datos para enviar
+        // Preparar datos para enviar
         const formData = {
-            fecha: document.getElementById('fecha').value,
-            lugar: document.getElementById('lugar').value,
-            lider_asignado: document.getElementById('lider').value.toUpperCase(),
-            coordinador: document.getElementById('coordinador').value,
-            coordinador_otro: document.getElementById('coordinador_otro').value,
-            lider_pepsico: document.getElementById('lider_pepsico').value,
-            lider_pepsico_otro: document.getElementById('lider_pepsico_otro').value,
-            turno: document.getElementById('turno').value,
-            total_personas: document.getElementById('total_personas').value,
-            cajas_totales: document.getElementById('cajas_totales').value,
-            datos_vehiculos: vehiculosData,
-            detalles_vehiculos: detallesVehiculos,
-            datos_paradas_operacion: Array.from(
+          fecha: document.getElementById('fecha').value,
+          lugar: document.getElementById('lugar').value,
+          lider_asignado: document.getElementById('lider').value.toUpperCase(),
+          coordinador: document.getElementById('coordinador').value,
+          coordinador_otro: document.getElementById('coordinador_otro').value,
+          lider_pepsico: document.getElementById('lider_pepsico').value,
+          lider_pepsico_otro: document.getElementById('lider_pepsico_otro').value,
+          turno: document.getElementById('turno').value,
+          total_personas: document.getElementById('total_personas').value,
+          cajas_totales: document.getElementById('cajas_totales').value,
+          datos_vehiculos: vehiculosData,
+          detalles_vehiculos: detallesVehiculos,
+          datos_paradas_operacion: Array.from(
             document.querySelectorAll('#operacion-contenedor .parada-group')
-            ).map(grupo => {
+          ).map(grupo => {
             return {
-                inicio: grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '',
-                fin: grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '',
-                motivo: grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '',
-                otro_motivo: grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || ''
+              inicio: grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '',
+              fin: grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '',
+              motivo: grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '',
+              otro_motivo: grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || ''
             };
-            })
+          })
         };
+        
+        console.log('📝 Datos que se enviarán a MySQL:');
+        console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
+        console.log('Detalles:', JSON.stringify(detallesVehiculos, null, 2));
         
         // ⚠️ URL DE RAILWAY
         const RAILWAY_API_URL = 'https://pepsico-funza-production-b0f5.up.railway.app/api/registro';
@@ -1475,6 +1480,7 @@ Debe cumplir:
         });
     </script>
 </body>
+
 
 
 
