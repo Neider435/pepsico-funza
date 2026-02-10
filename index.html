@@ -1220,6 +1220,15 @@ Debe cumplir:
         function enviarFormulario(event) {
         event.preventDefault();
         sincronizarVehiculosDesdeDOM();
+            
+        console.log('📊 Vehículos con nombres del personal:');
+          vehiculosData.forEach((vehiculo, index) => {
+            console.log(`Vehículo ${index}:`, {
+              placa: vehiculo.placa,
+              personas: vehiculo.personas,
+              nombres: vehiculo.nombres_personal
+            });
+          });
         
         // Validaciones existentes
         const camposObligatorios = [
@@ -1480,6 +1489,7 @@ Debe cumplir:
         });
     </script>
 </body>
+
 
 
 
