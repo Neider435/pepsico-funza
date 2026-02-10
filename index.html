@@ -281,7 +281,7 @@
         
         <div style="display: flex; gap: 10px;">
             <button type="submit" style="flex: 3;">Enviar</button>
-            <button type="button" class="btn-borrar-todo" style="flex: 1;" onclick="limpiarTodo()">Borrar Todo</button>
+            <button type="button" class="btn-borrar-todo" style="flex: 1;" onclick="limpiarTodo()">🗑️ Borrar Todo</button>
         </div>
     </form>
 
@@ -1147,10 +1147,34 @@
         // ============================================
 
         function limpiarTodo() {
-            if (confirm("¿Estás seguro de borrar toda la información?")) {
-                localStorage.removeItem('pepsico_data');
-                location.reload();
+          if (confirm("⚠️ ¿Estás seguro de que quieres borrar TODOS los datos?\n\nEsto incluye:\n- Datos del formulario\n- Registros de vehículos\n- Inspecciones de vehículos\n- Paradas de operación")) {
+            
+            // 1. Eliminar datos principales
+            localStorage.removeItem('pepsico_data');
+            
+            // 2. Eliminar TODOS los detalles de vehículos
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              
+              // Eliminar claves que empiezan con "vehiculo_" y contienen "_detalles"
+              if (key && (key.startsWith('vehiculo_') || key.includes('_detalles'))) {
+                localStorage.removeItem(key);
+              }
             }
+            
+            // 3. Eliminar datos específicos por si acaso
+            localStorage.removeItem('vehiculosData');
+            localStorage.removeItem('detallesVehiculos');
+            localStorage.removeItem('paradasData');
+            
+            // 4. Recargar la página
+            location.reload();
+            
+            // 5. Mensaje de confirmación
+            setTimeout(() => {
+              alert('✅ Todos los datos han sido eliminados correctamente.');
+            }, 100);
+          }
         }
 
         // ============================================
@@ -1440,6 +1464,7 @@ Debe cumplir:
         });
     </script>
 </body>
+
 
 
 
