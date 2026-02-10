@@ -1145,38 +1145,49 @@
         // ============================================
         // LIMPIEZA TOTAL
         // ============================================
-
         function limpiarTodo() {
-          if (confirm("⚠️ ¿Estás seguro de que quieres borrar TODOS los datos?\n\nEsto incluye:\n- Datos del formulario\n- Registros de vehículos\n- Inspecciones de vehículos\n- Paradas de operación")) {
+          if (confirm("⚠️ ¿Estás seguro de que quieres borrar TODOS los datos?\n\nEsto incluye:\n- Datos del formulario principal\n- Registros de vehículos\n- Inspecciones de vehículos (detalles.html)\n- Paradas de operación")) {
             
             // 1. Eliminar datos principales
             localStorage.removeItem('pepsico_data');
             
-            // 2. Eliminar TODOS los detalles de vehículos
+            // 2. Eliminar TODOS los detalles de inspección de vehículos
+            // (vehiculo_0_detalles, vehiculo_1_detalles, etc.)
             for (let i = 0; i < localStorage.length; i++) {
               const key = localStorage.key(i);
               
-              // Eliminar claves que empiezan con "vehiculo_" y contienen "_detalles"
-              if (key && (key.startsWith('vehiculo_') || key.includes('_detalles'))) {
+              // Eliminar claves relacionadas con detalles de vehículos
+              if (key && (
+                key.startsWith('vehiculo_') && key.endsWith('_detalles') ||
+                key.includes('_detalles') ||
+                key.startsWith('detalles_vehiculo_')
+              )) {
                 localStorage.removeItem(key);
+                // Ajustar índice porque localStorage cambia al eliminar
+                i--;
               }
             }
             
-            // 3. Eliminar datos específicos por si acaso
-            localStorage.removeItem('vehiculosData');
-            localStorage.removeItem('detallesVehiculos');
-            localStorage.removeItem('paradasData');
+            // 3. Eliminar otros datos residuales del formulario
+            const clavesResiduales = [
+              'fecha', 'lugar', 'lider', 'coordinador', 'coordinador_otro',
+              'lider_pepsico', 'lider_pepsico_otro', 'turno', 'total_personas',
+              'cajas_totales', 'nombres_personal', 'vehiculosData', 
+              'detallesVehiculos', 'paradasData'
+            ];
             
-            // 4. Recargar la página
+            clavesResiduales.forEach(clave => localStorage.removeItem(clave));
+            
+            // 4. Recargar la página para limpiar completamente el estado
             location.reload();
             
-            // 5. Mensaje de confirmación
+            // 5. Confirmación visual (opcional)
             setTimeout(() => {
-              alert('✅ Todos los datos han sido eliminados correctamente.');
+              alert('✅ Todos los datos han sido eliminados correctamente.\nLos detalles de inspección también fueron borrados.');
             }, 100);
           }
         }
-
+        
         // ============================================
         // VALIDACIÓN DE PLACAS
         // ============================================
@@ -1464,6 +1475,7 @@ Debe cumplir:
         });
     </script>
 </body>
+
 
 
 
