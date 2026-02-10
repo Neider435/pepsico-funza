@@ -287,6 +287,7 @@
   text-align: center;
 }
 </style>
+
 </head>
 <body>
     <div class="logo-container">
@@ -392,9 +393,7 @@
   <video id="scanner-video" autoplay style="width: 90%; max-width: 500px; border: 3px solid #001855; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5);"></video>
   <div class="scanner-overlay" style="position: absolute; width: 90%; max-width: 500px; height: 300px; border: 3px solid #00ff00; border-radius: 5px; pointer-events: none;"></div>
   <div class="scanner-controls" style="margin-top: 20px; display: flex; gap: 15px;">
-    <button type="button" class="scanner-btn" onclick="pausarEscanner()" style="background-color: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 5px; font-size: 14px; cursor: pointer; width: 100%;">
-      Pausar
-    </button>
+
     <button type="button" class="scanner-btn scanner-btn-flash" onclick="toggleFlashlight()" style="background-color: #ffc107; color: #000; border: none; padding: 8px 12px; border-radius: 5px; font-size: 14px; cursor: pointer; width: 100%;">
       Linterna
     </button>
@@ -1482,6 +1481,7 @@ function limpiarEscaneoVehiculo(vehicleIndex) {
 
 // Iniciar QuaggaJS
 function iniciarQuagga() {
+  // Configuración mejorada para compatibilidad
   Quagga.init({
     inputStream: {
       name: "Live",
@@ -1490,7 +1490,14 @@ function iniciarQuagga() {
       constraints: {
         width: { min: 640 },
         height: { min: 480 },
-        facingMode: "environment" // Cámara trasera
+        facingMode: "environment", // Cámara trasera
+        aspectRatio: { min: 1, max: 2 } // Relación de aspecto
+      },
+      // Asegurar que el video se muestre
+      video: {
+        width: 640,
+        height: 480,
+        objectFit: 'cover'
       }
     },
     decoder: {
@@ -1508,14 +1515,24 @@ function iniciarQuagga() {
     },
     locator: {
       patchSize: "medium",
-      halfSample: true
+      halfSample: true,
+      debug: true // Para diagnóstico
     },
     numOfWorkers: 2,
     frequency: 10
   }, function(err) {
     if (err) {
       console.error("❌ Error iniciando Quagga:", err);
-      alert("Error al iniciar la cámara. Por favor, permite el acceso a la cámara.");
+      
+      // Manejo específico de errores de permiso
+      if (err.name === "NotAllowedError" || err.name === "PermissionDismissedError") {
+        alert("⚠️ Error de permiso: No se pudo acceder a la cámara. Por favor, verifica que hayas concedido permiso para usar la cámara.");
+      } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+        alert("⚠️ Error: No se encontró ninguna cámara. Asegúrate de que tu dispositivo tenga una cámara y esté conectada.");
+      } else {
+        alert("⚠️ Error al inicializar la cámara: " + err.message);
+      }
+      
       cerrarEscanner();
       return;
     }
@@ -1525,9 +1542,27 @@ function iniciarQuagga() {
     scannerActive = true;
     Quagga.start();
     
-    // Evento de detección de código
+    // Forzar el video a mostrar
+    const video = document.getElementById('scanner-video');
+    if (video) {
+      video.style.display = 'block';
+      video.style.visibility = 'visible';
+      video.style.width = '100%';
+      video.style.maxWidth = '500px';
+    }
+    
     Quagga.onDetected(handleCodeDetection);
   });
+}
+
+// Forzar el video a mostrar
+const video = document.getElementById('scanner-video');
+if (video) {
+  video.style.display = 'block';
+  video.style.visibility = 'visible';
+  video.style.width = '100%';
+  video.style.maxWidth = '500px';
+  video.style.height = 'auto';
 }
 
 // Manejar detección de código
@@ -1583,16 +1618,6 @@ function reanudarEscanner() {
   }
 }
 
-// Pausar escáner
-function pausarEscanner() {
-  if (scannerActive) {
-    Quagga.stop();
-    scannerActive = false;
-    console.log('⏸️ Escáner pausado');
-  } else {
-    reanudarEscanner();
-  }
-}
 
 // Alternar linterna
 function toggleFlashlight() {
@@ -1873,6 +1898,6 @@ function toggleFlashlight() {
                 this.dataset.manualChange = 'true';
             });
         });
+        
     </script>
 </body>
-
