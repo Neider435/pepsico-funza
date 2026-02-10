@@ -49,7 +49,7 @@ app.post('/api/registro', async (req, res) => {
       total_personas,
       cajas_totales,
       datos_vehiculos,
-      detalles_vehiculos,
+      detalles_vehiculos, // Se recibe como un array ordenado desde el frontend
       datos_paradas_operacion
     } = req.body;
 
@@ -67,8 +67,10 @@ app.post('/api/registro', async (req, res) => {
     
     const registroId = registroResult.insertId;
     
-    // 2. Insertar vehículos
-    for (const vehiculo of datos_vehiculos) {
+    // 2. Insertar vehículos (usamos un bucle for tradicional para tener el índice 'i')
+    for (let i = 0; i < datos_vehiculos.length; i++) {
+      const vehiculo = datos_vehiculos[i];
+      
       const nombresJSON = vehiculo.nombres_personal && Array.isArray(vehiculo.nombres_personal) && vehiculo.nombres_personal.length > 0 
         ? JSON.stringify(vehiculo.nombres_personal) 
         : null;
@@ -78,7 +80,7 @@ app.post('/api/registro', async (req, res) => {
           registro_id, inicio, fin, motivo, otro_motivo, muelle, otro_muelle_num,
           placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, personas, cajas,
           justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_final, 
-          foto_url, nombres_personal  -- ✅ Columna añadida aquí
+          foto_url, nombres_personal
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           registroId,
@@ -107,10 +109,10 @@ app.post('/api/registro', async (req, res) => {
       
       const vehiculoId = vehiculoResult.insertId;
       
-      // 3. Insertar detalles del vehículo (si existen)
-      const detallesKey = `vehiculo_${vehiculoId}_detalles`;
-      if (detalles_vehiculos[detallesKey]) {
-        const detalles = detalles_vehiculos[detallesKey];
+      // 3. Insertar detalles del vehículo usando el MISMO ÍNDICE que el vehículo
+      // Esto asegura que el detalle 0 sea para el vehículo 0, etc.
+      if (detalles_vehiculos && detalles_vehiculos[i]) {
+        const detalles = detalles_vehiculos[i];
         await connection.query(
           `INSERT INTO detalles_vehiculos (
             vehiculo_id, interior_camion, estado_carpa, olores_extraños, objetos_extraños,
@@ -120,7 +122,7 @@ app.post('/api/registro', async (req, res) => {
             vehiculoId,
             detalles.interior_camion,
             detalles.estado_carpa,
-            detalles.olor_extraños,
+            detalles.olores_extraños,
             detalles.objetos_extraños,
             detalles.evidencias_plagas,
             detalles.estado_suelo,
@@ -152,7 +154,7 @@ app.post('/api/registro', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Registro guardado correctamente',
+      message: 'Registro guardado correctamente con detalles',
       id: registroId
     });
   } catch (error) {
