@@ -80,8 +80,8 @@ app.post('/api/registro', async (req, res) => {
           registro_id, inicio, fin, motivo, otro_motivo, muelle, otro_muelle_num,
           placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, personas, cajas,
           justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_final, 
-          foto_url, nombres_personal
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          foto_url, nombres_personal,tipo_operacion
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           registroId,
           vehiculo.inicio,
@@ -103,7 +103,8 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.tiempo_muerto_inicio,
           vehiculo.tiempo_muerto_final,
           vehiculo.foto_url,
-          nombresJSON
+          nombresJSON,
+          vehiculo.tipo_operacion
         ]
       );
       
