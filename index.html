@@ -301,7 +301,7 @@
         
         <!-- SECCIÓN: DATOS GENERALES -->
         <label for="lugar">Lugar de operación:</label>
-        <select name="lugar" id="lugar" required onchange="actualizarCampos(); filtrarCoordinadores()">
+        <select name="lugar" id="lugar" required onchange="actualizarCampos(); filtrarCoordinadores(); actualizarMuellesPorLugar();">
             <option value="">Seleccione una opción</option>
             <option value="Funza">Pepsico Funza</option>
             <option value="SantoDomingo">Santo Domingo</option> 
@@ -409,6 +409,99 @@
 
     <script>
         let vehiculosData = [];
+        function obtenerMuellesPorLugar(lugar) {
+  if (lugar === 'SantoDomingo') {
+    // Muelles del 1 al 10 para Santo Domingo
+    return [
+      { value: '1', label: '1' },
+      { value: '2', label: '2' },
+      { value: '3', label: '3' },
+      { value: '4', label: '4' },
+      { value: '5', label: '5' },
+      { value: '6', label: '6' },
+      { value: '7', label: '7' },
+      { value: '8', label: '8' },
+      { value: '9', label: '9' },
+      { value: '10', label: '10' },
+      { value: 'otro', label: 'Otro' }
+    ];
+  } else {
+    // Muelles actuales para Pepsico Funza
+    return [
+      { value: '3', label: '3' },
+      { value: '11', label: '11' },
+      { value: '12', label: '12' },
+      { value: '13', label: '13' },
+      { value: '14', label: '14' },
+      { value: '17', label: '17' },
+      { value: '18', label: '18' },
+      { value: '19', label: '19' },
+      { value: '20', label: '20' },
+      { value: 'otro', label: 'Otro' }
+    ];
+  }
+}
+
+// ✅ NUEVA FUNCIÓN: Actualizar muelles de todos los vehículos
+function actualizarMuellesPorLugar() {
+  const lugar = document.getElementById('lugar').value;
+  const muelles = obtenerMuellesPorLugar(lugar);
+  
+  const contenedor = document.getElementById('vehiculos-contenedor');
+  const registros = contenedor.querySelectorAll('.registro-vehiculo');
+  
+  registros.forEach((registro, index) => {
+    const muelleSelect = registro.querySelector(`#muelle-select-${index}`);
+    const otroMuelleInput = registro.querySelector(`#otro_muelle_${index}`);
+    
+    if (muelleSelect) {
+      // Guardar valor actual
+      const valorActual = muelleSelect.value;
+      
+      // Limpiar y agregar nuevas opciones
+      muelleSelect.innerHTML = '<option value="">Seleccione</option>';
+      
+      muelles.forEach(muelle => {
+        const option = document.createElement('option');
+        option.value = muelle.value;
+        option.textContent = muelle.label;
+        
+        // Restaurar selección si coincide
+        if (muelle.value === valorActual) {
+          option.selected = true;
+        }
+        
+        muelleSelect.appendChild(option);
+      });
+      
+      // Manejar campo "otro"
+      manejarOtroMuelle(index);
+    }
+  });
+  
+  guardarProgreso();
+}
+
+// ✅ NUEVA FUNCIÓN: Manejar campo "otro" para muelles
+function manejarOtroMuelle(vIndex) {
+  const muelleSelect = document.querySelector(`#muelle-select-${vIndex}`);
+  const otroInput = document.querySelector(`#otro_muelle_${vIndex}`);
+  
+  if (!muelleSelect || !otroInput) return;
+  
+  if (muelleSelect.value === 'otro') {
+    otroInput.style.display = 'block';
+    otroInput.required = true;
+  } else {
+    otroInput.style.display = 'none';
+    otroInput.required = false;
+    otroInput.value = '';
+  }
+  
+  guardarProgreso();
+}
+
+        
 
         // ============================================
         // FUNCIONES PARA NOMBRES DEL PERSONAL
@@ -580,6 +673,7 @@
             actualizarTotalCajas();
             guardarProgreso();
         }
+        
 
         function sincronizarVehiculosDesdeDOM() {
   const contenedor = document.getElementById('vehiculos-contenedor');
@@ -617,6 +711,7 @@
       destino: getValue(`vehiculo_${i}_destino`),
       otro_destino: getValue(`vehiculo_${i}_otro_destino`),
       origen: getValue(`vehiculo_${i}_origen`),
+      otro_origen: getValue(`vehiculo_${i}_otro_origen`),
       personas: getValue(`vehiculo_${i}_personas`),
       // ✅ Guardar nombres del personal (NUEVO)
       nombres_personal: nombresPersonal,
@@ -638,6 +733,7 @@
     };
   }
 }
+
 
         // ============================================
         // MANEJO DE CAMPOS "OTRO"
@@ -742,6 +838,7 @@
             registro.className = 'registro-vehiculo';
             registro.dataset.index = vIndex;
             
+            
             const html = `
                 <button type="button" class="btn-eliminar-registro" onclick="eliminarRegistroVehiculo(${vIndex})">
                     Eliminar Vehículo #${vIndex + 1}
@@ -794,18 +891,9 @@
                 <hr style="margin-top:25px; border-style:dashed;">
                 
                 <label>Muelle:</label>
-                <select name="vehiculo_${vIndex}_muelle" required>
+                <select name="vehiculo_${vIndex}_muelle" id="muelle-select-${vIndex}" required onchange="manejarOtroMuelle(${vIndex})">
                     <option value="">Seleccione</option>
-                    <option value="3" ${datos.muelle === '3' ? 'selected' : ''}>3</option>
-                    <option value="11" ${datos.muelle === '11' ? 'selected' : ''}>11</option>
-                    <option value="12" ${datos.muelle === '12' ? 'selected' : ''}>12</option>
-                    <option value="13" ${datos.muelle === '13' ? 'selected' : ''}>13</option>
-                    <option value="14" ${datos.muelle === '14' ? 'selected' : ''}>14</option>
-                    <option value="17" ${datos.muelle === '17' ? 'selected' : ''}>17</option>
-                    <option value="18" ${datos.muelle === '18' ? 'selected' : ''}>18</option>
-                    <option value="19" ${datos.muelle === '19' ? 'selected' : ''}>19</option>
-                    <option value="20" ${datos.muelle === '20' ? 'selected' : ''}>20</option>
-                    <option value="otro" ${datos.muelle === 'otro' ? 'selected' : ''}>Otro</option>
+                    <!-- Los muelles se generarán dinámicamente -->
                 </select>
                 <input type="number" name="vehiculo_${vIndex}_otro_muelle_num" id="otro_muelle_${vIndex}" class="otro-input" placeholder="N° muelle" min="1" max="999" value="${datos.otro_muelle_num || ''}">
                 
@@ -833,28 +921,58 @@
                 <div class="form-group-custom" id="destino-group-${vIndex}" style="${(datos.motivo === 'cargue') ? 'display:block;' : 'display:none;'}">
                     <label style="margin-top:0;">Destino:</label>
                     <select id="destino-select-${vIndex}" name="vehiculo_${vIndex}_destino">
-                        <option value="">Seleccione Destino</option>
-                        <option value="guarner_medellin" ${datos.destino === 'guarner_medellin' ? 'selected' : ''}>Guarne/Medellin</option>
-                        <option value="cali" ${datos.destino === 'cali' ? 'selected' : ''}>Cali</option>
-                        <option value="barranquilla" ${datos.destino === 'barranquilla' ? 'selected' : ''}>Barranquilla</option>
-                        <option value="pereira" ${datos.destino === 'pereira' ? 'selected' : ''}>Pereira</option>
-                        <option value="bucaramanga" ${datos.destino === 'bucaramanga' ? 'selected' : ''}>Bucaramanga</option>
-                        <option value="monteria" ${datos.destino === 'monteria' ? 'selected' : ''}>Montería</option>
-                        <option value="peru" ${datos.destino === 'peru' ? 'selected' : ''}>Perú</option>
-                        <option value="ecuador" ${datos.destino === 'ecuador' ? 'selected' : ''}>Ecuador</option>
-                        <option value="funza" ${datos.destino === 'funza' ? 'selected' : ''}>Funza</option>
-                        <option value="santo_domingo" ${datos.destino === 'santo_domingo' ? 'selected' : ''}>Santo Domingo</option>
-                        <option value="innova" ${datos.destino === 'innova' ? 'selected' : ''}>Innova</option>
-                        <option value="villavicencio" ${datos.destino === 'villavicencio' ? 'selected' : ''}>Villavicencio</option>
-                        <option value="otro" ${datos.destino === 'otro' ? 'selected' : ''}>Otro</option>
-                    </select>
+<option value="">Seleccione Destino</option>
+<option value="BARRANQUILLA" ${datos.destino === 'BARRANQUILLA' ? 'selected' : ''}>BARRANQUILLA</option>
+<option value="CALI" ${datos.destino === 'CALI' ? 'selected' : ''}>CALI</option>
+<option value="BUCARAMANGA" ${datos.destino === 'BUCARAMANGA' ? 'selected' : ''}>BUCARAMANGA</option>
+<option value="MEDELLIN" ${datos.destino === 'MEDELLIN' ? 'selected' : ''}>MEDELLIN</option>
+<option value="MONTERIA" ${datos.destino === 'MONTERIA' ? 'selected' : ''}>MONTERIA</option>
+<option value="GUARNE" ${datos.destino === 'GUARNE' ? 'selected' : ''}>GUARNE</option>
+<option value="PEREIRA" ${datos.destino === 'PEREIRA' ? 'selected' : ''}>PEREIRA</option>
+<option value="PERU" ${datos.destino === 'PERU' ? 'selected' : ''}>PERU</option>
+<option value="ECUADOR" ${datos.destino === 'ECUADOR' ? 'selected' : ''}>ECUADOR</option>
+<option value="FUNZA" ${datos.destino === 'FUNZA' ? 'selected' : ''}>FUNZA</option>
+<option value="BOLIVIA" ${datos.destino === 'BOLIVIA' ? 'selected' : ''}>BOLIVIA</option>
+<option value="SANTO DOMINGO" ${datos.destino === 'SANTO DOMINGO' ? 'selected' : ''}>SANTO DOMINGO</option>
+<option value="LOCALES" ${datos.destino === 'LOCALES' ? 'selected' : ''}>LOCALES</option>
+<option value="INNOVA" ${datos.destino === 'INNOVA' ? 'selected' : ''}>INNOVA</option>
+<option value="CUCUTA" ${datos.destino === 'CUCUTA' ? 'selected' : ''}>CUCUTA</option>
+<option value="LA ESTANCIA" ${datos.destino === 'LA ESTANCIA' ? 'selected' : ''}>LA ESTANCIA</option>
+<option value="CIUDAD BOLIVAR" ${datos.destino === 'CIUDAD BOLIVAR' ? 'selected' : ''}>CIUDAD BOLIVAR</option>
+<option value="VILLAVICENCIO" ${datos.destino === 'VILLAVICENCIO' ? 'selected' : ''}>VILLAVICENCIO</option>
+<option value="ACACIAS" ${datos.destino === 'ACACIAS' ? 'selected' : ''}>ACACIAS</option>
+<option value="otro" ${datos.destino === 'otro' ? 'selected' : ''}>Otro</option>
+</select>
                     <input type="text" name="vehiculo_${vIndex}_otro_destino" id="otro_destino_${vIndex}" class="otro-input" placeholder="Especifique otro destino" value="${datos.otro_destino || ''}">
                 </div>
                 
                 <div class="form-group-custom" id="remitente-group-${vIndex}" style="${(datos.motivo === 'descargue') ? 'display:block;' : 'display:none;'}">
-                    <label style="margin-top:0;">Origen / Remitente:</label>
-                    <input type="text" id="remitente-input-${vIndex}" name="vehiculo_${vIndex}_origen" placeholder="Ej: Zona Franca" value="${datos.origen || ''}" oninput="guardarProgreso()">
-                </div>
+<label style="margin-top:0;">Origen / Remitente:</label>
+<select id="remitente-select-${vIndex}" name="vehiculo_${vIndex}_origen">
+<option value="">Seleccione Origen</option>
+<option value="BARRANQUILLA" ${datos.origen === 'BARRANQUILLA' ? 'selected' : ''}>BARRANQUILLA</option>
+<option value="CALI" ${datos.origen === 'CALI' ? 'selected' : ''}>CALI</option>
+<option value="BUCARAMANGA" ${datos.origen === 'BUCARAMANGA' ? 'selected' : ''}>BUCARAMANGA</option>
+<option value="MEDELLIN" ${datos.origen === 'MEDELLIN' ? 'selected' : ''}>MEDELLIN</option>
+<option value="MONTERIA" ${datos.origen === 'MONTERIA' ? 'selected' : ''}>MONTERIA</option>
+<option value="GUARNE" ${datos.origen === 'GUARNE' ? 'selected' : ''}>GUARNE</option>
+<option value="PEREIRA" ${datos.origen === 'PEREIRA' ? 'selected' : ''}>PEREIRA</option>
+<option value="PERU" ${datos.origen === 'PERU' ? 'selected' : ''}>PERU</option>
+<option value="ECUADOR" ${datos.origen === 'ECUADOR' ? 'selected' : ''}>ECUADOR</option>
+<option value="FUNZA" ${datos.origen === 'FUNZA' ? 'selected' : ''}>FUNZA</option>
+<option value="BOLIVIA" ${datos.origen === 'BOLIVIA' ? 'selected' : ''}>BOLIVIA</option>
+<option value="SANTO DOMINGO" ${datos.origen === 'SANTO DOMINGO' ? 'selected' : ''}>SANTO DOMINGO</option>
+<option value="LOCALES" ${datos.origen === 'LOCALES' ? 'selected' : ''}>LOCALES</option>
+<option value="INNOVA" ${datos.origen === 'INNOVA' ? 'selected' : ''}>INNOVA</option>
+<option value="CUCUTA" ${datos.origen === 'CUCUTA' ? 'selected' : ''}>CUCUTA</option>
+<option value="LA ESTANCIA" ${datos.origen === 'LA ESTANCIA' ? 'selected' : ''}>LA ESTANCIA</option>
+<option value="CIUDAD BOLIVAR" ${datos.origen === 'CIUDAD BOLIVAR' ? 'selected' : ''}>CIUDAD BOLIVAR</option>
+<option value="VILLAVICENCIO" ${datos.origen === 'VILLAVICENCIO' ? 'selected' : ''}>VILLAVICENCIO</option>
+<option value="ACACIAS" ${datos.origen === 'ACACIAS' ? 'selected' : ''}>ACACIAS</option>
+<option value="otro" ${datos.origen === 'otro' ? 'selected' : ''}>Otro</option>
+</select>
+<input type="text" name="vehiculo_${vIndex}_otro_origen" id="otro_origen_${vIndex}" class="otro-input" placeholder="Especifique otro origen" value="${datos.otro_origen || ''}">
+</div>
                 
                 <label>Total De Personas:</label>
                 <input type="number" name="vehiculo_${vIndex}_personas" min="1" required value="${datos.personas || ''}" oninput="generarCamposNombresVehiculo(${vIndex}); guardarProgreso()">
@@ -995,6 +1113,30 @@
         </div>
         </div>
             `;
+            const origenSelect = document.getElementById(`remitente-select-${vIndex}`);
+if (origenSelect) {
+  origenSelect.addEventListener('change', () => manejarOtroOrigen(vIndex));
+  // Llamar inmediatamente para mostrar/ocultar "otro" si ya está seleccionado
+  manejarOtroOrigen(vIndex);
+}
+            function manejarOtroOrigen(vIndex) {
+  const origenSelect = document.querySelector(`#remitente-select-${vIndex}`);
+  const otroInput = document.querySelector(`#otro_origen_${vIndex}`);
+  
+  if (!origenSelect || !otroInput) return;
+  
+  if (origenSelect.value === 'otro') {
+    otroInput.style.display = 'block';
+    otroInput.required = true;
+  } else {
+    otroInput.style.display = 'none';
+    otroInput.required = false;
+    otroInput.value = '';
+  }
+  
+  guardarProgreso();
+}
+            
             
             registro.innerHTML = html;
             contenedor.appendChild(registro);
@@ -1276,6 +1418,11 @@ function actualizarCampos() {
   
   actualizarTotalCajas();
   guardarProgreso();
+  
+  // ✅ NUEVO: Actualizar muelles cuando cambie el lugar
+  actualizarMuellesPorLugar();
+  // ✅ NUEVO: Actualizar tipo de operación
+  actualizarTipoOperacion();
 }
 
         // ============================================
@@ -1850,79 +1997,86 @@ function toggleFlashlight() {
             const savedData = localStorage.getItem('pepsico_data');
             
             if (savedData) {
-                const data = JSON.parse(savedData);
-                const nVehiculos = data._numVehiculos || 1;
+  const data = JSON.parse(savedData);
+  const nVehiculos = data._numVehiculos || 1;
+
+  // ✅ PASO CLAVE: Cargar primero el lugar para que los muelles se generen
+  const lugarGuardado = data.lugar || 'Funza';
+  document.getElementById('lugar').value = lugarGuardado;
+  actualizarMuellesPorLugar(); // ← Generar opciones de muelle ANTES
+
+  document.getElementById('vehiculos-contenedor').innerHTML = '';
+  vehiculosData = [];
+
+  for(let i=0; i<nVehiculos; i++) {
+    const vObj = {
+      inicio: data[`vehiculo_${i}_inicio`] || '',
+      fin: data[`vehiculo_${i}_fin`] || '',
+      motivo: data[`vehiculo_${i}_motivo`] || '',
+      otro_motivo: data[`vehiculo_${i}_otro_motivo`] || '',
+      muelle: data[`vehiculo_${i}_muelle`] || '',
+      otro_muelle_num: data[`vehiculo_${i}_otro_muelle_num`] || '',
+      placa: data[`vehiculo_${i}_placa`] || '',
+      tipo_vehi: data[`vehiculo_${i}_tipo_vehi`] || '',
+      otro_tipo: data[`vehiculo_${i}_otro_tipo`] || '',
+      destino: data[`vehiculo_${i}_destino`] || '',
+      otro_destino: data[`vehiculo_${i}_otro_destino`] || '',
+      origen: data[`vehiculo_${i}_origen`] || '',
+      otro_origen: data[`vehiculo_${i}_otro_origen`] || '',
+      personas: data[`vehiculo_${i}_personas`] || '',
+      nombres_personal: [],
+      cajas: data[`vehiculo_${i}_cajas`] || '',
+      justificacion: data[`vehiculo_${i}_justificacion`] || '',
+      otro_justificacion: data[`vehiculo_${i}_otro_justificacion`] || '',
+      tiempo_muerto_inicio: data[`vehiculo_${i}_tiempo_muerto_inicio`] || '',
+      tiempo_muerto_final: data[`vehiculo_${i}_tiempo_muerto_final`] || '',
+      foto_url: data[`vehiculo_${i}_foto_url`] || '',
+      interior_camion: data[`vehiculo_${i}_interior_camion`] || '',
+      estado_carpa: data[`vehiculo_${i}_estado_carpa`] || '',
+      olores_extranos: data[`vehiculo_${i}_olores_extranos`] || '',
+      objetos_extranos: data[`vehiculo_${i}_objetos_extranos`] || '',
+      evidencias_plagas: data[`vehiculo_${i}_evidencias_plagas`] || '',
+      estado_suelo: data[`vehiculo_${i}_estado_suelo`] || '',
+      aprobado: data[`vehiculo_${i}_aprobado`] || ''
+    };
+
+    // ✅ Cargar nombres del personal desde localStorage (NUEVO)
+    for (let j = 1; ; j++) {
+      const nombreKey = `vehiculo_${i}_nombre_persona_${j}`;
+      if (data[nombreKey] !== undefined) {
+        vObj.nombres_personal.push(data[nombreKey]);
+      } else {
+        break;
+      }
+    }
+    vehiculosData.push(vObj);
+    crearVehiculoHTML(document.getElementById('vehiculos-contenedor'), i, vObj);
+  }
+
+  // Resto del código...
+  document.getElementById('operacion-contenedor').innerHTML = '';
+  if (data._paradasDetalle) {
+    data._paradasDetalle.forEach(p => agregarCampoParada('operacion', p));
+  }
+  for (const key in data) {
+    if (key.startsWith('_') || key.startsWith('vehiculo_') || key.startsWith('parada_')) continue;
+    const el = form.elements[key];
+    if (el) {
+      el.value = data[key];
+      if (el.id === 'coordinador') manejarOtroCoordinador();
+    }
+  }
+  actualizarTotalCajas();
+  generarCamposNombres();
+} else {
+  agregarRegistroVehiculo();
+  agregarCampoParada('operacion');
+  actualizarCampos();
+  // ✅ También aquí:
+  actualizarMuellesPorLugar();
+}
+            
                 
-                document.getElementById('vehiculos-contenedor').innerHTML = '';
-                vehiculosData = [];
-                
-                for(let i=0; i<nVehiculos; i++) {
-                    const vObj = {
-                        inicio: data[`vehiculo_${i}_inicio`] || '',
-                        fin: data[`vehiculo_${i}_fin`] || '',
-                        motivo: data[`vehiculo_${i}_motivo`] || '',
-                        otro_motivo: data[`vehiculo_${i}_otro_motivo`] || '',
-                        muelle: data[`vehiculo_${i}_muelle`] || '',
-                        otro_muelle_num: data[`vehiculo_${i}_otro_muelle_num`] || '',
-                        placa: data[`vehiculo_${i}_placa`] || '',
-                        tipo_vehi: data[`vehiculo_${i}_tipo_vehi`] || '',
-                        otro_tipo: data[`vehiculo_${i}_otro_tipo`] || '',
-                        destino: data[`vehiculo_${i}_destino`] || '',
-                        otro_destino: data[`vehiculo_${i}_otro_destino`] || '',
-                        origen: data[`vehiculo_${i}_origen`] || '',
-                        personas: data[`vehiculo_${i}_personas`] || '',
-                        // ✅ Cargar nombres del personal (NUEVO)
-                        nombres_personal: [],
-                        cajas: data[`vehiculo_${i}_cajas`] || '',
-                        justificacion: data[`vehiculo_${i}_justificacion`] || '',
-                        otro_justificacion: data[`vehiculo_${i}_otro_justificacion`] || '',
-                        tiempo_muerto_inicio: data[`vehiculo_${i}_tiempo_muerto_inicio`] || '',
-                        tiempo_muerto_final: data[`vehiculo_${i}_tiempo_muerto_final`] || '',
-                        foto_url: data[`vehiculo_${i}_foto_url`] || '',
-                        interior_camion: data[`vehiculo_${i}_interior_camion`] || '',
-                        estado_carpa: data[`vehiculo_${i}_estado_carpa`] || '',
-                        olores_extranos: data[`vehiculo_${i}_olores_extranos`] || '',
-                        objetos_extranos: data[`vehiculo_${i}_objetos_extranos`] || '',
-                        evidencias_plagas: data[`vehiculo_${i}_evidencias_plagas`] || '',
-                        estado_suelo: data[`vehiculo_${i}_estado_suelo`] || '',
-                        aprobado: data[`vehiculo_${i}_aprobado`] || ''
-                    };
-                    
-                    // ✅ Cargar nombres del personal desde localStorage (NUEVO)
-                    for (let j = 1; ; j++) {
-                        const nombreKey = `vehiculo_${i}_nombre_persona_${j}`;
-                        if (data[nombreKey] !== undefined) {
-                            vObj.nombres_personal.push(data[nombreKey]);
-                        } else {
-                            break;
-                        }
-                    }
-                    
-                    vehiculosData.push(vObj);
-                    crearVehiculoHTML(document.getElementById('vehiculos-contenedor'), i, vObj);
-                }
-                
-                document.getElementById('operacion-contenedor').innerHTML = '';
-                if (data._paradasDetalle) {
-                    data._paradasDetalle.forEach(p => agregarCampoParada('operacion', p));
-                }
-                
-                for (const key in data) {
-                    if (key.startsWith('_') || key.startsWith('vehiculo_') || key.startsWith('parada_')) continue;
-                    const el = form.elements[key];
-                    if (el) {
-                        el.value = data[key];
-                        if (el.id === 'coordinador') manejarOtroCoordinador();
-                    }
-                }
-                
-                actualizarTotalCajas();
-                generarCamposNombres(); // Cargar nombres si existen en el total
-            } else {
-                agregarRegistroVehiculo();
-                agregarCampoParada('operacion');
-                actualizarCampos();
-            }
             
             form.addEventListener('submit', enviarFormulario);
             form.addEventListener('input', guardarProgreso);
