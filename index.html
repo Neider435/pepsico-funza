@@ -192,101 +192,106 @@
             cursor: pointer;
             font-weight: bold;
         }
-    </style>
-    <!-- QuaggaJS para escaneo de códigos de barras -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+        /* ✅ ESTILOS PARA RESUMEN DE PRODUCTOS ESCANEADOS */
+.resumen-productos-container {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 15px;
+  border: 1px solid #dee2e6;
+}
 
-<!-- Estilos para el escáner -->
-<style>
-.scanner-btn {
-  background-color: #28a745;
+.resumen-productos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #001855;
+}
+
+.resumen-productos-title {
+  color: #C76E00;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.total-cajas-badge {
+  background: #001855;
   color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 5px;
-  font-size: 14px;
-  cursor: pointer;
-  margin-top: 8px;
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+.productos-table {
   width: 100%;
-}
-
-.scanner-btn:hover {
-  opacity: 0.9;
-}
-
-.scanner-btn:disabled {
-  background-color: #6c757d;
-  cursor: not-allowed;
-}
-
-.scanned-display {
-  background: #e9f7fe;
-  padding: 8px;
-  border-radius: 5px;
-  margin-top: 8px;
-  font-size: 12px;
-  display: none;
-}
-
-.scanned-display.show {
+  border-collapse: collapse;
+  margin-top: 10px;
+  max-height: 250px;
+  overflow-y: auto;
   display: block;
 }
 
-#scanner-container {
-  display: none;
-  position: fixed;
+.productos-table th {
+  background: #001855;
+  color: white;
+  padding: 10px 8px;
+  text-align: left;
+  font-size: 0.85em;
+  position: sticky;
   top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.9);
-  z-index: 1000;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
 }
 
-#scanner-video {
-  width: 90%;
-  max-width: 500px;
-  border: 3px solid #001855;
-  border-radius: 10px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+.productos-table td {
+  padding: 8px;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 0.9em;
 }
 
-.scanner-overlay {
-  position: absolute;
-  width: 90%;
-  max-width: 500px;
-  height: 300px;
-  border: 3px solid #00ff00;
-  border-radius: 5px;
-  pointer-events: none;
+.productos-table tr:hover {
+  background-color: #f1f3f5;
 }
 
-.scanner-controls {
-  margin-top: 20px;
-  display: flex;
-  gap: 15px;
+.producto-referencia {
+  font-family: 'Courier New', monospace;
+  font-size: 0.85em;
+  color: #495057;
 }
 
-.scanner-btn-cancel {
-  background-color: #dc3545;
-}
-
-.scanner-btn-flash {
-  background-color: #ffc107;
-  color: #000;
-}
-
-.scanner-total {
-  font-size: 24px;
+.producto-cantidad {
   font-weight: bold;
-  color: #001855;
-  margin-top: 15px;
+  color: #C76E00;
   text-align: center;
 }
-</style>
+
+.no-productos {
+  text-align: center;
+  color: #6c757d;
+  padding: 20px;
+  font-style: italic;
+}
+
+.btn-limpiar-escaneo {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  font-size: 0.85em;
+  cursor: pointer;
+  margin-top: 10px;
+  display: block;
+  width: 100%;
+}
+
+.btn-limpiar-escaneo:hover {
+  background: #c82333;
+  transform: scale(1.02);
+  transition: all 0.2s;
+}
+    </style>
 
 </head>
 <body>
@@ -388,23 +393,9 @@
             <button type="submit" style="flex: 3;">Enviar</button>
             <button type="button" class="btn-borrar-todo" style="flex: 1;" onclick="limpiarTodo()">🗑️ Borrar Todo</button>
         </div>
-        <!-- Contenedor del escáner de códigos de barras -->
-<div id="scanner-container" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; flex-direction: column; justify-content: center; align-items: center;">
-  <video id="scanner-video" autoplay style="width: 90%; max-width: 500px; border: 3px solid #001855; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.5);"></video>
-  <div class="scanner-overlay" style="position: absolute; width: 90%; max-width: 500px; height: 300px; border: 3px solid #00ff00; border-radius: 5px; pointer-events: none;"></div>
-  <div class="scanner-controls" style="margin-top: 20px; display: flex; gap: 15px;">
+        
 
-    <button type="button" class="scanner-btn scanner-btn-flash" onclick="toggleFlashlight()" style="background-color: #ffc107; color: #000; border: none; padding: 8px 12px; border-radius: 5px; font-size: 14px; cursor: pointer; width: 100%;">
-      Linterna
-    </button>
-    <button type="button" class="scanner-btn scanner-btn-cancel" onclick="cerrarEscanner()" style="background-color: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 5px; font-size: 14px; cursor: pointer; width: 100%;">
-      Cerrar
-    </button>
-  </div>
-  <div class="scanner-total" id="scanner-total" style="font-size: 24px; font-weight: bold; color: #001855; margin-top: 15px; text-align: center;"></div>
-</div>
 
-</form> <!-- Este es el cierre del formulario -->
     </form>
 
     <script>
@@ -980,25 +971,17 @@ function manejarOtroMuelle(vIndex) {
                 <!-- ✅ Contenedor para nombres del personal (NUEVO) -->
                 <div id="nombres-personal-${vIndex}" style="margin-top: 15px;"></div>
                 
-                <label>Cajas Movidas:</label>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                <input type="number" name="vehiculo_${vIndex}_cajas" class="cajas-input-js" min="0" required
-                        value="${datos.cajas || ''}"
-                        oninput="actualizarTotalCajas(); guardarProgreso();">
-                
-                <button type="button" class="scanner-btn" onclick="abrirEscannerVehiculo(${vIndex})">
-                    📱 Escanear Código (Picking)
-                </button>
-                
-                <div class="scanned-display" id="scanned-display-${vIndex}">
-                    <strong>📦 Cajas escaneadas:</strong> <span id="scanned-count-${vIndex}">0</span>
-                    <button type="button" onclick="limpiarEscaneoVehiculo(${vIndex})" 
-                            style="background-color: #dc3545; color: white; border: none; 
-                                padding: 3px 8px; border-radius: 3px; font-size: 10px; margin-left: 8px;">
-                    Limpiar
-                    </button>
-                </div>
-                </div>
+               <label>Cajas Movidas:</label>
+<input type="number" name="vehiculo_${vIndex}_cajas" class="cajas-input-js" min="0" required
+value="${datos.cajas|| ''}"
+oninput="actualizarTotalCajas(); guardarProgreso();"
+onclick="setVehiculoActivoParaEscaneo(${vIndex})">
+
+<!-- ✅ ÁREA DE FEEDBACK DE ESCANEO (invisible pero funcional) -->
+<div id="feedback-escaneo-${vIndex}" style="min-height: 40px; margin-top: 8px;"></div>
+
+<!-- ✅ RESUMEN DE PRODUCTOS ESCANEADOS -->
+<div id="resumen-productos-${vIndex}" style="margin-top: 20px; margin-bottom: 15px;"></div>
                 
                 <label>Justificación del retraso o incidencia:</label>
                 <select name="vehiculo_${vIndex}_justificacion" onchange="mostrarTiempoMuerto(this, ${vIndex})">
@@ -1501,6 +1484,274 @@ function actualizarCampos() {
             
             if(totalCajasInput) totalCajasInput.value = total;
         }
+        // ============================================
+// ✅ SISTEMA DE PICKING POR RADIOFRECUENCIA
+// ============================================
+
+// Estructura para almacenar productos escaneados por vehículo
+let productosEscaneadosPorVehiculo = {};
+
+// Cargar base de datos de productos desde JSON
+async function cargarBaseDatosProductos() {
+  try {
+    const response = await fetch('productos.json');
+    const data = await response.json();
+    window.baseDatosProductos = data;
+    console.log('✅ Base de datos de productos cargada:', Object.keys(data).length, 'productos');
+  } catch (error) {
+    console.warn('⚠️ No se pudo cargar productos.json, usando base de datos fallback');
+    window.baseDatosProductos = {
+      "300033638": { nombre: "DORITOS MQUES 4X1 BX10X38G+GTX2GACHKSCHO", referencia: "300033638" },
+      "300034010": { nombre: "CHOKIS CHISPAS 40GX1X80 ENF", referencia: "300034010" },
+      "300054027": { nombre: "MMOTO NK PASAS CH 30GX12X12 SP DISPX12", referencia: "300054027" },
+      "300054040": { nombre: "CHOKIS CHISPAS 57GX9X7 DISPX7 TROQ", referencia: "300054040" },
+      "300054062": { nombre: "MARGARITA REC CLAS ALITAS BBQ 250GX9X1", referencia: "300054062" },
+      "300037949": { nombre: "CHEESE TRIS QUESO 50GX72X1 CP", referencia: "300037949" },
+      "300065646": { nombre: "MARGARITA POLLO 105GX18X1 PROMO H2225", referencia: "300065646" }
+    };
+  }
+}
+
+// Inicializar almacenamiento de productos para un vehículo
+function inicializarProductosEscaneados(vIndex) {
+  if (!productosEscaneadosPorVehiculo[vIndex]) {
+    productosEscaneadosPorVehiculo[vIndex] = {
+      totalCajas: 0,
+      productos: {} // { codigo: { nombre, referencia, cantidad } }
+    };
+  }
+}
+
+// Capturar código escaneado por radiofrecuencia (input automático)
+function capturarCodigoEscaneado(codigo, vIndex) {
+  if (!codigo || codigo.trim().length < 5) return;
+  
+  codigo = codigo.trim().toUpperCase();
+  inicializarProductosEscaneados(vIndex);
+  
+  // Buscar producto en base de datos (intentar con varios formatos)
+  const producto = 
+    window.baseDatosProductos[codigo] || 
+    window.baseDatosProductos[codigo.replace(/\s/g, '')] ||
+    window.baseDatosProductos[codigo.substring(0, 8)] ||
+    window.baseDatosProductos[codigo.substring(0, 10)];
+  
+  if (producto) {
+    // Producto encontrado
+    if (!productosEscaneadosPorVehiculo[vIndex].productos[codigo]) {
+      productosEscaneadosPorVehiculo[vIndex].productos[codigo] = {
+        nombre: producto.nombre || codigo,
+        referencia: producto.referencia || codigo,
+        cantidad: 0
+      };
+    }
+    
+    // Incrementar contador
+    productosEscaneadosPorVehiculo[vIndex].productos[codigo].cantidad++;
+    productosEscaneadosPorVehiculo[vIndex].totalCajas++;
+    
+    // Actualizar campo de cajas del vehículo
+    const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
+    if (cajasInput) {
+      cajasInput.value = productosEscaneadosPorVehiculo[vIndex].totalCajas;
+    }
+    
+    // Actualizar total general y guardar
+    actualizarTotalCajas();
+    guardarProgreso();
+    
+    // Mostrar feedback visual
+    mostrarFeedbackEscaneo(producto.nombre, vIndex);
+    
+    console.log(`✅ Producto escaneado V${vIndex}: ${producto.nombre} (${codigo}) - Total: ${productosEscaneadosPorVehiculo[vIndex].totalCajas}`);
+  } else {
+    // Producto no encontrado
+    console.log(`⚠️ Código no encontrado: ${codigo}`);
+    // No mostramos alert para no interrumpir flujo de picking continuo
+  }
+}
+
+// Mostrar feedback visual al escanear
+function mostrarFeedbackEscaneo(nombreProducto, vIndex) {
+  const container = document.getElementById(`feedback-escaneo-${vIndex}`);
+  if (!container) return;
+  
+  container.innerHTML = `
+    <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 8px 12px; border-radius: 6px; margin-bottom: 8px; font-size: 0.9em; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+      ✅ ${nombreProducto.substring(0, 40)}${nombreProducto.length > 40 ? '...' : ''}
+    </div>
+  `;
+  
+  // Eliminar feedback después de 1.5 segundos
+  setTimeout(() => {
+    if (container) container.innerHTML = '';
+  }, 1500);
+}
+
+// Mostrar resumen de productos escaneados
+function mostrarResumenProductos(vIndex) {
+  const container = document.getElementById(`resumen-productos-${vIndex}`);
+  if (!container) return;
+  
+  inicializarProductosEscaneados(vIndex);
+  const productos = productosEscaneadosPorVehiculo[vIndex].productos;
+  const totalCajas = productosEscaneadosPorVehiculo[vIndex].totalCajas;
+  
+  if (totalCajas === 0) {
+    container.innerHTML = `
+      <div class="no-productos">
+        <p>📦 No hay productos escaneados aún</p>
+        <small>Los códigos se registrarán automáticamente al escanear</small>
+      </div>
+    `;
+    return;
+  }
+  
+  let html = `
+    <div class="resumen-productos-container">
+      <div class="resumen-productos-header">
+        <div class="resumen-productos-title">📊 RESUMEN DE PRODUCTOS</div>
+        <div class="total-cajas-badge">${totalCajas} CAJAS</div>
+      </div>
+      <div style="max-height: 250px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px;">
+        <table class="productos-table">
+          <thead>
+            <tr>
+              <th>Referencia</th>
+              <th>Producto</th>
+              <th>Cajas</th>
+            </tr>
+          </thead>
+          <tbody>
+  `;
+  
+  // Ordenar productos por cantidad descendente
+  const productosOrdenados = Object.entries(productos).sort((a, b) => b[1].cantidad - a[1].cantidad);
+  
+  productosOrdenados.forEach(([codigo, prod]) => {
+    html += `
+      <tr>
+        <td class="producto-referencia">${prod.referencia.substring(0, 15)}${prod.referencia.length > 15 ? '...' : ''}</td>
+        <td>${prod.nombre.substring(0, 35)}${prod.nombre.length > 35 ? '...' : ''}</td>
+        <td class="producto-cantidad">${prod.cantidad}</td>
+      </tr>
+    `;
+  });
+  
+  html += `
+          </tbody>
+        </table>
+      </div>
+      <button type="button" class="btn-limpiar-escaneo" onclick="limpiarEscaneoVehiculo(${vIndex})">
+        🗑️ Limpiar Todos los Productos
+      </button>
+    </div>
+  `;
+  
+  container.innerHTML = html;
+}
+
+// Limpiar escaneo de un vehículo
+function limpiarEscaneoVehiculo(vIndex) {
+  if (confirm(`⚠️ ¿Estás seguro de limpiar TODOS los productos escaneados del Vehículo #${vIndex + 1}?`)) {
+    productosEscaneadosPorVehiculo[vIndex] = {
+      totalCajas: 0,
+      productos: {}
+    };
+    
+    // Limpiar campo de cajas
+    const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
+    if (cajasInput) {
+      cajasInput.value = '0';
+    }
+    
+    actualizarTotalCajas();
+    guardarProgreso();
+    mostrarResumenProductos(vIndex);
+    
+    alert(`✅ Escaneo del Vehículo #${vIndex + 1} limpiado correctamente`);
+  }
+}
+
+// Guardar productos escaneados en localStorage
+function guardarProductosEscaneados() {
+  localStorage.setItem('productos_escaneados_rf', JSON.stringify(productosEscaneadosPorVehiculo));
+}
+
+// Cargar productos escaneados desde localStorage
+function cargarProductosEscaneados() {
+  const saved = localStorage.getItem('productos_escaneados_rf');
+  if (saved) {
+    try {
+      productosEscaneadosPorVehiculo = JSON.parse(saved);
+      console.log('✅ Productos escaneados cargados desde localStorage');
+      
+      // Actualizar resúmenes de todos los vehículos existentes
+      Object.keys(productosEscaneadosPorVehiculo).forEach(vIndex => {
+        mostrarResumenProductos(parseInt(vIndex));
+      });
+    } catch (e) {
+      console.error('❌ Error al cargar productos escaneados:', e);
+      productosEscaneadosPorVehiculo = {};
+    }
+  }
+}
+
+// Detectar escaneo automático de radiofrecuencia (input rápido de teclado)
+let bufferCodigo = '';
+let timeoutBuffer = null;
+
+document.addEventListener('keydown', function(e) {
+  // Ignorar teclas de control/modificadoras
+  if (e.key.length > 1 || ['Control', 'Shift', 'Alt', 'Meta', 'Tab', 'CapsLock'].includes(e.key)) return;
+  
+  // Si es Enter y hay buffer, procesar código
+  if (e.key === 'Enter' && bufferCodigo.length >= 5) {
+    e.preventDefault();
+    const codigo = bufferCodigo.trim();
+    const vIndex = window.vehiculoActivo !== undefined ? window.vehiculoActivo : 0;
+    
+    if (codigo) {
+      capturarCodigoEscaneado(codigo, vIndex);
+    }
+    
+    bufferCodigo = '';
+    return;
+  }
+  
+  // Acumular caracteres alfanuméricos
+  if (/^[a-zA-Z0-9]$/.test(e.key)) {
+    bufferCodigo += e.key.toUpperCase();
+    
+    // Reiniciar buffer si tarda más de 50ms entre teclas (no es escaneo)
+    clearTimeout(timeoutBuffer);
+    timeoutBuffer = setTimeout(() => {
+      if (bufferCodigo.length >= 8) { // Código largo = probable escaneo
+        const codigo = bufferCodigo.trim();
+        const vIndex = window.vehiculoActivo !== undefined ? window.vehiculoActivo : 0;
+        capturarCodigoEscaneado(codigo, vIndex);
+      }
+      bufferCodigo = '';
+    }, 50);
+  }
+});
+
+// Establecer vehículo activo para escaneo
+function setVehiculoActivoParaEscaneo(vIndex) {
+  window.vehiculoActivo = vIndex;
+  inicializarProductosEscaneados(vIndex);
+  
+  // Resaltar visualmente el vehículo activo
+  document.querySelectorAll('.registro-vehiculo').forEach((el, idx) => {
+    if (idx === vIndex) {
+      el.style.borderLeft = '4px solid #28a745';
+      el.style.paddingLeft = '15px';
+    } else {
+      el.style.borderLeft = 'none';
+      el.style.paddingLeft = '0';
+    }
+  });
+}
 
         function convertirATextoMayusculas() {
             const textInputs = document.querySelectorAll('input[type="text"], textarea');
@@ -1548,6 +1799,8 @@ function actualizarCampos() {
             
             data._numVehiculos = vehiculosData.length;
             data._paradasDetalle = paradasData;
+            // ✅ Guardar productos escaneados por vehículo
+data._productosEscaneados = productosEscaneadosPorVehiculo;
             
             localStorage.setItem('pepsico_data', JSON.stringify(data));
         }
@@ -1608,205 +1861,6 @@ Debe cumplir:
         }
 
         // ============================================
-// ESCÁNER DE CÓDIGOS DE BARRAS POR VEHÍCULO
-// ============================================
-
-let quaggaInitialized = false;
-let scannerActive = false;
-let currentVehicleIndex = null;
-let vehicleScannedCount = {}; // Contador de cajas escaneadas por vehículo
-
-// Abrir escáner para vehículo específico
-function abrirEscannerVehiculo(vehicleIndex) {
-  currentVehicleIndex = vehicleIndex;
-  
-  // Inicializar contador si no existe
-  if (!vehicleScannedCount[vehicleIndex]) {
-    vehicleScannedCount[vehicleIndex] = 0;
-  }
-  
-  // Mostrar contenedor del escáner
-  document.getElementById('scanner-container').style.display = 'flex';
-  
-  // Iniciar Quagga si no está inicializado
-  if (!quaggaInitialized) {
-    iniciarQuagga();
-  } else {
-    reanudarEscanner();
-  }
-  
-  // Mostrar contador de escaneo
-  document.getElementById(`scanned-display-${vehicleIndex}`).classList.add('show');
-}
-
-// Cerrar escáner y actualizar vehículo específico
-function cerrarEscanner() {
-  if (scannerActive) {
-    Quagga.stop();
-    scannerActive = false;
-  }
-  
-  document.getElementById('scanner-container').style.display = 'none';
-  
-  if (currentVehicleIndex !== null) {
-    // Actualizar el campo de cajas del vehículo específico
-    const cajasInput = document.getElementById(`vehiculo_${currentVehicleIndex}_cajas`);
-    if (cajasInput) {
-      const valorActual = parseInt(cajasInput.value) || 0;
-      const totalEscaneado = vehicleScannedCount[currentVehicleIndex] || 0;
-      cajasInput.value = valorActual + totalEscaneado;
-      
-      // Actualizar visualización
-      document.getElementById(`scanned-count-${currentVehicleIndex}`).textContent = totalEscaneado;
-      document.getElementById(`scanned-display-${currentVehicleIndex}`).classList.add('show');
-      
-      actualizarTotalCajas();
-      guardarProgreso();
-    }
-    
-    console.log(`✅ Vehículo ${currentVehicleIndex}: ${vehicleScannedCount[currentVehicleIndex]} cajas escaneadas`);
-    currentVehicleIndex = null;
-  }
-}
-
-// Limpiar escaneo de vehículo específico
-function limpiarEscaneoVehiculo(vehicleIndex) {
-  vehicleScannedCount[vehicleIndex] = 0;
-  document.getElementById(`scanned-count-${vehicleIndex}`).textContent = '0';
-  document.getElementById(`scanned-display-${vehicleIndex}`).classList.remove('show');
-  console.log(`🧹 Escaneo limpiado para vehículo ${vehicleIndex}`);
-}
-
-// Iniciar QuaggaJS
-function iniciarQuagga() {
-  // Configuración mejorada para compatibilidad
-  Quagga.init({
-    inputStream: {
-      name: "Live",
-      type: "LiveStream",
-      target: document.querySelector('#scanner-video'),
-      constraints: {
-        width: { min: 640 },
-        height: { min: 480 },
-        facingMode: "environment",
-      },
-    },
-    decoder: {
-      readers: [
-        "code_128_reader",
-        "ean_reader",
-        "ean_8_reader",
-        "upc_reader",
-        "upc_e_reader",
-        "code_39_reader",
-        "code_39_vin_reader",
-        "codabar_reader",
-        "i2of5_reader"
-      ]
-    },
-    locator: {
-      patchSize: "medium",
-      halfSample: true,
-      debug: true // Para diagnóstico
-    },
-    numOfWorkers: 2,
-    frequency: 10
-  }, function(err) {
-    if (err) {
-      console.error("❌ Error iniciando Quagga:", err);
-      
-      // Manejo específico de errores de permiso
-      if (err.name === "NotAllowedError" || err.name === "PermissionDismissedError") {
-        alert("⚠️ Error de permiso: No se pudo acceder a la cámara. Por favor, verifica que hayas concedido permiso para usar la cámara.");
-      } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
-        alert("⚠️ Error: No se encontró ninguna cámara. Asegúrate de que tu dispositivo tenga una cámara y esté conectada.");
-      } else {
-        alert("⚠️ Error al inicializar la cámara: " + err.message);
-      }
-      
-      cerrarEscanner();
-      return;
-    }
-    
-    console.log("✅ QuaggaJS iniciado correctamente");
-    quaggaInitialized = true;
-    scannerActive = true;
-
-    
-    // Forzar el video a mostrar
-    const video = document.getElementById('scanner-video');
-    if (video) {
-      video.style.display = 'block';
-      video.style.visibility = 'visible';
-      video.style.width = '100%';
-      video.style.maxWidth = '500px';
-    }
-    Quagga.start();
-    Quagga.onDetected(handleCodeDetection);
-  });
-}
-
-// Manejar detección de código
-function handleCodeDetection(result) {
-  if (currentVehicleIndex === null) return;
-  
-  const code = result.codeResult.code;
-  const vehicleIndex = currentVehicleIndex;
-  
-  // Incrementar contador
-  if (!vehicleScannedCount[vehicleIndex]) {
-    vehicleScannedCount[vehicleIndex] = 0;
-  }
-  
-  vehicleScannedCount[vehicleIndex]++;
-  
-  // Actualizar visualización
-  const countElement = document.getElementById(`scanned-count-${vehicleIndex}`);
-  if (countElement) {
-    countElement.textContent = vehicleScannedCount[vehicleIndex];
-    document.getElementById(`scanned-display-${vehicleIndex}`).classList.add('show');
-  }
-  
-  // Actualizar total en pantalla del escáner
-  const scannerTotal = document.getElementById('scanner-total');
-  if (scannerTotal) {
-    scannerTotal.textContent = vehicleScannedCount[vehicleIndex];
-  }
-  
-  console.log(`✅ Vehículo ${vehicleIndex} - Código escaneado: ${code} - Total: ${vehicleScannedCount[vehicleIndex]}`);
-  
-  // Vibración (si está disponible)
-  if (navigator.vibrate) {
-    navigator.vibrate(100);
-  }
-  
-  // Feedback visual
-  const overlay = document.querySelector('.scanner-overlay');
-  if (overlay) {
-    overlay.style.borderColor = '#ff0000';
-    setTimeout(() => {
-      overlay.style.borderColor = '#00ff00';
-    }, 200);
-  }
-}
-
-// Reanudar escáner
-function reanudarEscanner() {
-  if (!scannerActive) {
-    Quagga.start();
-    scannerActive = true;
-    console.log('▶️ Escáner reanudado');
-  }
-}
-
-
-// Alternar linterna
-function toggleFlashlight() {
-  console.log('🔦 Linterna no disponible en este navegador');
-  alert('La linterna no está disponible en este dispositivo/navegador');
-}
-
-        // ============================================
         // ENVÍO DEL FORMULARIO
         // ===========================================
         function enviarFormulario(event) {
@@ -1864,7 +1918,22 @@ function toggleFlashlight() {
         if (!validarPlacas()) return;
         if (!validarSolapamientoVehiculos() || !validarSolapamientoParadas()) return;
         
-        
+        // ✅ Sincronizar productos escaneados con vehiculosData
+sincronizarVehiculosDesdeDOM();
+for (let i = 0; i < vehiculosData.length; i++) {
+  if (productosEscaneadosPorVehiculo[i]) {
+    // Convertir a array para enviar
+    const productosArray = Object.entries(productosEscaneadosPorVehiculo[i].productos).map(([codigo, prod]) => ({
+      codigo: codigo,
+      referencia: prod.referencia,
+      nombre: prod.nombre,
+      cantidad: prod.cantidad
+    }));
+    
+    vehiculosData[i].productos_escaneados = productosArray;
+    vehiculosData[i].total_cajas_escaneadas = productosEscaneadosPorVehiculo[i].totalCajas;
+  }
+}
         // Preparar datos para enviar
         // Preparar datos para enviar
         const formData = {
@@ -2063,6 +2132,14 @@ function toggleFlashlight() {
     }
   }
   actualizarTotalCajas();
+  // ✅ Cargar productos escaneados desde localStorage
+if (data._productosEscaneados) {
+  productosEscaneadosPorVehiculo = data._productosEscaneados;
+  // Actualizar resúmenes visuales
+  Object.keys(productosEscaneadosPorVehiculo).forEach(vIndex => {
+    mostrarResumenProductos(parseInt(vIndex));
+  });
+}
   generarCamposNombres();
 } else {
   agregarRegistroVehiculo();
@@ -2071,9 +2148,7 @@ function toggleFlashlight() {
   // ✅ También aquí:
   actualizarMuellesPorLugar();
 }
-            
-                
-            
+             
             form.addEventListener('submit', enviarFormulario);
             form.addEventListener('input', guardarProgreso);
             form.addEventListener('change', guardarProgreso);
@@ -2085,4 +2160,3 @@ function toggleFlashlight() {
         
     </script>
 </body>
-
