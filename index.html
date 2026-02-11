@@ -394,8 +394,6 @@
             <button type="button" class="btn-borrar-todo" style="flex: 1;" onclick="limpiarTodo()">🗑️ Borrar Todo</button>
         </div>
         
-
-
     </form>
 
     <script>
@@ -971,14 +969,28 @@ function manejarOtroMuelle(vIndex) {
                 <!-- ✅ Contenedor para nombres del personal (NUEVO) -->
                 <div id="nombres-personal-${vIndex}" style="margin-top: 15px;"></div>
                 
-               <label>Cajas Movidas:</label>
-<input type="number" name="vehiculo_${vIndex}_cajas" class="cajas-input-js" min="0" required
-value="${datos.cajas|| ''}"
-oninput="actualizarTotalCajas(); guardarProgreso();"
-onclick="setVehiculoActivoParaEscaneo(${vIndex})">
-
-<!-- ✅ ÁREA DE FEEDBACK DE ESCANEO (invisible pero funcional) -->
-<div id="feedback-escaneo-${vIndex}" style="min-height: 40px; margin-top: 8px;"></div>
+               <!-- ✅ CAMPO DE CAJAS MOVIDAS (SOLO LECTURA - SE ACTUALIZA AUTOMÁTICAMENTE) -->
+<label>Cajas Movidas:</label>
+<input type="number" name="vehiculo_${vIndex}_cajas" class="cajas-input-js" min="0" readonly
+value="${datos.cajas || '0'}"
+style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
+<!-- ✅ ÁREA DE PICKING CON BOTÓN -->
+<div style="background: #e7f3ff; padding: 15px; border-radius: 8px; margin-top: 15px; border: 2px solid #001855;">
+  <h5 style="margin-top: 0; color: #001855; font-size: 0.95em;">📦 Picking de Productos</h5>
+  
+  <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+    <input type="text" id="codigo-picking-${vIndex}" placeholder="Escanea o escribe código de referencia"
+    style="flex: 1; padding: 8px 12px; border: 2px solid #001855; border-radius: 5px; font-size: 1em;"
+    onkeypress="if(event.key === 'Enter') agregarProductoPicking(${vIndex})">
+    
+    <button type="button" onclick="agregarProductoPicking(${vIndex})"
+    style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 8px 16px; border-radius: 5px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+      ➕ Agregar
+    </button>
+  </div>
+  
+  <div id="feedback-picking-${vIndex}" style="min-height: 30px; margin-top: 8px;"></div>
+</div>
 
 <!-- ✅ RESUMEN DE PRODUCTOS ESCANEADOS -->
 <div id="resumen-productos-${vIndex}" style="margin-top: 20px; margin-bottom: 15px;"></div>
@@ -1522,72 +1534,9 @@ function inicializarProductosEscaneados(vIndex) {
   }
 }
 
-// Capturar código escaneado por radiofrecuencia (input automático)
-function capturarCodigoEscaneado(codigo, vIndex) {
-  if (!codigo || codigo.trim().length < 5) return;
-  
-  codigo = codigo.trim().toUpperCase();
-  inicializarProductosEscaneados(vIndex);
-  
-  // Buscar producto en base de datos (intentar con varios formatos)
-  const producto = 
-    window.baseDatosProductos[codigo] || 
-    window.baseDatosProductos[codigo.replace(/\s/g, '')] ||
-    window.baseDatosProductos[codigo.substring(0, 8)] ||
-    window.baseDatosProductos[codigo.substring(0, 10)];
-  
-  if (producto) {
-    // Producto encontrado
-    if (!productosEscaneadosPorVehiculo[vIndex].productos[codigo]) {
-      productosEscaneadosPorVehiculo[vIndex].productos[codigo] = {
-        nombre: producto.nombre || codigo,
-        referencia: producto.referencia || codigo,
-        cantidad: 0
-      };
-    }
-    
-    // Incrementar contador
-    productosEscaneadosPorVehiculo[vIndex].productos[codigo].cantidad++;
-    productosEscaneadosPorVehiculo[vIndex].totalCajas++;
-    
-    // Actualizar campo de cajas del vehículo
-    const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
-    if (cajasInput) {
-      cajasInput.value = productosEscaneadosPorVehiculo[vIndex].totalCajas;
-    }
-    
-    // Actualizar total general y guardar
-    actualizarTotalCajas();
-    guardarProgreso();
-    
-    // Mostrar feedback visual
-    mostrarFeedbackEscaneo(producto.nombre, vIndex);
-    
-    console.log(`✅ Producto escaneado V${vIndex}: ${producto.nombre} (${codigo}) - Total: ${productosEscaneadosPorVehiculo[vIndex].totalCajas}`);
-  } else {
-    // Producto no encontrado
-    console.log(`⚠️ Código no encontrado: ${codigo}`);
-    // No mostramos alert para no interrumpir flujo de picking continuo
-  }
-}
+
 
 // Mostrar feedback visual al escanear
-function mostrarFeedbackEscaneo(nombreProducto, vIndex) {
-  const container = document.getElementById(`feedback-escaneo-${vIndex}`);
-  if (!container) return;
-  
-  container.innerHTML = `
-    <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 8px 12px; border-radius: 6px; margin-bottom: 8px; font-size: 0.9em; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-      ✅ ${nombreProducto.substring(0, 40)}${nombreProducto.length > 40 ? '...' : ''}
-    </div>
-  `;
-  
-  // Eliminar feedback después de 1.5 segundos
-  setTimeout(() => {
-    if (container) container.innerHTML = '';
-  }, 1500);
-}
-
 // Mostrar resumen de productos escaneados
 function mostrarResumenProductos(vIndex) {
   const container = document.getElementById(`resumen-productos-${vIndex}`);
@@ -1599,27 +1548,31 @@ function mostrarResumenProductos(vIndex) {
   
   if (totalCajas === 0) {
     container.innerHTML = `
-      <div class="no-productos">
-        <p>📦 No hay productos escaneados aún</p>
-        <small>Los códigos se registrarán automáticamente al escanear</small>
+      <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; text-align: center; border: 1px dashed #dee2e6;">
+        <p style="color: #6c757d; margin: 0; font-size: 1.1em;">📦 No hay productos en el picking aún</p>
+        <small style="color: #6c757d;">Comienza a agregar productos usando el campo de arriba</small>
       </div>
     `;
     return;
   }
   
   let html = `
-    <div class="resumen-productos-container">
-      <div class="resumen-productos-header">
-        <div class="resumen-productos-title">📊 RESUMEN DE PRODUCTOS</div>
-        <div class="total-cajas-badge">${totalCajas} CAJAS</div>
+    <div style="background: #f8f9fa; border-radius: 8px; padding: 15px; border: 2px solid #001855;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h5 style="margin: 0; color: #001855;">📊 Resumen de Picking</h5>
+        <div style="background: #001855; color: white; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 1.1em;">
+          ${totalCajas} cajas
+        </div>
       </div>
-      <div style="max-height: 250px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px;">
-        <table class="productos-table">
+      
+      <div style="max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 5px;">
+        <table style="width: 100%; border-collapse: collapse;">
           <thead>
-            <tr>
-              <th>Referencia</th>
-              <th>Producto</th>
-              <th>Cajas</th>
+            <tr style="background: #001855; color: white;">
+              <th style="padding: 10px 8px; text-align: left; font-size: 0.85em;">Referencia</th>
+              <th style="padding: 10px 8px; text-align: left; font-size: 0.85em;">Producto</th>
+              <th style="padding: 10px 8px; text-align: center; font-size: 0.85em;">Cajas</th>
+              <th style="padding: 10px 8px; text-align: center; font-size: 0.85em;">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -1630,10 +1583,16 @@ function mostrarResumenProductos(vIndex) {
   
   productosOrdenados.forEach(([codigo, prod]) => {
     html += `
-      <tr>
-        <td class="producto-referencia">${prod.referencia.substring(0, 15)}${prod.referencia.length > 15 ? '...' : ''}</td>
-        <td>${prod.nombre.substring(0, 35)}${prod.nombre.length > 35 ? '...' : ''}</td>
-        <td class="producto-cantidad">${prod.cantidad}</td>
+      <tr style="border-bottom: 1px solid #e9ecef;">
+        <td style="padding: 8px; font-family: 'Courier New', monospace; font-size: 0.85em; color: #495057;">${prod.referencia}</td>
+        <td style="padding: 8px; font-size: 0.9em;">${prod.nombre}</td>
+        <td style="padding: 8px; text-align: center; font-weight: bold; color: #C76E00;">${prod.cantidad}</td>
+        <td style="padding: 8px; text-align: center;">
+          <button type="button" onclick="eliminarProductoPicking(${vIndex}, '${codigo}')" 
+          style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 0.8em; cursor: pointer;">
+            🗑️
+          </button>
+        </td>
       </tr>
     `;
   });
@@ -1642,8 +1601,10 @@ function mostrarResumenProductos(vIndex) {
           </tbody>
         </table>
       </div>
-      <button type="button" class="btn-limpiar-escaneo" onclick="limpiarEscaneoVehiculo(${vIndex})">
-        🗑️ Limpiar Todos los Productos
+      
+      <button type="button" onclick="limpiarEscaneoVehiculo(${vIndex})" 
+      style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 5px; font-weight: bold; margin-top: 12px; width: 100%; cursor: pointer;">
+        🗑️ Limpiar Todo el Picking
       </button>
     </div>
   `;
@@ -1651,26 +1612,44 @@ function mostrarResumenProductos(vIndex) {
   container.innerHTML = html;
 }
 
-// Limpiar escaneo de un vehículo
-function limpiarEscaneoVehiculo(vIndex) {
-  if (confirm(`⚠️ ¿Estás seguro de limpiar TODOS los productos escaneados del Vehículo #${vIndex + 1}?`)) {
-    productosEscaneadosPorVehiculo[vIndex] = {
-      totalCajas: 0,
-      productos: {}
-    };
-    
-    // Limpiar campo de cajas
-    const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
-    if (cajasInput) {
-      cajasInput.value = '0';
+// Eliminar producto específico del picking
+function eliminarProductoPicking(vIndex, codigo) {
+  if (confirm(`⚠️ ¿Eliminar este producto del picking?`)) {
+    if (productosEscaneadosPorVehiculo[vIndex] && productosEscaneadosPorVehiculo[vIndex].productos[codigo]) {
+      const cantidad = productosEscaneadosPorVehiculo[vIndex].productos[codigo].cantidad;
+      productosEscaneadosPorVehiculo[vIndex].totalCajas -= cantidad;
+      delete productosEscaneadosPorVehiculo[vIndex].productos[codigo];
+      
+      // Actualizar campo de cajas
+      const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
+      if (cajasInput) {
+        cajasInput.value = productosEscaneadosPorVehiculo[vIndex].totalCajas;
+      }
+      
+      actualizarTotalCajas();
+      guardarProgreso();
+      mostrarResumenProductos(vIndex);
+      
+      mostrarFeedbackPicking(`✅ Producto eliminado`, vIndex, 'success');
     }
-    
-    actualizarTotalCajas();
-    guardarProgreso();
-    mostrarResumenProductos(vIndex);
-    
-    alert(`✅ Escaneo del Vehículo #${vIndex + 1} limpiado correctamente`);
   }
+}
+// ✅ FUNCIÓN FALTANTE: Limpiar todo el picking de un vehículo
+function limpiarEscaneoVehiculo(vIndex) {
+    if (confirm(`⚠️ ¿Limpiar todo el picking del Vehículo #${vIndex + 1}?`)) {
+        productosEscaneadosPorVehiculo[vIndex] = {
+            totalCajas: 0,
+            productos: {}
+        };
+        const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
+        if (cajasInput) {
+            cajasInput.value = '0';
+        }
+        actualizarTotalCajas();
+        guardarProgreso();
+        mostrarResumenProductos(vIndex);
+        mostrarFeedbackPicking(`✅ Picking limpiado del Vehículo #${vIndex + 1}`, vIndex, 'success');
+    }
 }
 
 // Guardar productos escaneados en localStorage
@@ -1697,60 +1676,107 @@ function cargarProductosEscaneados() {
   }
 }
 
-// Detectar escaneo automático de radiofrecuencia (input rápido de teclado)
-let bufferCodigo = '';
-let timeoutBuffer = null;
+// ============================================
+// ✅ NUEVO: Sistema de Picking con Botón
+// ============================================
 
-document.addEventListener('keydown', function(e) {
-  // Ignorar teclas de control/modificadoras
-  if (e.key.length > 1 || ['Control', 'Shift', 'Alt', 'Meta', 'Tab', 'CapsLock'].includes(e.key)) return;
+// Agregar producto al picking con botón
+function agregarProductoPicking(vIndex) {
+  const codigoInput = document.getElementById(`codigo-picking-${vIndex}`);
+  const codigo = codigoInput.value.trim().toUpperCase();
   
-  // Si es Enter y hay buffer, procesar código
-  if (e.key === 'Enter' && bufferCodigo.length >= 5) {
-    e.preventDefault();
-    const codigo = bufferCodigo.trim();
-    const vIndex = window.vehiculoActivo !== undefined ? window.vehiculoActivo : 0;
-    
-    if (codigo) {
-      capturarCodigoEscaneado(codigo, vIndex);
-    }
-    
-    bufferCodigo = '';
+  if (!codigo || codigo.length < 5) {
+    mostrarFeedbackPicking('⚠️ Por favor ingresa un código válido', vIndex, 'warning');
     return;
   }
   
-  // Acumular caracteres alfanuméricos
-  if (/^[a-zA-Z0-9]$/.test(e.key)) {
-    bufferCodigo += e.key.toUpperCase();
-    
-    // Reiniciar buffer si tarda más de 50ms entre teclas (no es escaneo)
-    clearTimeout(timeoutBuffer);
-    timeoutBuffer = setTimeout(() => {
-      if (bufferCodigo.length >= 8) { // Código largo = probable escaneo
-        const codigo = bufferCodigo.trim();
-        const vIndex = window.vehiculoActivo !== undefined ? window.vehiculoActivo : 0;
-        capturarCodigoEscaneado(codigo, vIndex);
-      }
-      bufferCodigo = '';
-    }, 50);
-  }
-});
-
-// Establecer vehículo activo para escaneo
-function setVehiculoActivoParaEscaneo(vIndex) {
-  window.vehiculoActivo = vIndex;
-  inicializarProductosEscaneados(vIndex);
+  // Buscar producto en base de datos
+  const producto = window.baseDatosProductos[codigo] || 
+                   window.baseDatosProductos[codigo.replace(/\s/g, '')] ||
+                   window.baseDatosProductos[codigo.substring(0, 8)] ||
+                   window.baseDatosProductos[codigo.substring(0, 10)];
   
-  // Resaltar visualmente el vehículo activo
-  document.querySelectorAll('.registro-vehiculo').forEach((el, idx) => {
-    if (idx === vIndex) {
-      el.style.borderLeft = '4px solid #28a745';
-      el.style.paddingLeft = '15px';
-    } else {
-      el.style.borderLeft = 'none';
-      el.style.paddingLeft = '0';
+  if (producto) {
+    // Inicializar si no existe
+    inicializarProductosEscaneados(vIndex);
+    
+    // Agregar o incrementar producto
+    if (!productosEscaneadosPorVehiculo[vIndex].productos[codigo]) {
+      productosEscaneadosPorVehiculo[vIndex].productos[codigo] = {
+        nombre: producto.nombre || codigo,
+        referencia: producto.referencia || codigo,
+        cantidad: 0
+      };
     }
-  });
+    
+    // Incrementar cantidad
+    productosEscaneadosPorVehiculo[vIndex].productos[codigo].cantidad++;
+    productosEscaneadosPorVehiculo[vIndex].totalCajas++;
+    
+    // Actualizar campo de cajas movidas
+    const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
+    if (cajasInput) {
+      cajasInput.value = productosEscaneadosPorVehiculo[vIndex].totalCajas;
+    }
+    
+    // Actualizar total general
+    actualizarTotalCajas();
+    
+    // Guardar progreso
+    guardarProgreso();
+    
+    // Mostrar feedback exitoso
+    mostrarFeedbackPicking(`✅ ${producto.nombre.substring(0, 40)}${producto.nombre.length > 40 ? '...' : ''}`, vIndex, 'success');
+    
+    // Limpiar campo de entrada
+    codigoInput.value = '';
+    codigoInput.focus();
+    
+    // Actualizar resumen
+    mostrarResumenProductos(vIndex);
+    
+    console.log(`📦 Producto agregado V${vIndex}: ${producto.nombre} - Total cajas: ${productosEscaneadosPorVehiculo[vIndex].totalCajas}`);
+  } else {
+    // Producto no encontrado
+    mostrarFeedbackPicking(`❌ Código no encontrado: ${codigo}`, vIndex, 'error');
+    codigoInput.focus();
+  }
+}
+
+// Mostrar feedback de picking
+function mostrarFeedbackPicking(mensaje, vIndex, tipo = 'info') {
+  const container = document.getElementById(`feedback-picking-${vIndex}`);
+  if (!container) return;
+  
+  let colorBg, colorText;
+  switch(tipo) {
+    case 'success':
+      colorBg = '#d4edda';
+      colorText = '#155724';
+      break;
+    case 'error':
+      colorBg = '#f8d7da';
+      colorText = '#721c24';
+      break;
+    case 'warning':
+      colorBg = '#fff3cd';
+      colorText = '#856404';
+      break;
+    default:
+      colorBg = '#d1ecf1';
+      colorText = '#0c5460';
+  }
+  
+  container.innerHTML = `
+    <div style="background: ${colorBg}; color: ${colorText}; padding: 8px 12px; border-radius: 5px; font-size: 0.9em; border-left: 4px solid ${colorText};">
+      ${mensaje}
+    </div>
+  `;
+  
+  // Eliminar feedback después de 3 segundos
+  setTimeout(() => {
+    if (container) container.innerHTML = '';
+  }, 3000);
 }
 
         function convertirATextoMayusculas() {
@@ -2068,7 +2094,8 @@ for (let i = 0; i < vehiculosData.length; i++) {
   // ✅ PASO CLAVE: Cargar primero el lugar para que los muelles se generen
   const lugarGuardado = data.lugar || 'Funza';
   document.getElementById('lugar').value = lugarGuardado;
-  actualizarMuellesPorLugar(); // ← Generar opciones de muelle ANTES
+  actualizarMuellesPorLugar();
+   // ← Generar opciones de muelle ANTES
 
   document.getElementById('vehiculos-contenedor').innerHTML = '';
   vehiculosData = [];
@@ -2147,8 +2174,12 @@ if (data._productosEscaneados) {
   actualizarCampos();
   // ✅ También aquí:
   actualizarMuellesPorLugar();
+  // ✅ Cargar base de datos de productos
+cargarBaseDatosProductos();
+// ✅ Cargar productos escaneados desde localStorage
+cargarProductosEscaneados();
 }
-             
+
             form.addEventListener('submit', enviarFormulario);
             form.addEventListener('input', guardarProgreso);
             form.addEventListener('change', guardarProgreso);
