@@ -288,7 +288,6 @@
 }
 </style>
 
-<script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 <body>
     <div class="logo-container">
@@ -562,11 +561,6 @@
             guardarProgreso();
         }
 
-        // ✅ FUNCIÓN NUEVA: ABRIR DETALLES DEL VEHÍCULO
-        function abrirDetalles(vehicleIndex) {
-            window.location.href = `detalles.html?vehicle=${vehicleIndex}`;
-        }
-
         function reindexarVehiculos() {
             const contenedor = document.getElementById('vehiculos-contenedor');
             contenedor.innerHTML = '';
@@ -633,7 +627,14 @@
       tiempo_muerto_final: getValue(`vehiculo_${i}_tiempo_muerto_final`),
       foto_url: getValue(`vehiculo_${i}_foto_url`),
       // ✅ Nuevo campo para Santo Domingo
-      tipo_operacion: getValue(`vehiculo_${i}_tipo_operacion`)
+      tipo_operacion: getValue(`vehiculo_${i}_tipo_operacion`),
+        interior_camion: getValue(`vehiculo_${i}_interior_camion`),
+  estado_carpa: getValue(`vehiculo_${i}_estado_carpa`),
+  olores_extranos: getValue(`vehiculo_${i}_olores_extranos`),
+  objetos_extranos: getValue(`vehiculo_${i}_objetos_extranos`),
+  evidencias_plagas: getValue(`vehiculo_${i}_evidencias_plagas`),
+  estado_suelo: getValue(`vehiculo_${i}_estado_suelo`),
+  aprobado: getValue(`vehiculo_${i}_aprobado`)
     };
   }
 }
@@ -862,24 +863,24 @@
                 <div id="nombres-personal-${vIndex}" style="margin-top: 15px;"></div>
                 
                 <label>Cajas Movidas:</label>
-<div style="display: flex; flex-direction: column; gap: 8px;">
-  <input type="number" name="vehiculo_${vIndex}_cajas" class="cajas-input-js" min="0" required
-         value="${datos.cajas || ''}"
-         oninput="actualizarTotalCajas(); guardarProgreso();">
-  
-  <button type="button" class="scanner-btn" onclick="abrirEscannerVehiculo(${vIndex})">
-    📱 Escanear Código (Picking)
-  </button>
-  
-  <div class="scanned-display" id="scanned-display-${vIndex}">
-    <strong>📦 Cajas escaneadas:</strong> <span id="scanned-count-${vIndex}">0</span>
-    <button type="button" onclick="limpiarEscaneoVehiculo(${vIndex})" 
-            style="background-color: #dc3545; color: white; border: none; 
-                   padding: 3px 8px; border-radius: 3px; font-size: 10px; margin-left: 8px;">
-      Limpiar
-    </button>
-  </div>
-</div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                <input type="number" name="vehiculo_${vIndex}_cajas" class="cajas-input-js" min="0" required
+                        value="${datos.cajas || ''}"
+                        oninput="actualizarTotalCajas(); guardarProgreso();">
+                
+                <button type="button" class="scanner-btn" onclick="abrirEscannerVehiculo(${vIndex})">
+                    📱 Escanear Código (Picking)
+                </button>
+                
+                <div class="scanned-display" id="scanned-display-${vIndex}">
+                    <strong>📦 Cajas escaneadas:</strong> <span id="scanned-count-${vIndex}">0</span>
+                    <button type="button" onclick="limpiarEscaneoVehiculo(${vIndex})" 
+                            style="background-color: #dc3545; color: white; border: none; 
+                                padding: 3px 8px; border-radius: 3px; font-size: 10px; margin-left: 8px;">
+                    Limpiar
+                    </button>
+                </div>
+                </div>
                 
                 <label>Justificación del retraso o incidencia:</label>
                 <select name="vehiculo_${vIndex}_justificacion" onchange="mostrarTiempoMuerto(this, ${vIndex})">
@@ -917,12 +918,82 @@
                     📸 <strong>La foto se sube automáticamente.</strong> No necesita hacer nada más.
                 </p>
 
-                <button type="button" class="btn-detalles" onclick="abrirDetalles(${vIndex})" 
-                        style="background-color: #0066cc; color: white; border: none; padding: 12px; 
-                            border-radius: 5px; margin-top: 15px; width: 100%; font-weight: bold;
-                            text-align: center; display: block; font-size: 16px; cursor: pointer;">
-                    📋 INSPECCION DE VEHICULO
-                </button>
+                <!-- ✅ SECCIÓN DE INSPECCIÓN DE VEHÍCULO -->
+            <hr style="margin-top:25px; border-style:dashed;">
+            <h5 style="text-align:center; color:#C76E00;">INSPECCIÓN DE VEHÍCULO</h5>
+            <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-top:15px;">
+            
+            <!-- INTERIOR CAMIÓN -->
+            <div class="form-group-custom">
+                <label style="margin-top:0;">INTERIOR CAMIÓN:</label>
+                <select name="vehiculo_${vIndex}_interior_camion" required>
+                <option value="">Seleccione</option>
+                <option value="BUENO" ${datos.interior_camion === 'BUENO' ? 'selected' : ''}>BUENO</option>
+                <option value="MALO" ${datos.interior_camion === 'MALO' ? 'selected' : ''}>MALO</option>
+                </select>
+            </div>
+
+            <!-- ESTADO DE LA CARPA -->
+            <div class="form-group-custom">
+                <label style="margin-top:0;">ESTADO DE LA CARPA:</label>
+                <select name="vehiculo_${vIndex}_estado_carpa" required>
+                <option value="">Seleccione</option>
+                <option value="BUENO" ${datos.estado_carpa === 'BUENO' ? 'selected' : ''}>BUENO</option>
+                <option value="MALO" ${datos.estado_carpa === 'MALO' ? 'selected' : ''}>MALO</option>
+                <option value="N/A" ${datos.estado_carpa === 'N/A' ? 'selected' : ''}>N/A</option>
+                </select>
+            </div>
+
+            <!-- OLORES EXTRAÑOS -->
+            <div class="form-group-custom">
+                <label style="margin-top:0;">OLORES EXTRAÑOS:</label>
+                <select name="vehiculo_${vIndex}_olores_extranos" required>
+                <option value="">Seleccione</option>
+                <option value="SI" ${datos.olores_extranos === 'SI' ? 'selected' : ''}>SI</option>
+                <option value="NO" ${datos.olores_extranos === 'NO' ? 'selected' : ''}>NO</option>
+                </select>
+            </div>
+
+            <!-- OBJETOS EXTRAÑOS -->
+            <div class="form-group-custom">
+                <label style="margin-top:0;">OBJETOS EXTRAÑOS:</label>
+                <select name="vehiculo_${vIndex}_objetos_extranos" required>
+                <option value="">Seleccione</option>
+                <option value="SI" ${datos.objetos_extranos === 'SI' ? 'selected' : ''}>SI</option>
+                <option value="NO" ${datos.objetos_extranos === 'NO' ? 'selected' : ''}>NO</option>
+                </select>
+            </div>
+
+            <!-- EVIDENCIAS DE PLAGAS -->
+            <div class="form-group-custom">
+                <label style="margin-top:0;">EVIDENCIAS DE PLAGAS:</label>
+                <select name="vehiculo_${vIndex}_evidencias_plagas" required>
+                <option value="">Seleccione</option>
+                <option value="SI" ${datos.evidencias_plagas === 'SI' ? 'selected' : ''}>SI</option>
+                <option value="NO" ${datos.evidencias_plagas === 'NO' ? 'selected' : ''}>NO</option>
+                </select>
+            </div>
+
+        <!-- ESTADO DEL SUELO -->
+        <div class="form-group-custom">
+            <label style="margin-top:0;">ESTADO DEL SUELO:</label>
+            <select name="vehiculo_${vIndex}_estado_suelo" required>
+            <option value="">Seleccione</option>
+            <option value="BUENO" ${datos.estado_suelo === 'BUENO' ? 'selected' : ''}>BUENO</option>
+            <option value="MALO" ${datos.estado_suelo === 'MALO' ? 'selected' : ''}>MALO</option>
+            </select>
+        </div>
+
+        <!-- APROBADO -->
+        <div class="form-group-custom">
+            <label style="margin-top:0;">APROBADO:</label>
+            <select name="vehiculo_${vIndex}_aprobado" required>
+            <option value="">Seleccione</option>
+            <option value="SI" ${datos.aprobado === 'SI' ? 'selected' : ''}>SI</option>
+            <option value="NO" ${datos.aprobado === 'NO' ? 'selected' : ''}>NO</option>
+            </select>
+        </div>
+        </div>
             `;
             
             registro.innerHTML = html;
@@ -1346,30 +1417,13 @@ function actualizarCampos() {
             
             // 1. Eliminar datos principales
             localStorage.removeItem('pepsico_data');
-            
-            // 2. Eliminar TODOS los detalles de inspección de vehículos
-            // (vehiculo_0_detalles, vehiculo_1_detalles, etc.)
-            for (let i = 0; i < localStorage.length; i++) {
-              const key = localStorage.key(i);
-              
-              // Eliminar claves relacionadas con detalles de vehículos
-              if (key && (
-                key.startsWith('vehiculo_') && key.endsWith('_detalles') ||
-                key.includes('_detalles') ||
-                key.startsWith('detalles_vehiculo_')
-              )) {
-                localStorage.removeItem(key);
-                // Ajustar índice porque localStorage cambia al eliminar
-                i--;
-              }
-            }
+
             
             // 3. Eliminar otros datos residuales del formulario
             const clavesResiduales = [
               'fecha', 'lugar', 'lider', 'coordinador', 'coordinador_otro',
               'lider_pepsico', 'lider_pepsico_otro', 'turno', 'total_personas',
-              'cajas_totales', 'nombres_personal', 'vehiculosData', 
-              'detallesVehiculos', 'paradasData'
+              'cajas_totales', 'nombres_personal', 'vehiculosData', 'paradasData'
             ];
             
             clavesResiduales.forEach(clave => localStorage.removeItem(clave));
@@ -1549,43 +1603,6 @@ function iniciarQuagga() {
   });
 }
 
-function iniciarEscaneo(index) {
-    const scannerContainer = document.getElementById(`reader-${index}`);
-    scannerContainer.style.display = 'block'; // Mostrar el div del scanner
-
-    const html5QrCode = new Html5Qrcode(`reader-${index}`);
-    
-    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-
-    // Iniciar la cámara trasera
-    html5QrCode.start(
-        { facingMode: "environment" }, 
-        config,
-        (decodedText) => {
-            // Cuando detecta algo:
-            document.querySelector(`input[name="vehiculo_${index}_placa"]`).value = decodedText;
-            html5QrCode.stop(); // Apaga la cámara
-            scannerContainer.style.display = 'none';
-        },
-        (errorMessage) => {
-            // Error de lectura (normal mientras busca)
-        }
-    ).catch((err) => {
-        console.error("Error al iniciar cámara:", err);
-        alert("No se pudo acceder a la cámara. Asegúrate de dar permisos HTTPS.");
-    });
-}
-
-// Forzar el video a mostrar
-const video = document.getElementById('scanner-video');
-if (video) {
-  video.style.display = 'block';
-  video.style.visibility = 'visible';
-  video.style.width = '100%';
-  video.style.maxWidth = '500px';
-  video.style.height = 'auto';
-}
-
 // Manejar detección de código
 function handleCodeDetection(result) {
   if (currentVehicleIndex === null) return;
@@ -1704,18 +1721,6 @@ function toggleFlashlight() {
         if (!validarPlacas()) return;
         if (!validarSolapamientoVehiculos() || !validarSolapamientoParadas()) return;
         
-        // Obtener detalles de vehículos desde localStorage
-        const detallesVehiculos = {};
-        const savedData = localStorage.getItem('pepsico_data');
-        if (savedData) {
-            const data = JSON.parse(savedData);
-            for (let i = 0; i < vehiculosData.length; i++) {
-            const detallesKey = `vehiculo_${i}_detalles`;
-            if (data[detallesKey]) {
-                detallesVehiculos[detallesKey] = JSON.parse(data[detallesKey]);
-            }
-            }
-        }
         
         // Preparar datos para enviar
         // Preparar datos para enviar
@@ -1731,7 +1736,9 @@ function toggleFlashlight() {
           total_personas: document.getElementById('total_personas').value,
           cajas_totales: document.getElementById('cajas_totales').value,
           datos_vehiculos: vehiculosData,
-          detalles_vehiculos: detallesVehiculos,
+
+          
+      
           datos_paradas_operacion: Array.from(
             document.querySelectorAll('#operacion-contenedor .parada-group')
           ).map(grupo => {
@@ -1746,7 +1753,6 @@ function toggleFlashlight() {
         
         console.log('📝 Datos que se enviarán a MySQL:');
         console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
-        console.log('Detalles:', JSON.stringify(detallesVehiculos, null, 2));
         
         // ⚠️ URL DE RAILWAY
         const RAILWAY_API_URL = 'https://pepsico-funza-production-b0f5.up.railway.app/api/registro';
@@ -1872,7 +1878,14 @@ function toggleFlashlight() {
                         otro_justificacion: data[`vehiculo_${i}_otro_justificacion`] || '',
                         tiempo_muerto_inicio: data[`vehiculo_${i}_tiempo_muerto_inicio`] || '',
                         tiempo_muerto_final: data[`vehiculo_${i}_tiempo_muerto_final`] || '',
-                        foto_url: data[`vehiculo_${i}_foto_url`] || ''
+                        foto_url: data[`vehiculo_${i}_foto_url`] || '',
+                        interior_camion: data[`vehiculo_${i}_interior_camion`] || '',
+                        estado_carpa: data[`vehiculo_${i}_estado_carpa`] || '',
+                        olores_extranos: data[`vehiculo_${i}_olores_extranos`] || '',
+                        objetos_extranos: data[`vehiculo_${i}_objetos_extranos`] || '',
+                        evidencias_plagas: data[`vehiculo_${i}_evidencias_plagas`] || '',
+                        estado_suelo: data[`vehiculo_${i}_estado_suelo`] || '',
+                        aprobado: data[`vehiculo_${i}_aprobado`] || ''
                     };
                     
                     // ✅ Cargar nombres del personal desde localStorage (NUEVO)
