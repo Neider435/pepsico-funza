@@ -29,6 +29,7 @@ const pool = mysql.createPool({
 });
 
 // Endpoint para recibir datos del formulario
+// Endpoint para recibir datos del formulario
 app.post('/api/registro', async (req, res) => {
   let connection;
   
@@ -48,8 +49,8 @@ app.post('/api/registro', async (req, res) => {
       turno,
       total_personas,
       cajas_totales,
-      datos_vehiculos,
-      detalles_vehiculos, // Se recibe como un array ordenado desde el frontend
+      datos_vehiculos,        // ✅ Ahora contiene los campos de inspección
+      // ❌ ELIMINAR: detalles_vehiculos,
       datos_paradas_operacion
     } = req.body;
 
@@ -67,7 +68,7 @@ app.post('/api/registro', async (req, res) => {
     
     const registroId = registroResult.insertId;
     
-    // 2. Insertar vehículos (usamos un bucle for tradicional para tener el índice 'i')
+    // 2. Insertar vehículos Y sus detalles de inspección
     for (let i = 0; i < datos_vehiculos.length; i++) {
       const vehiculo = datos_vehiculos[i];
       
@@ -75,12 +76,13 @@ app.post('/api/registro', async (req, res) => {
         ? JSON.stringify(vehiculo.nombres_personal) 
         : null;
       
+      // Insertar vehículo
       const [vehiculoResult] = await connection.query(
         `INSERT INTO vehiculos (
           registro_id, inicio, fin, motivo, otro_motivo, muelle, otro_muelle_num,
           placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, personas, cajas,
           justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_final, 
-          foto_url, nombres_personal,tipo_operacion
+          foto_url, nombres_personal, tipo_operacion
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           registroId,
@@ -110,30 +112,26 @@ app.post('/api/registro', async (req, res) => {
       
       const vehiculoId = vehiculoResult.insertId;
       
-      // 3. Insertar detalles del vehículo usando el MISMO ÍNDICE que el vehículo
-      // Esto asegura que el detalle 0 sea para el vehículo 0, etc.
-      if (detalles_vehiculos && detalles_vehiculos[i]) {
-        const detalles = detalles_vehiculos[i];
-        await connection.query(
-          `INSERT INTO detalles_vehiculos (
-            vehiculo_id, interior_camion, estado_carpa, olores_extraños, objetos_extraños,
-            evidencias_plagas, estado_suelo, aprobado
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            vehiculoId,
-            detalles.interior_camion,
-            detalles.estado_carpa,
-            detalles.olores_extraños,
-            detalles.objetos_extraños,
-            detalles.evidencias_plagas,
-            detalles.estado_suelo,
-            detalles.aprobado
-          ]
-        );
-      }
+      // ✅ INSERTAR DETALLES DE INSPECCIÓN usando los campos del mismo objeto vehiculo
+      await connection.query(
+        `INSERT INTO detalles_vehiculos (
+          vehiculo_id, interior_camion, estado_carpa, olores_extraños, objetos_extraños,
+          evidencias_plagas, estado_suelo, aprobado
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          vehiculoId,
+          vehiculo.interior_camion || null,
+          vehiculo.estado_carpa || null,
+          vehiculo.olores_extranos || null,
+          vehiculo.objetos_extranos || null,
+          vehiculo.evidencias_plagas || null,
+          vehiculo.estado_suelo || null,
+          vehiculo.aprobado || null
+        ]
+      );
     }
     
-    // 4. Insertar paradas de operación
+    // 3. Insertar paradas de operación
     for (const parada of datos_paradas_operacion) {
       await connection.query(
         `INSERT INTO paradas_operacion (
