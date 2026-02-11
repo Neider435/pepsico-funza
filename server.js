@@ -29,7 +29,6 @@ const pool = mysql.createPool({
 });
 
 // Endpoint para recibir datos del formulario
-// Endpoint para recibir datos del formulario
 app.post('/api/registro', async (req, res) => {
   let connection;
   
@@ -49,8 +48,7 @@ app.post('/api/registro', async (req, res) => {
       turno,
       total_personas,
       cajas_totales,
-      datos_vehiculos,        // ✅ Ahora contiene los campos de inspección
-      // ❌ ELIMINAR: detalles_vehiculos,
+      datos_vehiculos,
       datos_paradas_operacion
     } = req.body;
 
@@ -129,7 +127,27 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.aprobado || null
         ]
       );
-    }
+      
+      // ✅ NUEVO: Insertar productos escaneados por vehículo (AHORA DENTRO DEL BUCLE)
+      if (vehiculo.productos_escaneados && Array.isArray(vehiculo.productos_escaneados)) {
+        for (const producto of vehiculo.productos_escaneados) {
+          await connection.query(
+            `INSERT INTO num_producto (
+              vehiculo_id, registro_id, codigo_producto, referencia, nombre_producto, cantidad_cajas
+            ) VALUES (?, ?, ?, ?, ?, ?)`,
+            [
+              vehiculoId,
+              registroId,
+              producto.codigo || '',
+              producto.referencia || '',
+              producto.nombre || '',
+              producto.cantidad || 0
+            ]
+          );
+        }
+      }
+      
+    } // <-- CIERRE DEL BUCLE FOR
     
     // 3. Insertar paradas de operación
     for (const parada of datos_paradas_operacion) {
