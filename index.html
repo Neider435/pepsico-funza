@@ -435,38 +435,30 @@
 function actualizarMuellesPorLugar() {
   const lugar = document.getElementById('lugar').value;
   const muelles = obtenerMuellesPorLugar(lugar);
-  
   const contenedor = document.getElementById('vehiculos-contenedor');
   const registros = contenedor.querySelectorAll('.registro-vehiculo');
   
   registros.forEach((registro, index) => {
     const muelleSelect = registro.querySelector(`#muelle-select-${index}`);
     const otroMuelleInput = registro.querySelector(`#otro_muelle_${index}`);
-    
     if (muelleSelect) {
-      // Guardar valor actual
       const valorActual = muelleSelect.value;
-      
-      // Limpiar y agregar nuevas opciones
       muelleSelect.innerHTML = '<option value="">Seleccione</option>';
-      
       muelles.forEach(muelle => {
         const option = document.createElement('option');
         option.value = muelle.value;
         option.textContent = muelle.label;
-        
-        // Restaurar selección si coincide
         if (muelle.value === valorActual) {
           option.selected = true;
         }
-        
         muelleSelect.appendChild(option);
       });
-      
-      // Manejar campo "otro"
       manejarOtroMuelle(index);
     }
   });
+  
+  // ✅ ACTUALIZAR TIPO DE OPERACIÓN CUANDO CAMBIE EL LUGAR
+  actualizarTipoOperacionPorLugar();
   
   guardarProgreso();
 }
@@ -773,29 +765,24 @@ function manejarOtroMuelle(vIndex) {
         // FUNCIONES DE VISUALIZACIÓN CONDICIONAL
         // ============================================
 
-       function alternarDestinoRemitente(selectMotivo, vIndex) {
-          const motivo = selectMotivo.value;
-          const destinoGroup = document.getElementById(`destino-group-${vIndex}`);
-          const remitenteGroup = document.getElementById(`remitente-group-${vIndex}`);
-          const tipoOperacionGroup = document.getElementById(`tipo-operacion-group-${vIndex}`);
-          
-          if (destinoGroup) destinoGroup.style.display = motivo === 'cargue' ? 'block' : 'none';
-          if (remitenteGroup) remitenteGroup.style.display = motivo === 'descargue' ? 'block' : 'none';
-          
-          // Mostrar tipo operación solo si es Santo Domingo
-          const lugar = document.getElementById('lugar').value;
-          if (tipoOperacionGroup) {
-            tipoOperacionGroup.style.display = (lugar === 'SantoDomingo' && motivo !== '') ? 'block' : 'none';
-          }
-          
-          const destinoSelect = document.getElementById(`destino-select-${vIndex}`);
-          const remitenteInput = document.getElementById(`remitente-input-${vIndex}`);
-          
-          if (motivo === 'cargue' && destinoSelect) {
-            destinoSelect.removeAttribute('required'); // Destino opcional
-          } else if (remitenteInput) {
-            remitenteInput.required = motivo === 'descargue';
-          }
+        function alternarDestinoRemitente(selectMotivo, vIndex) {
+            const motivo = selectMotivo.value;
+            const destinoGroup = document.getElementById(`destino-group-${vIndex}`);
+            const remitenteGroup = document.getElementById(`remitente-group-${vIndex}`);
+            
+            if (destinoGroup) destinoGroup.style.display = motivo === 'cargue' ? 'block' : 'none';
+            if (remitenteGroup) remitenteGroup.style.display = motivo === 'descargue' ? 'block' : 'none';
+            
+            // ✅ ELIMINAR la lógica del tipo de operación de aquí
+            // (se manejará solo por el lugar, no por el motivo)
+            
+            const destinoSelect = document.getElementById(`destino-select-${vIndex}`);
+            const remitenteInput = document.getElementById(`remitente-input-${vIndex}`);
+            if (motivo === 'cargue' && destinoSelect) {
+                destinoSelect.removeAttribute('required'); // Destino opcional
+            } else if (remitenteInput) {
+                remitenteInput.required = motivo === 'descargue';
+            }
         }
 
         function mostrarTiempoMuerto(select, vIndex) {
@@ -812,6 +799,30 @@ function manejarOtroMuelle(vIndex) {
             guardarProgreso();
         }
 
+        //FUNCIÓN: Mostrar/Ocultar Tipo de Operación basado en lugar
+function actualizarTipoOperacionPorLugar() {
+  const lugar = document.getElementById('lugar').value;
+  const contenedor = document.getElementById('vehiculos-contenedor');
+  const registros = contenedor.querySelectorAll('.registro-vehiculo');
+  
+  registros.forEach((registro, index) => {
+    const tipoOperacionGroup = document.getElementById(`tipo-operacion-group-${index}`);
+    if (tipoOperacionGroup) {
+      if (lugar === 'SantoDomingo') {
+        tipoOperacionGroup.style.display = 'block';
+      } else {
+        tipoOperacionGroup.style.display = 'none';
+        // Limpiar valor cuando se oculta
+        const tipoOperacionSelect = document.getElementById(`tipo-operacion-${index}`);
+        if (tipoOperacionSelect) {
+          tipoOperacionSelect.value = '';
+        }
+      }
+    }
+  });
+  
+  guardarProgreso();
+}
         // ============================================
         // CREACIÓN DE HTML PARA VEHÍCULOS
         // ============================================
@@ -867,12 +878,13 @@ function manejarOtroMuelle(vIndex) {
                     </select>
                     <input type="text" name="vehiculo_${vIndex}_otro_motivo" placeholder="Especifique otro motivo" class="otro-input" value="${datos.otro_motivo || ''}">
 
+                    <!-- ✅ TIPO DE OPERACIÓN: mostrar/ocultar basado en lugar (Santo Domingo) -->
                     <div class="form-group-custom" id="tipo-operacion-group-${vIndex}" style="display:none;">
                       <label style="margin-top:0;">Tipo de Operación:</label>
                       <select id="tipo-operacion-${vIndex}" name="vehiculo_${vIndex}_tipo_operacion">
                         <option value="">Seleccione tipo</option>
-                        <option value="3PD">3PD</option>
-                        <option value="MQ">MQ</option>
+                        <option value="3PD" ${datos.tipo_operacion === '3PD' ? 'selected' : ''}>3PD</option>
+                        <option value="MQ" ${datos.tipo_operacion === 'MQ' ? 'selected' : ''}>MQ</option>
                       </select>
                     </div>
                 </div>
@@ -1117,6 +1129,21 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
         </div>
         </div>
             `;
+            
+            registro.innerHTML = html;
+            contenedor.appendChild(registro);
+            
+            // ✅ MOSTRAR/OCULTAR "Tipo de Operación" basado en lugar (Santo Domingo)
+            const lugar = document.getElementById('lugar').value;
+  const tipoOperacionGroup = document.getElementById(`tipo-operacion-group-${vIndex}`);
+  if (tipoOperacionGroup) {
+    if (lugar === 'SantoDomingo') {
+      tipoOperacionGroup.style.display = 'block';
+    } else {
+      tipoOperacionGroup.style.display = 'none';
+    }
+  }
+            
             const origenSelect = document.getElementById(`remitente-select-${vIndex}`);
 if (origenSelect) {
   origenSelect.addEventListener('change', () => manejarOtroOrigen(vIndex));
@@ -1140,10 +1167,6 @@ if (origenSelect) {
   
   guardarProgreso();
 }
-            
-            
-            registro.innerHTML = html;
-            contenedor.appendChild(registro);
             
             const motivoSelect = document.getElementById(motivoSelectId);
             motivoSelect.addEventListener('change', () => {
@@ -2307,7 +2330,8 @@ for (let i = 0; i < vehiculosData.length; i++) {
         objetos_extranos: data[`vehiculo_${i}_objetos_extranos`] || '',
         evidencias_plagas: data[`vehiculo_${i}_evidencias_plagas`] || '',
         estado_suelo: data[`vehiculo_${i}_estado_suelo`] || '',
-        aprobado: data[`vehiculo_${i}_aprobado`] || ''
+        aprobado: data[`vehiculo_${i}_aprobado`] || '',
+        tipo_operacion: data[`vehiculo_${i}_tipo_operacion`] || ''  // ✅ AÑADIR ESTA LÍNEA
       };
 
       // ✅ Cargar nombres del personal desde localStorage (NUEVO)
@@ -2321,6 +2345,14 @@ for (let i = 0; i < vehiculosData.length; i++) {
       }
       vehiculosData.push(vObj);
       crearVehiculoHTML(document.getElementById('vehiculos-contenedor'), i, vObj);
+      
+      // ✅ Restaurar valor de tipo de operación
+      if (vObj.tipo_operacion) {
+        const tipoOperacionSelect = document.getElementById(`tipo-operacion-${i}`);
+        if (tipoOperacionSelect) {
+          tipoOperacionSelect.value = vObj.tipo_operacion;
+        }
+      }
     }
 
     // ✅ PASO 4: Poblar muelles DESPUÉS de crear los vehículos
