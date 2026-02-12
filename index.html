@@ -1644,44 +1644,85 @@ function mostrarResumenProductos(vIndex) {
 
 // Eliminar producto específico del picking
 function eliminarProductoPicking(vIndex, codigo) {
-  if (confirm(`⚠️ ¿Eliminar este producto del picking?`)) {
-    if (productosEscaneadosPorVehiculo[vIndex] && productosEscaneadosPorVehiculo[vIndex].productos[codigo]) {
-      const cantidad = productosEscaneadosPorVehiculo[vIndex].productos[codigo].cantidad;
-      productosEscaneadosPorVehiculo[vIndex].totalCajas -= cantidad;
-      delete productosEscaneadosPorVehiculo[vIndex].productos[codigo];
-      
-      // Actualizar campo de cajas
-      const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
-      if (cajasInput) {
-        cajasInput.value = productosEscaneadosPorVehiculo[vIndex].totalCajas;
-      }
-      
-      actualizarTotalCajas();
-      guardarProgreso();
-      mostrarResumenProductos(vIndex);
-      
-      mostrarFeedbackPicking(`✅ Producto eliminado`, vIndex, 'success');
-    }
+  // Verificar que exista el vehículo y el producto
+  if (!productosEscaneadosPorVehiculo[vIndex] || !productosEscaneadosPorVehiculo[vIndex].productos[codigo]) {
+    console.warn('Producto no encontrado para eliminar');
+    return;
   }
+  
+  const producto = productosEscaneadosPorVehiculo[vIndex].productos[codigo];
+  
+  // ✅ VERIFICACIÓN: Pedir confirmación al usuario
+  const confirmar = confirm(`⚠️ ¿Estás seguro de eliminar TODAS las ${producto.cantidad} cajas de:\n\n${producto.nombre}?\n\nEsta acción no se puede deshacer.`);
+  
+  if (!confirmar) {
+    console.log('Eliminación cancelada por el usuario');
+    return;
+  }
+  
+  // Eliminar producto
+  const cantidadEliminada = producto.cantidad;
+  delete productosEscaneadosPorVehiculo[vIndex].productos[codigo];
+  
+  // Actualizar total de cajas
+  productosEscaneadosPorVehiculo[vIndex].totalCajas -= cantidadEliminada;
+  
+  // Actualizar campo de cajas movidas
+  const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
+  if (cajasInput) {
+    cajasInput.value = productosEscaneadosPorVehiculo[vIndex].totalCajas;
+  }
+  
+  // Actualizar total general
+  actualizarTotalCajas();
+  
+  // Guardar progreso
+  guardarProgreso();
+  
+  // Mostrar feedback
+  mostrarFeedbackPicking(`✅ ${producto.nombre.substring(0, 30)}${producto.nombre.length > 30 ? '...' : ''} eliminado`, vIndex, 'success');
+  
+  // Actualizar resumen
+  mostrarResumenProductos(vIndex);
+  
+  console.log(`📦 Producto eliminado V${vIndex}: ${codigo}`);
 }
 // ✅ FUNCIÓN FALTANTE: Limpiar todo el picking de un vehículo
 function limpiarEscaneoVehiculo(vIndex) {
-    if (confirm(`⚠️ ¿Limpiar todo el picking del Vehículo #${vIndex + 1}?`)) {
-        productosEscaneadosPorVehiculo[vIndex] = {
-            totalCajas: 0,
-            productos: {}
-        };
-        const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
-        if (cajasInput) {
-            cajasInput.value = '0';
-        }
-        actualizarTotalCajas();
-        guardarProgreso();
-        mostrarResumenProductos(vIndex);
-        mostrarFeedbackPicking(`✅ Picking limpiado del Vehículo #${vIndex + 1}`, vIndex, 'success');
-    }
+  // ✅ VERIFICACIÓN: Pedir confirmación al usuario
+  const confirmar = confirm(`⚠️ ¿Estás seguro de LIMPIAR TODO el picking del vehículo ${vIndex + 1}?\n\nSe eliminarán TODOS los productos escaneados.\n\nEsta acción no se puede deshacer.`);
+  
+  if (!confirmar) {
+    console.log('Limpieza de picking cancelada por el usuario');
+    return;
+  }
+  
+  // Limpiar productos escaneados
+  productosEscaneadosPorVehiculo[vIndex] = {
+    productos: {},
+    totalCajas: 0
+  };
+  
+  // Limpiar campo de cajas
+  const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
+  if (cajasInput) {
+    cajasInput.value = '';
+  }
+  
+  // Actualizar total general
+  actualizarTotalCajas();
+  
+  // Guardar progreso
+  guardarProgreso();
+  
+  // Mostrar feedback
+  mostrarFeedbackPicking('✅ Picking limpiado completamente', vIndex, 'success');
+  
+  // Actualizar resumen
+  mostrarResumenProductos(vIndex);
+  
+  console.log(`🧹 Picking limpiado para vehículo V${vIndex}`);
 }
-
 // Guardar productos escaneados en localStorage
 function guardarProductosEscaneados() {
   localStorage.setItem('productos_escaneados_rf', JSON.stringify(productosEscaneadosPorVehiculo));
@@ -1724,6 +1765,20 @@ function borrarCantidadPicking(vIndex, codigo, cantidadABorrar) {
   
   if (cantidadABorrar <= 0) {
     alert(`⚠️ La cantidad a borrar debe ser mayor a 0.`);
+    return;
+  }
+  
+  // ✅ VERIFICACIÓN: Pedir confirmación al usuario
+  const productoNombre = producto.nombre.substring(0, 40) + (producto.nombre.length > 40 ? '...' : '');
+  const mensaje = cantidadABorrar === cantidadActual 
+    ? `⚠️ ¿Estás seguro de eliminar TODAS las ${cantidadActual} cajas de:\n\n${productoNombre}?\n\nEsta acción no se puede deshacer.`
+    : `⚠️ ¿Estás seguro de eliminar ${cantidadABorrar} caja${cantidadABorrar > 1 ? 's' : ''} de:\n\n${productoNombre}?\n\nQuedarán ${cantidadActual - cantidadABorrar} caja${(cantidadActual - cantidadABorrar) > 1 ? 's' : ''}.`;
+  
+  const confirmar = confirm(mensaje);
+  
+  if (!confirmar) {
+    // ✅ Usuario canceló la acción
+    console.log('Acción de borrado cancelada por el usuario');
     return;
   }
   
