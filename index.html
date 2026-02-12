@@ -1698,18 +1698,10 @@ function agregarProductoPicking(vIndex) {
   const codigoInput = document.getElementById(`codigo-picking-${vIndex}`);
   const codigo = codigoInput.value.trim().toUpperCase();
   
-  // ✅ VERIFICAR si la base de datos está cargada
-  if (!window.baseDatosProductos) {
-    mostrarFeedbackPicking('⚠️ Espera: Cargando base de datos...', vIndex, 'warning');
-    console.log('Base de datos aún no cargada, reintento en 500ms');
-    
-    // ✅ Reintentar después de 500ms
-    setTimeout(() => agregarProductoPicking(vIndex), 500);
-    return;
-  }
-  
   if (!codigo || codigo.length < 5) {
     mostrarFeedbackPicking('⚠️ Por favor ingresa un código válido', vIndex, 'warning');
+    // ✅ Mantener foco incluso en advertencia
+    setTimeout(() => codigoInput.focus(), 50);
     return;
   }
   
@@ -1751,9 +1743,12 @@ function agregarProductoPicking(vIndex) {
     // Mostrar feedback exitoso
     mostrarFeedbackPicking(`✅ ${producto.nombre.substring(0, 40)}${producto.nombre.length > 40 ? '...' : ''}`, vIndex, 'success');
     
-    // Limpiar campo de entrada
+    // ✅ Limpiar y enfocar con delay para asegurar el foco
     codigoInput.value = '';
-    codigoInput.focus();
+    setTimeout(() => {
+      codigoInput.focus();
+      codigoInput.select(); // ✅ Seleccionar todo el texto (por si hay algo)
+    }, 50);
     
     // Actualizar resumen
     mostrarResumenProductos(vIndex);
@@ -1763,7 +1758,11 @@ function agregarProductoPicking(vIndex) {
     // Producto no encontrado - Borrar campo automáticamente
     mostrarFeedbackPicking(`❌ Código no encontrado: ${codigo}`, vIndex, 'error');
     codigoInput.value = '';
-    codigoInput.focus();
+    // ✅ Enfocar con delay incluso en error
+    setTimeout(() => {
+      codigoInput.focus();
+      codigoInput.select();
+    }, 50);
   }
 }
 
@@ -2220,4 +2219,3 @@ for (let i = 0; i < vehiculosData.length; i++) {
         
     </script>
 </body>
-
