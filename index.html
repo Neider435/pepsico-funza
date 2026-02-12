@@ -1507,8 +1507,11 @@ let productosEscaneadosPorVehiculo = {};
 // Cargar base de datos de productos desde JSON
 async function cargarBaseDatosProductos() {
   try {
+    console.log('⏳ Cargando base de datos de productos...');
+    
     const response = await fetch('productos.json');
     const data = await response.json();
+    
     window.baseDatosProductos = data;
     console.log('✅ Base de datos de productos cargada:', Object.keys(data).length, 'productos');
   } catch (error) {
@@ -1522,6 +1525,7 @@ async function cargarBaseDatosProductos() {
       "300037949": { nombre: "CHEESE TRIS QUESO 50GX72X1 CP", referencia: "300037949" },
       "300065646": { nombre: "MARGARITA POLLO 105GX18X1 PROMO H2225", referencia: "300065646" }
     };
+    console.log('✅ Base de datos fallback cargada');
   }
 }
 
@@ -2095,111 +2099,116 @@ for (let i = 0; i < vehiculosData.length; i++) {
         // INICIALIZACIÓN AL CARGAR LA PÁGINA
         // ============================================
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.querySelector('form');
-            const savedData = localStorage.getItem('pepsico_data');
-            
-            if (savedData) {
-  const data = JSON.parse(savedData);
-  const nVehiculos = data._numVehiculos || 1;
+        document.addEventListener('DOMContentLoaded', async function() {  // ← Añadir 'async' aquí
+  const form = document.querySelector('form');
+  const savedData = localStorage.getItem('pepsico_data');
 
-  // ✅ PASO CLAVE: Cargar primero el lugar para que los muelles se generen
-  const lugarGuardado = data.lugar || 'Funza';
-  document.getElementById('lugar').value = lugarGuardado;
-  actualizarMuellesPorLugar();
-   // ← Generar opciones de muelle ANTES
+  if (savedData) {
+    const data = JSON.parse(savedData);
+    const nVehiculos = data._numVehiculos || 1;
 
-  document.getElementById('vehiculos-contenedor').innerHTML = '';
-  vehiculosData = [];
+    // ✅ PASO CLAVE: Cargar primero el lugar para que los muelles se generen
+    const lugarGuardado = data.lugar || 'Funza';
+    document.getElementById('lugar').value = lugarGuardado;
+    actualizarMuellesPorLugar();
+    // ← Generar opciones de muelle ANTES
 
-  for(let i=0; i<nVehiculos; i++) {
-    const vObj = {
-      inicio: data[`vehiculo_${i}_inicio`] || '',
-      fin: data[`vehiculo_${i}_fin`] || '',
-      motivo: data[`vehiculo_${i}_motivo`] || '',
-      otro_motivo: data[`vehiculo_${i}_otro_motivo`] || '',
-      muelle: data[`vehiculo_${i}_muelle`] || '',
-      otro_muelle_num: data[`vehiculo_${i}_otro_muelle_num`] || '',
-      placa: data[`vehiculo_${i}_placa`] || '',
-      tipo_vehi: data[`vehiculo_${i}_tipo_vehi`] || '',
-      otro_tipo: data[`vehiculo_${i}_otro_tipo`] || '',
-      destino: data[`vehiculo_${i}_destino`] || '',
-      otro_destino: data[`vehiculo_${i}_otro_destino`] || '',
-      origen: data[`vehiculo_${i}_origen`] || '',
-      otro_origen: data[`vehiculo_${i}_otro_origen`] || '',
-      personas: data[`vehiculo_${i}_personas`] || '',
-      nombres_personal: [],
-      cajas: data[`vehiculo_${i}_cajas`] || '',
-      justificacion: data[`vehiculo_${i}_justificacion`] || '',
-      otro_justificacion: data[`vehiculo_${i}_otro_justificacion`] || '',
-      tiempo_muerto_inicio: data[`vehiculo_${i}_tiempo_muerto_inicio`] || '',
-      tiempo_muerto_final: data[`vehiculo_${i}_tiempo_muerto_final`] || '',
-      foto_url: data[`vehiculo_${i}_foto_url`] || '',
-      interior_camion: data[`vehiculo_${i}_interior_camion`] || '',
-      estado_carpa: data[`vehiculo_${i}_estado_carpa`] || '',
-      olores_extranos: data[`vehiculo_${i}_olores_extranos`] || '',
-      objetos_extranos: data[`vehiculo_${i}_objetos_extranos`] || '',
-      evidencias_plagas: data[`vehiculo_${i}_evidencias_plagas`] || '',
-      estado_suelo: data[`vehiculo_${i}_estado_suelo`] || '',
-      aprobado: data[`vehiculo_${i}_aprobado`] || ''
-    };
+    document.getElementById('vehiculos-contenedor').innerHTML = '';
+    vehiculosData = [];
 
-    // ✅ Cargar nombres del personal desde localStorage (NUEVO)
-    for (let j = 1; ; j++) {
-      const nombreKey = `vehiculo_${i}_nombre_persona_${j}`;
-      if (data[nombreKey] !== undefined) {
-        vObj.nombres_personal.push(data[nombreKey]);
-      } else {
-        break;
+    for(let i=0; i<nVehiculos; i++) {
+      const vObj = {
+        inicio: data[`vehiculo_${i}_inicio`] || '',
+        fin: data[`vehiculo_${i}_fin`] || '',
+        motivo: data[`vehiculo_${i}_motivo`] || '',
+        otro_motivo: data[`vehiculo_${i}_otro_motivo`] || '',
+        muelle: data[`vehiculo_${i}_muelle`] || '',
+        otro_muelle_num: data[`vehiculo_${i}_otro_muelle_num`] || '',
+        placa: data[`vehiculo_${i}_placa`] || '',
+        tipo_vehi: data[`vehiculo_${i}_tipo_vehi`] || '',
+        otro_tipo: data[`vehiculo_${i}_otro_tipo`] || '',
+        destino: data[`vehiculo_${i}_destino`] || '',
+        otro_destino: data[`vehiculo_${i}_otro_destino`] || '',
+        origen: data[`vehiculo_${i}_origen`] || '',
+        otro_origen: data[`vehiculo_${i}_otro_origen`] || '',
+        personas: data[`vehiculo_${i}_personas`] || '',
+        nombres_personal: [],
+        cajas: data[`vehiculo_${i}_cajas`] || '',
+        justificacion: data[`vehiculo_${i}_justificacion`] || '',
+        otro_justificacion: data[`vehiculo_${i}_otro_justificacion`] || '',
+        tiempo_muerto_inicio: data[`vehiculo_${i}_tiempo_muerto_inicio`] || '',
+        tiempo_muerto_final: data[`vehiculo_${i}_tiempo_muerto_final`] || '',
+        foto_url: data[`vehiculo_${i}_foto_url`] || '',
+        interior_camion: data[`vehiculo_${i}_interior_camion`] || '',
+        estado_carpa: data[`vehiculo_${i}_estado_carpa`] || '',
+        olores_extranos: data[`vehiculo_${i}_olores_extranos`] || '',
+        objetos_extranos: data[`vehiculo_${i}_objetos_extranos`] || '',
+        evidencias_plagas: data[`vehiculo_${i}_evidencias_plagas`] || '',
+        estado_suelo: data[`vehiculo_${i}_estado_suelo`] || '',
+        aprobado: data[`vehiculo_${i}_aprobado`] || ''
+      };
+
+      // ✅ Cargar nombres del personal desde localStorage (NUEVO)
+      for (let j = 1; ; j++) {
+        const nombreKey = `vehiculo_${i}_nombre_persona_${j}`;
+        if (data[nombreKey] !== undefined) {
+          vObj.nombres_personal.push(data[nombreKey]);
+        } else {
+          break;
+        }
+      }
+      vehiculosData.push(vObj);
+      crearVehiculoHTML(document.getElementById('vehiculos-contenedor'), i, vObj);
+    }
+
+    // Resto del código...
+    document.getElementById('operacion-contenedor').innerHTML = '';
+    if (data._paradasDetalle) {
+      data._paradasDetalle.forEach(p => agregarCampoParada('operacion', p));
+    }
+    for (const key in data) {
+      if (key.startsWith('_') || key.startsWith('vehiculo_') || key.startsWith('parada_')) continue;
+      const el = form.elements[key];
+      if (el) {
+        el.value = data[key];
+        if (el.id === 'coordinador') manejarOtroCoordinador();
       }
     }
-    vehiculosData.push(vObj);
-    crearVehiculoHTML(document.getElementById('vehiculos-contenedor'), i, vObj);
-  }
-
-  // Resto del código...
-  document.getElementById('operacion-contenedor').innerHTML = '';
-  if (data._paradasDetalle) {
-    data._paradasDetalle.forEach(p => agregarCampoParada('operacion', p));
-  }
-  for (const key in data) {
-    if (key.startsWith('_') || key.startsWith('vehiculo_') || key.startsWith('parada_')) continue;
-    const el = form.elements[key];
-    if (el) {
-      el.value = data[key];
-      if (el.id === 'coordinador') manejarOtroCoordinador();
+    actualizarTotalCajas();
+    
+    // ✅ Cargar productos escaneados desde localStorage
+    if (data._productosEscaneados) {
+      productosEscaneadosPorVehiculo = data._productosEscaneados;
+      // Actualizar resúmenes visuales
+      Object.keys(productosEscaneadosPorVehiculo).forEach(vIndex => {
+        mostrarResumenProductos(parseInt(vIndex));
+      });
     }
+    
+    // ✅ Cargar base de datos de productos (TAMBIÉN aquí con await)
+    await cargarBaseDatosProductos();  // ← Añadir 'await' aquí
+    
+    generarCamposNombres();
+  } else {
+    agregarRegistroVehiculo();
+    agregarCampoParada('operacion');
+    actualizarCampos();
+    // ✅ También aquí:
+    actualizarMuellesPorLugar();
+    // ✅ Cargar base de datos de productos con await
+    await cargarBaseDatosProductos();  // ← Añadir 'await' aquí
+    // ✅ Cargar productos escaneados desde localStorage
+    cargarProductosEscaneados();
   }
-  actualizarTotalCajas();
-  // ✅ Cargar productos escaneados desde localStorage
-if (data._productosEscaneados) {
-  productosEscaneadosPorVehiculo = data._productosEscaneados;
-  // Actualizar resúmenes visuales
-  Object.keys(productosEscaneadosPorVehiculo).forEach(vIndex => {
-    mostrarResumenProductos(parseInt(vIndex));
-  });
-}
-  generarCamposNombres();
-} else {
-  agregarRegistroVehiculo();
-  agregarCampoParada('operacion');
-  actualizarCampos();
-  // ✅ También aquí:
-  actualizarMuellesPorLugar();
-  // ✅ Cargar base de datos de productos
-cargarBaseDatosProductos();
-// ✅ Cargar productos escaneados desde localStorage
-cargarProductosEscaneados();
-}
 
-            form.addEventListener('submit', enviarFormulario);
-            form.addEventListener('input', guardarProgreso);
-            form.addEventListener('change', guardarProgreso);
-            
-            document.getElementById('lider_pepsico').addEventListener('change', function() {
-                this.dataset.manualChange = 'true';
-            });
-        });
+  form.addEventListener('submit', enviarFormulario);
+  form.addEventListener('input', guardarProgreso);
+  form.addEventListener('change', guardarProgreso);
+  
+  document.getElementById('lider_pepsico').addEventListener('change', function() {
+    this.dataset.manualChange = 'true';
+  });
+});
         
     </script>
 </body>
