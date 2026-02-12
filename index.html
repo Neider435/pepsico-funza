@@ -1738,8 +1738,9 @@ function agregarProductoPicking(vIndex) {
     
     console.log(`📦 Producto agregado V${vIndex}: ${producto.nombre} - Total cajas: ${productosEscaneadosPorVehiculo[vIndex].totalCajas}`);
   } else {
-    // Producto no encontrado
+    // Producto no encontrado - ✅ Borrar campo automáticamente
     mostrarFeedbackPicking(`❌ Código no encontrado: ${codigo}`, vIndex, 'error');
+    codigoInput.value = '';  // ✅ Esta línea borra el campo
     codigoInput.focus();
   }
 }
