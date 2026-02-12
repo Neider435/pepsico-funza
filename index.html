@@ -1601,9 +1601,18 @@ function mostrarResumenProductos(vIndex) {
         <td style="padding: 8px; font-size: 0.9em;">${prod.nombre}</td>
         <td style="padding: 8px; text-align: center; font-weight: bold; color: #C76E00;">${prod.cantidad}</td>
         <td style="padding: 8px; text-align: center;">
-          <button type="button" onclick="eliminarProductoPicking(${vIndex}, '${codigo}')" 
-          style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 0.8em; cursor: pointer;">
-            🗑️
+          <!-- ✅ Botón para borrar 1 unidad -->
+          <button type="button" onclick="borrarCantidadPicking(${vIndex}, '${codigo}', 1)" 
+                  style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 0.75em; cursor: pointer; margin-right: 3px;"
+                  title="Borrar 1 unidad">
+            ➖ 1
+          </button>
+          
+          <!-- ✅ Botón para borrar todo el producto -->
+          <button type="button" onclick="borrarCantidadPicking(${vIndex}, '${codigo}', ${prod.cantidad})" 
+                  style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 0.75em; cursor: pointer;"
+                  title="Borrar todo">
+            🗑️ Todo
           </button>
         </td>
       </tr>
@@ -1616,7 +1625,7 @@ function mostrarResumenProductos(vIndex) {
       </div>
       
       <button type="button" onclick="limpiarEscaneoVehiculo(${vIndex})" 
-      style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 5px; font-weight: bold; margin-top: 12px; width: 100%; cursor: pointer;">
+              style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 5px; font-weight: bold; margin-top: 12px; width: 100%; cursor: pointer;">
         🗑️ Limpiar Todo el Picking
       </button>
     </div>
@@ -1687,6 +1696,66 @@ function cargarProductosEscaneados() {
       productosEscaneadosPorVehiculo = {};
     }
   }
+}
+
+function borrarCantidadPicking(vIndex, codigo, cantidadABorrar) {
+  // Verificar que exista el vehículo y el producto
+  if (!productosEscaneadosPorVehiculo[vIndex] || !productosEscaneadosPorVehiculo[vIndex].productos[codigo]) {
+    console.warn('Producto no encontrado para borrar');
+    return;
+  }
+  
+  const producto = productosEscaneadosPorVehiculo[vIndex].productos[codigo];
+  const cantidadActual = producto.cantidad;
+  
+  // Verificar que no se borre más de lo que hay
+  if (cantidadABorrar > cantidadActual) {
+    alert(`⚠️ No puedes borrar ${cantidadABorrar} unidades. Solo hay ${cantidadActual} disponibles.`);
+    return;
+  }
+  
+  // Calcular nueva cantidad
+  const nuevaCantidad = cantidadActual - cantidadABorrar;
+  
+  // Actualizar cantidad del producto
+  if (nuevaCantidad > 0) {
+    productosEscaneadosPorVehiculo[vIndex].productos[codigo].cantidad = nuevaCantidad;
+  } else {
+    // Si queda 0, eliminar el producto completamente
+    delete productosEscaneadosPorVehiculo[vIndex].productos[codigo];
+  }
+  
+  // Actualizar total de cajas
+  productosEscaneadosPorVehiculo[vIndex].totalCajas -= cantidadABorrar;
+  
+  // Actualizar campo de cajas movidas
+  const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
+  if (cajasInput) {
+    cajasInput.value = productosEscaneadosPorVehiculo[vIndex].totalCajas;
+  }
+  
+  // Actualizar total general
+  actualizarTotalCajas();
+  
+  // Guardar progreso
+  guardarProgreso();
+  
+  // Mostrar feedback
+  const accion = cantidadABorrar === cantidadActual ? 'eliminado completamente' : `reducido en ${cantidadABorrar} unidades`;
+  mostrarFeedbackPicking(`✅ ${producto.nombre.substring(0, 30)}${producto.nombre.length > 30 ? '...' : ''} ${accion}`, vIndex, 'success');
+  
+  // Actualizar resumen
+  mostrarResumenProductos(vIndex);
+  
+  console.log(`📦 Producto actualizado V${vIndex}: ${codigo} - Nueva cantidad: ${nuevaCantidad}`);
+  
+  // ✅ Enfocar el campo EAN para continuar escaneando
+  setTimeout(() => {
+    const codigoInput = document.getElementById(`codigo-picking-${vIndex}`);
+    if (codigoInput) {
+      codigoInput.focus();
+    }
+  }, 50);
 }
 
 // ============================================
