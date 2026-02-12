@@ -979,14 +979,16 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
   <h5 style="margin-top: 0; color: #001855; font-size: 0.95em;">📦 Picking de Productos</h5>
   
   <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
-      <input type="text" id="codigo-picking-${vIndex}" placeholder="EAN"
-             style="flex: 3; padding: 10px 12px; border: 2px solid #001855; border-radius: 5px; font-size: 1.1em; font-family: Arial, sans-serif;"
-             onkeypress="if(event.key === 'Enter') agregarProductoPicking(${vIndex})">
-      <button type="button" onclick="agregarProductoPicking(${vIndex})"
-              style="flex: 1; background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 100px; border-radius: 5px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 0.95em;">
-        ➕ Agregar
-      </button>
-    </div>
+  <input type="text" id="codigo-picking-${vIndex}" placeholder="EAN"
+         style="flex: 3; padding: 10px 12px; border: 2px solid #001855; border-radius: 5px; font-size: 1.1em; font-family: Arial, sans-serif;"
+         onkeypress="if(event.key === 'Enter') agregarProductoPicking(${vIndex})"
+         oninput="this.value = this.value.replace(/[^0-9]/g, '').substring(0, 9);">
+         
+  <button type="button" onclick="agregarProductoPicking(${vIndex})"
+          style="flex: 1; background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 100px; border-radius: 5px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 0.95em;">
+    ➕ Agregar
+  </button>
+</div>
   
   <div id="feedback-picking-${vIndex}" style="min-height: 30px; margin-top: 8px;"></div>
 </div>
@@ -1680,66 +1682,74 @@ function cargarProductosEscaneados() {
 // ============================================
 
 // Agregar producto al picking con botón
+// Agregar producto al picking con botón
 function agregarProductoPicking(vIndex) {
-  const codigoInput = document.getElementById(`codigo-picking-${vIndex}`);
-  const codigo = codigoInput.value.trim().toUpperCase();
-  
-  if (!codigo || codigo.length < 5) {
-    mostrarFeedbackPicking('⚠️ Por favor ingresa un código válido', vIndex, 'warning');
-    return;
-  }
-  
-  // Buscar producto en base de datos
-  const producto = window.baseDatosProductos[codigo] || 
-                   window.baseDatosProductos[codigo.replace(/\s/g, '')] ||
-                   window.baseDatosProductos[codigo.substring(0, 8)] ||
-                   window.baseDatosProductos[codigo.substring(0, 10)];
-  
-  if (producto) {
-    // Inicializar si no existe
-    inicializarProductosEscaneados(vIndex);
+    const codigoInput = document.getElementById(`codigo-picking-${vIndex}`);
+    const codigo = codigoInput.value.trim();
     
-    // Agregar o incrementar producto
-    if (!productosEscaneadosPorVehiculo[vIndex].productos[codigo]) {
-      productosEscaneadosPorVehiculo[vIndex].productos[codigo] = {
-        nombre: producto.nombre || codigo,
-        referencia: producto.referencia || codigo,
-        cantidad: 0
-      };
+    // Validar que tenga al menos 5 dígitos
+    if (!codigo || codigo.length < 5) {
+        mostrarFeedbackPicking('⚠️ Ingrese mínimo 5 dígitos', vIndex, 'warning');
+        codigoInput.focus();
+        return;
     }
     
-    // Incrementar cantidad
-    productosEscaneadosPorVehiculo[vIndex].productos[codigo].cantidad++;
-    productosEscaneadosPorVehiculo[vIndex].totalCajas++;
+    // Buscar producto en base de datos
+    const producto = window.baseDatosProductos[codigo] ||
+                    window.baseDatosProductos[codigo.replace(/\s/g, '')] ||
+                    window.baseDatosProductos[codigo.substring(0, 8)] ||
+                    window.baseDatosProductos[codigo.substring(0, 10)];
     
-    // Actualizar campo de cajas movidas
-    const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
-    if (cajasInput) {
-      cajasInput.value = productosEscaneadosPorVehiculo[vIndex].totalCajas;
+    if (producto) {
+        // Inicializar si no existe
+        inicializarProductosEscaneados(vIndex);
+        
+        // Agregar o incrementar producto
+        if (!productosEscaneadosPorVehiculo[vIndex].productos[codigo]) {
+            productosEscaneadosPorVehiculo[vIndex].productos[codigo] = {
+                nombre: producto.nombre || codigo,
+                referencia: producto.referencia || codigo,
+                cantidad: 0
+            };
+        }
+        
+        // Incrementar cantidad
+        productosEscaneadosPorVehiculo[vIndex].productos[codigo].cantidad++;
+        productosEscaneadosPorVehiculo[vIndex].totalCajas++;
+        
+        // Actualizar campo de cajas movidas
+        const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
+        if (cajasInput) {
+            cajasInput.value = productosEscaneadosPorVehiculo[vIndex].totalCajas;
+        }
+        
+        // Actualizar total general
+        actualizarTotalCajas();
+        
+        // Guardar progreso
+        guardarProgreso();
+        
+        // Mostrar feedback exitoso
+        mostrarFeedbackPicking(`✅ ${producto.nombre.substring(0, 40)}${producto.nombre.length > 40 ? '...' : ''}`, vIndex, 'success');
+        
+        // Limpiar campo de entrada
+        codigoInput.value = '';
+        codigoInput.focus();
+        
+        // Actualizar resumen
+        mostrarResumenProductos(vIndex);
+        
+        console.log(`📦 Producto agregado V${vIndex}: ${producto.nombre} - Total cajas: ${productosEscaneadosPorVehiculo[vIndex].totalCajas}`);
+    } else {
+        // Producto no encontrado - LIMPIAR AUTOMÁTICAMENTE
+        mostrarFeedbackPicking(`❌ Código no encontrado`, vIndex, 'error');
+        
+        // Limpiar el campo automáticamente después de 1 segundo
+        setTimeout(() => {
+            codigoInput.value = '';
+            codigoInput.focus();
+        }, 1000);
     }
-    
-    // Actualizar total general
-    actualizarTotalCajas();
-    
-    // Guardar progreso
-    guardarProgreso();
-    
-    // Mostrar feedback exitoso
-    mostrarFeedbackPicking(`✅ ${producto.nombre.substring(0, 40)}${producto.nombre.length > 40 ? '...' : ''}`, vIndex, 'success');
-    
-    // Limpiar campo de entrada
-    codigoInput.value = '';
-    codigoInput.focus();
-    
-    // Actualizar resumen
-    mostrarResumenProductos(vIndex);
-    
-    console.log(`📦 Producto agregado V${vIndex}: ${producto.nombre} - Total cajas: ${productosEscaneadosPorVehiculo[vIndex].totalCajas}`);
-  } else {
-    // Producto no encontrado
-    mostrarFeedbackPicking(`❌ Código no encontrado: ${codigo}`, vIndex, 'error');
-    codigoInput.focus();
-  }
 }
 
 // Mostrar feedback de picking
@@ -2190,4 +2200,3 @@ cargarProductosEscaneados();
         
     </script>
 </body>
-
