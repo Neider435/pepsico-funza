@@ -444,7 +444,7 @@ function actualizarMuellesPorLugar() {
     const otroMuelleInput = registro.querySelector(`#otro_muelle_${index}`);
     
     if (muelleSelect) {
-      // Guardar valor actual
+      // ✅ Guardar valor actual ANTES de limpiar
       const valorActual = muelleSelect.value;
       
       // Limpiar y agregar nuevas opciones
@@ -455,7 +455,7 @@ function actualizarMuellesPorLugar() {
         option.value = muelle.value;
         option.textContent = muelle.label;
         
-        // Restaurar selección si coincide
+        // ✅ Restaurar selección si coincide
         if (muelle.value === valorActual) {
           option.selected = true;
         }
@@ -463,13 +463,53 @@ function actualizarMuellesPorLugar() {
         muelleSelect.appendChild(option);
       });
       
+      // ✅ Guardar el muelle seleccionado en localStorage
+      if (valorActual) {
+        localStorage.setItem(`muelle_seleccionado_${index}`, valorActual);
+      }
+      
       // Manejar campo "otro"
       manejarOtroMuelle(index);
     }
   });
   
+  // ✅ Guardar lugar seleccionado
+  localStorage.setItem('lugar_seleccionado', lugar);
+  
   guardarProgreso();
 }
+
+// ✅ Guardar muelle cuando cambia la selección
+document.addEventListener('DOMContentLoaded', function() {
+  const contenedor = document.getElementById('vehiculos-contenedor');
+  
+  // Delegación de eventos para muelles dinámicos
+  contenedor.addEventListener('change', function(e) {
+    const target = e.target;
+    
+    // Verificar si es un select de muelle
+    if (target.id && target.id.startsWith('muelle-select-')) {
+      const index = target.id.replace('muelle-select-', '');
+      const valor = target.value;
+      
+      // Guardar en localStorage
+      if (valor) {
+        localStorage.setItem(`muelle_seleccionado_${index}`, valor);
+      } else {
+        localStorage.removeItem(`muelle_seleccionado_${index}`);
+      }
+    }
+  });
+  
+  // ✅ Evento para guardar lugar
+  const lugarSelect = document.getElementById('lugar');
+  if (lugarSelect) {
+    lugarSelect.addEventListener('change', function() {
+      localStorage.setItem('lugar_seleccionado', this.value);
+      actualizarMuellesPorLugar();
+    });
+  }
+});
 
 // ✅ NUEVA FUNCIÓN: Manejar campo "otro" para muelles
 function manejarOtroMuelle(vIndex) {
@@ -2261,9 +2301,39 @@ for (let i = 0; i < vehiculosData.length; i++) {
         // INICIALIZACIÓN AL CARGAR LA PÁGINA
         // ============================================
 
-        document.addEventListener('DOMContentLoaded', async function() {  // ← Añadir 'async' aquí
+        document.addEventListener('DOMContentLoaded', async function() {
   const form = document.querySelector('form');
   const savedData = localStorage.getItem('pepsico_data');
+
+  // ✅ Evento para guardar lugar al cambiar
+  const lugarSelect = document.getElementById('lugar');
+  if (lugarSelect) {
+    lugarSelect.addEventListener('change', function() {
+      localStorage.setItem('lugar_seleccionado', this.value);
+      actualizarMuellesPorLugar();
+    });
+  }
+  
+  // ✅ Evento delegado para guardar muelles al cambiar
+  const contenedor = document.getElementById('vehiculos-contenedor');
+  if (contenedor) {
+    contenedor.addEventListener('change', function(e) {
+      const target = e.target;
+      
+      // Verificar si es un select de muelle
+      if (target.id && target.id.startsWith('muelle-select-')) {
+        const index = target.id.replace('muelle-select-', '');
+        const valor = target.value;
+        
+        // Guardar en localStorage
+        if (valor) {
+          localStorage.setItem(`muelle_seleccionado_${index}`, valor);
+        } else {
+          localStorage.removeItem(`muelle_seleccionado_${index}`);
+        }
+      }
+    });
+  }
 
   if (savedData) {
     const data = JSON.parse(savedData);
@@ -2348,9 +2418,31 @@ for (let i = 0; i < vehiculosData.length; i++) {
     }
     
     // ✅ Cargar base de datos de productos (TAMBIÉN aquí con await)
-    await cargarBaseDatosProductos();  // ← Añadir 'await' aquí
+    await cargarBaseDatosProductos();
     
     generarCamposNombres();
+    
+    // ✅ Restaurar muelles seleccionados después de crear los vehículos
+    setTimeout(() => {
+      const registros = document.getElementById('vehiculos-contenedor').querySelectorAll('.registro-vehiculo');
+      
+      registros.forEach((registro, index) => {
+        const muelleSelect = registro.querySelector(`#muelle-select-${index}`);
+        const muelleGuardado = localStorage.getItem(`muelle_seleccionado_${index}`);
+        
+        if (muelleSelect && muelleGuardado) {
+          // ✅ Verificar si la opción existe antes de seleccionarla
+          const optionExiste = Array.from(muelleSelect.options).some(opt => opt.value === muelleGuardado);
+          
+          if (optionExiste) {
+            muelleSelect.value = muelleGuardado;
+            // ✅ Disparar evento change para actualizar campos "otro" si es necesario
+            const event = new Event('change');
+            muelleSelect.dispatchEvent(event);
+          }
+        }
+      });
+    }, 200);
   } else {
     agregarRegistroVehiculo();
     agregarCampoParada('operacion');
@@ -2358,9 +2450,36 @@ for (let i = 0; i < vehiculosData.length; i++) {
     // ✅ También aquí:
     actualizarMuellesPorLugar();
     // ✅ Cargar base de datos de productos con await
-    await cargarBaseDatosProductos();  // ← Añadir 'await' aquí
+    await cargarBaseDatosProductos();
     // ✅ Cargar productos escaneados desde localStorage
     cargarProductosEscaneados();
+    
+    // ✅ Restaurar lugar guardado si existe (para nuevo formulario)
+    const lugarGuardado = localStorage.getItem('lugar_seleccionado');
+    if (lugarGuardado) {
+      document.getElementById('lugar').value = lugarGuardado;
+      actualizarMuellesPorLugar();
+    }
+    
+    // ✅ Restaurar muelles seleccionados
+    setTimeout(() => {
+      const registros = document.getElementById('vehiculos-contenedor').querySelectorAll('.registro-vehiculo');
+      
+      registros.forEach((registro, index) => {
+        const muelleSelect = registro.querySelector(`#muelle-select-${index}`);
+        const muelleGuardado = localStorage.getItem(`muelle_seleccionado_${index}`);
+        
+        if (muelleSelect && muelleGuardado) {
+          const optionExiste = Array.from(muelleSelect.options).some(opt => opt.value === muelleGuardado);
+          
+          if (optionExiste) {
+            muelleSelect.value = muelleGuardado;
+            const event = new Event('change');
+            muelleSelect.dispatchEvent(event);
+          }
+        }
+      });
+    }, 200);
   }
 
   form.addEventListener('submit', enviarFormulario);
@@ -2370,7 +2489,6 @@ for (let i = 0; i < vehiculosData.length; i++) {
   document.getElementById('lider_pepsico').addEventListener('change', function() {
     this.dataset.manualChange = 'true';
   });
-});
-        
+});     
     </script>
 </body>
