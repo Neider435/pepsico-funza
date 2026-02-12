@@ -1585,6 +1585,7 @@ function mostrarResumenProductos(vIndex) {
               <th style="padding: 10px 8px; text-align: left; font-size: 0.85em;">Referencia</th>
               <th style="padding: 10px 8px; text-align: left; font-size: 0.85em;">Producto</th>
               <th style="padding: 10px 8px; text-align: center; font-size: 0.85em;">Cajas</th>
+              <th style="padding: 10px 8px; text-align: center; font-size: 0.85em;">Borrar</th>
               <th style="padding: 10px 8px; text-align: center; font-size: 0.85em;">Acciones</th>
             </tr>
           </thead>
@@ -1601,18 +1602,25 @@ function mostrarResumenProductos(vIndex) {
         <td style="padding: 8px; font-size: 0.9em;">${prod.nombre}</td>
         <td style="padding: 8px; text-align: center; font-weight: bold; color: #C76E00;">${prod.cantidad}</td>
         <td style="padding: 8px; text-align: center;">
-          <!-- ✅ Botón para borrar 1 unidad -->
-          <button type="button" onclick="borrarCantidadPicking(${vIndex}, '${codigo}', 1)" 
-                  style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 0.75em; cursor: pointer; margin-right: 3px;"
-                  title="Borrar 1 unidad">
-            ➖ 1
+          <!-- ✅ Input para cantidad a borrar -->
+          <input type="number" id="borrar-cantidad-${vIndex}-${codigo}" 
+                 min="1" max="${prod.cantidad}" value="1"
+                 style="width: 60px; padding: 4px; text-align: center; border: 2px solid #001855; border-radius: 4px; font-weight: bold;"
+                 oninput="validarCantidadBorrar(${vIndex}, '${codigo}')">
+        </td>
+        <td style="padding: 8px; text-align: center;">
+          <!-- ✅ Botón para borrar cantidad específica -->
+          <button type="button" onclick="borrarCantidadPicking(${vIndex}, '${codigo}', parseInt(document.getElementById('borrar-cantidad-${vIndex}-${codigo}').value))"
+                  style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85em; white-space: nowrap;"
+                  title="Borrar cantidad especificada">
+            🗑️ Borrar
           </button>
           
-          <!-- ✅ Botón para borrar todo el producto -->
-          <button type="button" onclick="borrarCantidadPicking(${vIndex}, '${codigo}', ${prod.cantidad})" 
-                  style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 0.75em; cursor: pointer;"
+          <!-- ✅ Botón para borrar todo -->
+          <button type="button" onclick="borrarCantidadPicking(${vIndex}, '${codigo}', ${prod.cantidad})"
+                  style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.75em; margin-top: 4px; display: block; width: 100%;"
                   title="Borrar todo">
-            🗑️ Todo
+            Todo
           </button>
         </td>
       </tr>
@@ -1711,6 +1719,11 @@ function borrarCantidadPicking(vIndex, codigo, cantidadABorrar) {
   // Verificar que no se borre más de lo que hay
   if (cantidadABorrar > cantidadActual) {
     alert(`⚠️ No puedes borrar ${cantidadABorrar} unidades. Solo hay ${cantidadActual} disponibles.`);
+    return;
+  }
+  
+  if (cantidadABorrar <= 0) {
+    alert(`⚠️ La cantidad a borrar debe ser mayor a 0.`);
     return;
   }
   
