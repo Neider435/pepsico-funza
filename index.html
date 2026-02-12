@@ -1686,6 +1686,13 @@ function agregarProductoPicking(vIndex) {
   const codigoInput = document.getElementById(`codigo-picking-${vIndex}`);
   const codigo = codigoInput.value.trim().toUpperCase();
   
+  // ✅ VERIFICACIÓN CRUCIAL: Asegurar que la base de datos exista
+  if (!window.baseDatosProductos || typeof window.baseDatosProductos !== 'object') {
+    mostrarFeedbackPicking('⚠️ Error: Base de datos no cargada. Recarga la página.', vIndex, 'error');
+    console.error("Base de datos de productos no inicializada");
+    return;
+  }
+  
   if (!codigo || codigo.length < 5) {
     mostrarFeedbackPicking('⚠️ Por favor ingresa un código válido', vIndex, 'warning');
     return;
