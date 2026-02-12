@@ -1642,6 +1642,24 @@ function mostrarResumenProductos(vIndex) {
   container.innerHTML = html;
 }
 
+// ✅ FUNCIÓN PARA VALIDAR LA CANTIDAD A BORRAR
+function validarCantidadBorrar(vIndex, codigo) {
+  const input = document.getElementById(`borrar-cantidad-${vIndex}-${codigo}`);
+  if (!input) return;
+  
+  let valor = parseInt(input.value) || 1;
+  const max = parseInt(input.max) || 1;
+  
+  // Forzar valores válidos
+  if (valor < 1) {
+    valor = 1;
+  } else if (valor > max) {
+    valor = max;
+  }
+  
+  input.value = valor;
+}
+
 // Eliminar producto específico del picking
 function eliminarProductoPicking(vIndex, codigo) {
   // Verificar que exista el vehículo y el producto
