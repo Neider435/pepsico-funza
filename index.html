@@ -978,16 +978,24 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
 <div style="background: #e7f3ff; padding: 15px; border-radius: 8px; margin-top: 15px; border: 2px solid #001855;">
   <h5 style="margin-top: 0; color: #001855; font-size: 0.95em;">📦 Picking de Productos</h5>
   
-  <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
-    <input type="text" id="codigo-picking-${vIndex}" placeholder="EAN" maxlength="9"
-       style="flex: 3; padding: 10px 12px; border: 2px solid #001855; border-radius: 5px; font-size: 1.1em; font-family: Arial, sans-serif;"
-       onkeypress="if(event.key === 'Enter') agregarProductoPicking(${vIndex})"
-       oninput="this.value = this.value.replace(/[^0-9]/g, '').substring(0, 9);">
-         
-  <button type="button" onclick="agregarProductoPicking(${vIndex})"
-          style="flex: 1; background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 100px; border-radius: 5px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 0.95em;">
-    ➕ Agregar
-  </button>
+  <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
+  <div style="display: flex; gap: 10px; align-items: center;">
+    <input type="text" id="codigo-picking-${vIndex}" placeholder="EAN"
+           style="flex: 3; padding: 10px 12px; border: 2px solid #001855; border-radius: 5px; font-size: 1.1em; font-family: Arial, sans-serif;"
+           onkeypress="if(event.key === 'Enter') agregarProductoPicking(${vIndex})"
+           oninput="this.value = this.value.replace(/[^0-9]/g, '').substring(0, 9);">
+           
+    <button type="button" onclick="agregarProductoPicking(${vIndex})"
+            style="flex: 1; background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 100px; border-radius: 5px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 0.95em;">
+      ➕ Agregar
+    </button>
+  </div>
+  
+    <!-- ✅ Botón de borrar debajo del campo EAN -->
+    <button type="button" onclick="document.getElementById('codigo-picking-${vIndex}').value = ''; document.getElementById('codigo-picking-${vIndex}').focus();"
+            style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 0.85em; width: 100px; transform: translateX(0px);">
+    🗑️ Borrar
+    </button>
 </div>
   
   <div id="feedback-picking-${vIndex}" style="min-height: 30px; margin-top: 8px;"></div>
@@ -2212,3 +2220,4 @@ for (let i = 0; i < vehiculosData.length; i++) {
         
     </script>
 </body>
+
