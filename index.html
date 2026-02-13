@@ -849,21 +849,47 @@ function actualizarTipoOperacionPorLugar() {
                 <div class="parada-group">
                     <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #1 (Cargue/Descargue)</p>
                     
-                    <div class="time-row">
-                        <div>
-                            <label class="time-label">Hora Inicio (HH:MM):</label>
-                            <input type="tel" name="vehiculo_${vIndex}_inicio" class="time-input-masked" required
-                                placeholder="HH:MM" maxlength="5" value="${datos.inicio || ''}"
-                                onblur="applyTimeMask(this, '${inicioId}');">
-                            <span id="${inicioId}" class="time-display"></span>
+                    <div class="time-control-section" style="background: #e7f3ff; padding: 15px; border-radius: 8px; border: 2px solid #001855; margin: 15px 0;">
+                      <h5 style="margin-top: 0; color: #001855; text-align: center;">⏱️ Control de Tiempo</h5>
+                      
+                      <div style="display: flex; gap: 15px; margin: 15px 0; align-items: center;">
+                        <div style="flex: 1; text-align: center;">
+                          <label class="time-label" style="display: block; font-weight: bold; color: #001855; margin-bottom: 5px;">Hora Inicio</label>
+                          <input type="text" id="hora-inicio-${vIndex}" name="vehiculo_${vIndex}_inicio" class="time-display-large" readonly
+                                style="width: 100%; padding: 12px; font-size: 1.3em; font-weight: bold; text-align: center; background: #d4edda; color: #155724; border: 2px solid #c3e6cb; border-radius: 5px;"
+                                placeholder="--:--" value="${datos.inicio || ''}">
                         </div>
-                        <div>
-                            <label class="time-label">Hora Final (HH:MM):</label>
-                            <input type="tel" name="vehiculo_${vIndex}_fin" class="time-input-masked" required
-                                placeholder="HH:MM" maxlength="5" value="${datos.fin || ''}"
-                                onblur="applyTimeMask(this, '${finId}');">
-                            <span id="${finId}" class="time-display"></span>
+                        
+                        <div style="flex: 1; text-align: center;">
+                          <label class="time-label" style="display: block; font-weight: bold; color: #001855; margin-bottom: 5px;">Hora Final</label>
+                          <input type="text" id="hora-fin-${vIndex}" name="vehiculo_${vIndex}_fin" class="time-display-large" readonly
+                                style="width: 100%; padding: 12px; font-size: 1.3em; font-weight: bold; text-align: center; background: #f8d7da; color: #721c24; border: 2px solid #f5c6cb; border-radius: 5px;"
+                                placeholder="--:--" value="${datos.fin || ''}">
                         </div>
+                      </div>
+                      
+                      <!-- ✅ Botón inteligente que cambia de estado -->
+                      <div style="text-align: center; margin-top: 15px;">
+                        <button type="button" id="btn-control-tiempo-${vIndex}" 
+                                onclick="controlarTiempoVehiculo(${vIndex})"
+                                style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 15px 40px; border-radius: 5px; font-weight: bold; font-size: 1.1em; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%;"
+                                data-estado="${datos.inicio && !datos.fin ? 'finalizar' : datos.inicio && datos.fin ? 'reiniciar' : 'iniciar'}">
+                          ${datos.inicio && !datos.fin ? '🏁 Finalizar Operación' : datos.inicio && datos.fin ? '🔄 Reiniciar' : '🚀 Iniciar Operación'}
+                        </button>
+                      </div>
+                      
+                      <!-- ✅ Botón eliminar (oculto inicialmente) -->
+                      <div style="text-align: center; margin-top: 10px; display: ${datos.inicio && datos.fin ? 'block' : 'none'};" id="btn-eliminar-tiempo-container-${vIndex}">
+                        <button type="button" id="btn-eliminar-tiempo-${vIndex}" 
+                                onclick="eliminarRegistroTiempo(${vIndex})"
+                                style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; font-size: 0.9em; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+                                title="Eliminar registro de tiempo">
+                          🗑️ Eliminar Registro
+                        </button>
+                      </div>
+                      
+                      <!-- ✅ Feedback visual -->
+                      <div id="feedback-tiempo-${vIndex}" style="margin-top: 10px; padding: 8px; border-radius: 5px; text-align: center; display: none;"></div>
                     </div>
                     
                     <label style="margin-top:5px;">Motivo:</label>
@@ -1962,6 +1988,242 @@ function agregarProductoPicking(vIndex) {
     }, 50);
   }
 }
+// ✅ ESTADO DEL CONTROL DE TIEMPO POR VEHÍCULO
+let estadoControlTiempo = {};
+
+// ✅ FUNCIÓN PRINCIPAL: Controlar tiempo (Iniciar → Finalizar → Eliminar)
+function controlarTiempoVehiculo(vIndex) {
+  const btn = document.getElementById(`btn-control-tiempo-${vIndex}`);
+  const estado = btn.getAttribute('data-estado');
+  
+  if (estado === 'iniciar') {
+    iniciarOperacion(vIndex);
+  } else if (estado === 'finalizar') {
+    finalizarOperacion(vIndex);
+  } else if (estado === 'reiniciar') {
+    reiniciarOperacion(vIndex);
+  }
+}
+
+// ✅ INICIAR OPERACIÓN
+function iniciarOperacion(vIndex) {
+  const horaInicioInput = document.getElementById(`hora-inicio-${vIndex}`);
+  const horaFinInput = document.getElementById(`hora-fin-${vIndex}`);
+  const btn = document.getElementById(`btn-control-tiempo-${vIndex}`);
+  
+  // ✅ Validar que no haya ya un registro
+  if (horaInicioInput.value || horaFinInput.value) {
+    alert('⚠️ Ya existe un registro de tiempo.\n\nSi quieres iniciar una nueva operación, primero elimina el registro actual usando el botón "Eliminar Registro".');
+    return;
+  }
+  
+  // ✅ Obtener hora actual
+  const ahora = new Date();
+  const hora = String(ahora.getHours()).padStart(2, '0');
+  const minuto = String(ahora.getMinutes()).padStart(2, '0');
+  const horaActual = `${hora}:${minuto}`;
+  
+  // ✅ Guardar hora de inicio
+  horaInicioInput.value = horaActual;
+  horaInicioInput.style.background = '#d4edda';
+  horaInicioInput.style.color = '#155724';
+  
+  // ✅ Cambiar botón a "Finalizar"
+  btn.textContent = '🏁 Finalizar Operación';
+  btn.style.background = 'linear-gradient(135deg, #ffc107 0%, #ff9800 100%)';
+  btn.style.color = '#000';
+  btn.setAttribute('data-estado', 'finalizar');
+  
+  // ✅ Mostrar feedback
+  mostrarFeedbackTiempo(vIndex, `✅ Operación iniciada a las ${horaActual}`, 'success');
+  
+  // ✅ Guardar en estado
+  if (!estadoControlTiempo[vIndex]) {
+    estadoControlTiempo[vIndex] = {};
+  }
+  estadoControlTiempo[vIndex].inicio = horaActual;
+  estadoControlTiempo[vIndex].timestampInicio = ahora.getTime();
+  
+  guardarProgreso();
+  
+  console.log(`⏱️ V${vIndex}: Operación iniciada a las ${horaActual}`);
+}
+
+// ✅ FINALIZAR OPERACIÓN
+function finalizarOperacion(vIndex) {
+  const horaInicioInput = document.getElementById(`hora-inicio-${vIndex}`);
+  const horaFinInput = document.getElementById(`hora-fin-${vIndex}`);
+  const btn = document.getElementById(`btn-control-tiempo-${vIndex}`);
+  
+  // ✅ Validar que haya hora de inicio
+  if (!horaInicioInput.value) {
+    alert('⚠️ Error: No se ha iniciado la operación.\n\nDebes iniciar la operación antes de finalizarla.');
+    return;
+  }
+  
+  // ✅ Pedir confirmación
+  const confirmar = confirm(`⚠️ ¿Estás seguro de FINALIZAR esta operación?\n\nHora de inicio: ${horaInicioInput.value}\n\nEsta acción no se puede deshacer. ¿Deseas continuar?`);
+  
+  if (!confirmar) {
+    console.log('Finalización cancelada por el usuario');
+    return;
+  }
+  
+  // ✅ Obtener hora actual
+  const ahora = new Date();
+  const hora = String(ahora.getHours()).padStart(2, '0');
+  const minuto = String(ahora.getMinutes()).padStart(2, '0');
+  const horaActual = `${hora}:${minuto}`;
+  
+  // ✅ Guardar hora de fin
+  horaFinInput.value = horaActual;
+  horaFinInput.style.background = '#f8d7da';
+  horaFinInput.style.color = '#721c24';
+  
+  // ✅ Calcular duración
+  const timestampInicio = estadoControlTiempo[vIndex]?.timestampInicio || ahora.getTime() - 3600000; // 1 hora por defecto
+  const duracionMs = ahora.getTime() - timestampInicio;
+  const duracionMinutos = Math.round(duracionMs / 60000);
+  
+  // ✅ Cambiar botón a "Reiniciar"
+  btn.textContent = '🔄 Reiniciar';
+  btn.style.background = 'linear-gradient(135deg, #17a2b8 0%, #138496 100%)';
+  btn.style.color = 'white';
+  btn.setAttribute('data-estado', 'reiniciar');
+  
+  // ✅ Mostrar botón eliminar
+  document.getElementById(`btn-eliminar-tiempo-container-${vIndex}`).style.display = 'block';
+  
+  // ✅ Mostrar feedback con duración
+  mostrarFeedbackTiempo(vIndex, `✅ Operación finalizada a las ${horaActual}\nDuración: ${duracionMinutos} minuto${duracionMinutos !== 1 ? 's' : ''}`, 'success');
+  
+  // ✅ Guardar en estado
+  estadoControlTiempo[vIndex].fin = horaActual;
+  estadoControlTiempo[vIndex].duracion = duracionMinutos;
+  
+  guardarProgreso();
+  
+  console.log(`⏱️ V${vIndex}: Operación finalizada a las ${horaActual} - Duración: ${duracionMinutos} minutos`);
+}
+
+// ✅ REINICIAR OPERACIÓN
+function reiniciarOperacion(vIndex) {
+  const confirmar = confirm('⚠️ ¿Estás seguro de REINICIAR el control de tiempo?\n\nSe eliminarán las horas de inicio y fin actuales y podrás comenzar una nueva operación.\n\n¿Deseas continuar?');
+  
+  if (!confirmar) {
+    console.log('Reinicio cancelado por el usuario');
+    return;
+  }
+  
+  limpiarRegistroTiempo(vIndex);
+  
+  mostrarFeedbackTiempo(vIndex, '✅ Control de tiempo reiniciado', 'success');
+}
+
+// ✅ ELIMINAR REGISTRO DE TIEMPO
+function eliminarRegistroTiempo(vIndex) {
+  const confirmar = confirm('⚠️ ¿Estás seguro de ELIMINAR este registro de tiempo?\n\nSe borrarán las horas de inicio y fin.\n\nEsta acción no se puede deshacer. ¿Deseas continuar?');
+  
+  if (!confirmar) {
+    console.log('Eliminación cancelada por el usuario');
+    return;
+  }
+  
+  limpiarRegistroTiempo(vIndex);
+  
+  mostrarFeedbackTiempo(vIndex, '✅ Registro de tiempo eliminado', 'success');
+}
+
+// ✅ LIMPIAR REGISTRO DE TIEMPO (función interna)
+function limpiarRegistroTiempo(vIndex) {
+  const horaInicioInput = document.getElementById(`hora-inicio-${vIndex}`);
+  const horaFinInput = document.getElementById(`hora-fin-${vIndex}`);
+  const btn = document.getElementById(`btn-control-tiempo-${vIndex}`);
+  
+  // ✅ Limpiar campos
+  horaInicioInput.value = '';
+  horaInicioInput.style.background = '';
+  horaInicioInput.style.color = '';
+  horaFinInput.value = '';
+  horaFinInput.style.background = '';
+  horaFinInput.style.color = '';
+  
+  // ✅ Restaurar botón a "Iniciar"
+  btn.textContent = '🚀 Iniciar Operación';
+  btn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+  btn.style.color = 'white';
+  btn.setAttribute('data-estado', 'iniciar');
+  
+  // ✅ Ocultar botón eliminar
+  document.getElementById(`btn-eliminar-tiempo-container-${vIndex}`).style.display = 'none';
+  
+  // ✅ Limpiar feedback
+  const feedback = document.getElementById(`feedback-tiempo-${vIndex}`);
+  if (feedback) {
+    feedback.style.display = 'none';
+  }
+  
+  // ✅ Limpiar estado
+  delete estadoControlTiempo[vIndex];
+  
+  guardarProgreso();
+}
+
+// ✅ MOSTRAR FEEDBACK DE TIEMPO
+function mostrarFeedbackTiempo(vIndex, mensaje, tipo) {
+  const feedback = document.getElementById(`feedback-tiempo-${vIndex}`);
+  if (!feedback) return;
+  
+  feedback.textContent = mensaje;
+  feedback.style.display = 'block';
+  
+  if (tipo === 'success') {
+    feedback.style.background = '#d4edda';
+    feedback.style.color = '#155724';
+    feedback.style.border = '1px solid #c3e6cb';
+  } else if (tipo === 'error') {
+    feedback.style.background = '#f8d7da';
+    feedback.style.color = '#721c24';
+    feedback.style.border = '1px solid #f5c6cb';
+  } else if (tipo === 'warning') {
+    feedback.style.background = '#fff3cd';
+    feedback.style.color = '#856404';
+    feedback.style.border = '1px solid #ffeaa7';
+  }
+  
+  // ✅ Ocultar después de 5 segundos
+  setTimeout(() => {
+    feedback.style.display = 'none';
+  }, 5000);
+}
+
+// ✅ VALIDAR ANTES DE ENVIAR FORMULARIO
+function validarControlTiempo(vIndex) {
+  const horaInicioInput = document.getElementById(`hora-inicio-${vIndex}`);
+  const horaFinInput = document.getElementById(`hora-fin-${vIndex}`);
+  
+  if (!horaInicioInput.value) {
+    alert(`⚠️ Vehículo ${vIndex + 1}: Debes INICIAR la operación antes de enviar el formulario.`);
+    return false;
+  }
+  
+  if (!horaFinInput.value) {
+    const confirmar = confirm(`⚠️ Vehículo ${vIndex + 1}: La operación no ha sido FINALIZADA.\n\n¿Deseas finalizarla ahora automáticamente y continuar?`);
+    
+    if (confirmar) {
+      // ✅ Finalizar automáticamente
+      const ahora = new Date();
+      const hora = String(ahora.getHours()).padStart(2, '0');
+      const minuto = String(ahora.getMinutes()).padStart(2, '0');
+      horaFinInput.value = `${hora}:${minuto}`;
+      return true;
+    }
+    
+    return false;
+  }
+  
+  return true;
+}
 
 // ✅ VALIDACIÓN HÍBRIDA: números (máx 9) o alfanumérico (máx 20)
 function validarCodigoPicking(input) {
@@ -2130,149 +2392,156 @@ Debe cumplir:
         // ENVÍO DEL FORMULARIO
         // ===========================================
         function enviarFormulario(event) {
-        event.preventDefault();
-        sincronizarVehiculosDesdeDOM();
-            
-        console.log('📊 Vehículos con nombres del personal:');
-          vehiculosData.forEach((vehiculo, index) => {
-            console.log(`Vehículo ${index}:`, {
-              placa: vehiculo.placa,
-              personas: vehiculo.personas,
-              nombres: vehiculo.nombres_personal
-            });
-          });
-        
-        // Validaciones existentes
-        const camposObligatorios = [
-            { id: 'lugar', nombre: 'Lugar de operación' },
-            { id: 'lider', nombre: 'Líder Asignado' },
-            { id: 'lider_pepsico', nombre: 'Líder De Pepsico' },
-            { id: 'fecha', nombre: 'Fecha' },
-            { id: 'turno', nombre: 'Turno' },
-            { id: 'total_personas', nombre: 'Total Personas En El Turno' },
-            { id: 'cajas_totales', nombre: 'Total Cajas Movidas' }
-        ];
-        
-        for (const campo of camposObligatorios) {
-            const el = document.getElementById(campo.id);
-            if (el && !el.value.trim()) {
-            alert(`❌ Por favor, complete el campo: "${campo.nombre}".`);
-            return;
-            }
-        }
-    
-        
-        // Validar nombres por vehículo
-        for (let i = 0; i < vehiculosData.length; i++) {
-            const vehiculo = vehiculosData[i];
-            const totalPersonasVeh = parseInt(vehiculo.personas) || 0;
-            if (totalPersonasVeh > 0) {
-            const nombresContainer = document.querySelector(`#nombres-personal-${i}`);
-            if (nombresContainer) {
-                const inputsNombres = nombresContainer.querySelectorAll('input[type="text"]');
-                for (let j = 0; j < inputsNombres.length; j++) {
-                if (!inputsNombres[j].value.trim()) {
-                    alert(`❌ Por favor, ingrese el nombre del trabajador ${j + 1} del Vehículo #${i + 1}.`);
-                    inputsNombres[j].focus();
-                    return;
-                }
-                }
-            }
-            }
-        }
-        
-        if (!validarPlacas()) return;
-        if (!validarSolapamientoVehiculos() || !validarSolapamientoParadas()) return;
-        
-        // ✅ Sincronizar productos escaneados con vehiculosData
-sincronizarVehiculosDesdeDOM();
-for (let i = 0; i < vehiculosData.length; i++) {
-  if (productosEscaneadosPorVehiculo[i]) {
-    // Convertir a array para enviar
-    const productosArray = Object.entries(productosEscaneadosPorVehiculo[i].productos).map(([codigo, prod]) => ({
-      codigo: codigo,
-      referencia: prod.referencia,
-      nombre: prod.nombre,
-      cantidad: prod.cantidad
-    }));
-    
-    vehiculosData[i].productos_escaneados = productosArray;
-    vehiculosData[i].total_cajas_escaneadas = productosEscaneadosPorVehiculo[i].totalCajas;
-  }
-}
-        // Preparar datos para enviar
-        // Preparar datos para enviar
-        const formData = {
-          fecha: document.getElementById('fecha').value,
-          lugar: document.getElementById('lugar').value,
-          lider_asignado: document.getElementById('lider').value.toUpperCase(),
-          coordinador: document.getElementById('coordinador').value,
-          coordinador_otro: document.getElementById('coordinador_otro').value,
-          lider_pepsico: document.getElementById('lider_pepsico').value,
-          lider_pepsico_otro: document.getElementById('lider_pepsico_otro').value,
-          turno: document.getElementById('turno').value,
-          total_personas: document.getElementById('total_personas').value,
-          cajas_totales: document.getElementById('cajas_totales').value,
-          datos_vehiculos: vehiculosData,
-
-          
+  event.preventDefault();
+  sincronizarVehiculosDesdeDOM();
       
-          datos_paradas_operacion: Array.from(
-            document.querySelectorAll('#operacion-contenedor .parada-group')
-          ).map(grupo => {
-            return {
-              inicio: grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '',
-              fin: grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '',
-              motivo: grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '',
-              otro_motivo: grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || ''
-            };
-          })
-        };
-        
-        console.log('📝 Datos que se enviarán a MySQL:');
-        console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
-        
-        // ⚠️ URL DE RAILWAY
-        const RAILWAY_API_URL = 'https://pepsico-funza-production-b0f5.up.railway.app/api/registro';
-        
-        // Mostrar mensaje de carga
-        const submitBtn = document.querySelector('button[type="submit"]');
-        const originalText = submitBtn.textContent;
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Enviando...';
-        
-        // Enviar a Railway (MySQL)
-        fetch(RAILWAY_API_URL, {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-        })
-        .then(response => {
-            if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(result => {
-            if (result.success) {
-            // ✅ Eliminar datos de localStorage
-            localStorage.removeItem('pepsico_data');
-            
-            // ✅ Redirigir a aceptacion.html
-            window.location.href = 'aceptacion.html';
-            } else {
-            throw new Error(result.error || 'Error desconocido');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('❌ Error al guardar: ' + error.message + '\n\nPor favor, inténtalo de nuevo.');
-            submitBtn.disabled = false;
-            submitBtn.textContent = originalText;
-        });
-        }
+  console.log('📊 Vehículos con nombres del personal:');
+    vehiculosData.forEach((vehiculo, index) => {
+      console.log(`Vehículo ${index}:`, {
+        placa: vehiculo.placa,
+        personas: vehiculo.personas,
+        nombres: vehiculo.nombres_personal
+      });
+    });
+  
+  // ✅ VALIDAR CONTROL DE TIEMPO DE TODOS LOS VEHÍCULOS
+  const nVehiculos = vehiculosData.length;
+  for (let i = 0; i < nVehiculos; i++) {
+    if (!validarControlTiempo(i)) {
+      return; // La validación ya muestra el mensaje de error
+    }
+  }
+  
+  // Validaciones existentes
+  const camposObligatorios = [
+      { id: 'lugar', nombre: 'Lugar de operación' },
+      { id: 'lider', nombre: 'Líder Asignado' },
+      { id: 'lider_pepsico', nombre: 'Líder De Pepsico' },
+      { id: 'fecha', nombre: 'Fecha' },
+      { id: 'turno', nombre: 'Turno' },
+      { id: 'total_personas', nombre: 'Total Personas En El Turno' },
+      { id: 'cajas_totales', nombre: 'Total Cajas Movidas' }
+  ];
+  
+  for (const campo of camposObligatorios) {
+      const el = document.getElementById(campo.id);
+      if (el && !el.value.trim()) {
+      alert(`❌ Por favor, complete el campo: "${campo.nombre}".`);
+      return;
+      }
+  }
+  
+  // Validar nombres por vehículo
+  for (let i = 0; i < vehiculosData.length; i++) {
+      const vehiculo = vehiculosData[i];
+      const totalPersonasVeh = parseInt(vehiculo.personas) || 0;
+      if (totalPersonasVeh > 0) {
+      const nombresContainer = document.querySelector(`#nombres-personal-${i}`);
+      if (nombresContainer) {
+          const inputsNombres = nombresContainer.querySelectorAll('input[type="text"]');
+          for (let j = 0; j < inputsNombres.length; j++) {
+          if (!inputsNombres[j].value.trim()) {
+              alert(`❌ Por favor, ingrese el nombre del trabajador ${j + 1} del Vehículo #${i + 1}.`);
+              inputsNombres[j].focus();
+              return;
+          }
+          }
+      }
+      }
+  }
+  
+  if (!validarPlacas()) return;
+  if (!validarSolapamientoVehiculos() || !validarSolapamientoParadas()) return;
+  
+  // ✅ Sincronizar productos escaneados con vehiculosData
+  sincronizarVehiculosDesdeDOM();
+  for (let i = 0; i < vehiculosData.length; i++) {
+    if (productosEscaneadosPorVehiculo[i]) {
+      // Convertir a array para enviar
+      const productosArray = Object.entries(productosEscaneadosPorVehiculo[i].productos).map(([codigo, prod]) => ({
+        codigo: codigo,
+        referencia: prod.referencia,
+        nombre: prod.nombre,
+        cantidad: prod.cantidad
+      }));
+      
+      vehiculosData[i].productos_escaneados = productosArray;
+      vehiculosData[i].total_cajas_escaneadas = productosEscaneadosPorVehiculo[i].totalCajas;
+    }
+  }
+  // Preparar datos para enviar
+  // Preparar datos para enviar
+  const formData = {
+    fecha: document.getElementById('fecha').value,
+    lugar: document.getElementById('lugar').value,
+    lider_asignado: document.getElementById('lider').value.toUpperCase(),
+    coordinador: document.getElementById('coordinador').value,
+    coordinador_otro: document.getElementById('coordinador_otro').value,
+    lider_pepsico: document.getElementById('lider_pepsico').value,
+    lider_pepsico_otro: document.getElementById('lider_pepsico_otro').value,
+    turno: document.getElementById('turno').value,
+    total_personas: document.getElementById('total_personas').value,
+    cajas_totales: document.getElementById('cajas_totales').value,
+    datos_vehiculos: vehiculosData,
+
+    
+  
+    datos_paradas_operacion: Array.from(
+      document.querySelectorAll('#operacion-contenedor .parada-group')
+    ).map(grupo => {
+      return {
+        inicio: grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '',
+        fin: grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '',
+        motivo: grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '',
+        otro_motivo: grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || ''
+      };
+    })
+  };
+  
+  console.log('📝 Datos que se enviarán a MySQL:');
+  console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
+  
+  // ⚠️ URL DE RAILWAY
+  const RAILWAY_API_URL = 'https://pepsico-funza-production-b0f5.up.railway.app/api/registro  ';
+  
+  // Mostrar mensaje de carga
+  const submitBtn = document.querySelector('button[type="submit"]');
+  const originalText = submitBtn.textContent;
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Enviando...';
+  
+  // Enviar a Railway (MySQL)
+  fetch(RAILWAY_API_URL, {
+      method: 'POST',
+      headers: {
+      'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData)
+  })
+  .then(response => {
+      if (!response.ok) {
+      throw new Error(`Error HTTP: ${response.status}`);
+      }
+      return response.json();
+  })
+  .then(result => {
+      if (result.success) {
+      // ✅ Eliminar datos de localStorage
+      localStorage.removeItem('pepsico_data');
+      
+      // ✅ Redirigir a aceptacion.html
+      window.location.href = 'aceptacion.html';
+      } else {
+      throw new Error(result.error || 'Error desconocido');
+      }
+  })
+  .catch(error => {
+      console.error('Error:', error);
+      alert('❌ Error al guardar: ' + error.message + '\n\nPor favor, inténtalo de nuevo.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+  });
+}
 
         // ============================================
         // GENERACIÓN DE CAMPOS DE NOMBRES TOTALES
