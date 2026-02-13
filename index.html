@@ -991,8 +991,9 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
   <div style="display: flex; gap: 10px; align-items: center;">
     <input type="text" id="codigo-picking-${vIndex}" placeholder="EAN o código especial"
        style="flex: 3; padding: 10px 12px; border: 2px solid #001855; border-radius: 5px; font-size: 1.1em; font-family: Arial, sans-serif;"
-       onkeypress="if(event.key === 'Enter') agregarProductoPicking(${vIndex})"
-       oninput="validarCodigoPicking(this)">
+       onkeypress="manejarEnterPicking(event, ${vIndex})"
+       oninput="validarCodigoPicking(this)"
+       onkeydown="prevenirSubmit(event)">
            
     <button type="button" onclick="agregarProductoPicking(${vIndex})"
             style="flex: 1; background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 100px; border-radius: 5px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 0.95em;">
@@ -1892,17 +1893,22 @@ function agregarProductoPicking(vIndex) {
   const codigoInput = document.getElementById(`codigo-picking-${vIndex}`);
   const codigo = codigoInput.value.trim().toUpperCase();
   
-  // ✅ Validación mínima: al menos 1 carácter (numérico o alfanumérico)
+  // ✅ Validación mínima: al menos 1 carácter
   if (!codigo || codigo.length < 1) {
     mostrarFeedbackPicking('⚠️ Por favor ingresa un código válido', vIndex, 'warning');
+    setTimeout(() => {
+      if (codigoInput) {
+        codigoInput.focus();
+        codigoInput.select();
+      }
+    }, 50);
     return;
   }
   
-  // Buscar producto en base de datos (sin modificaciones extrañas)
+  // ✅ Buscar producto en base de datos
   const producto = window.baseDatosProductos[codigo];
   
   if (producto) {
-    // ✅ Resto del código SIN CAMBIOS (inicializar, agregar, etc.)
     inicializarProductosEscaneados(vIndex);
     
     if (!productosEscaneadosPorVehiculo[vIndex].productos[codigo]) {
@@ -1928,8 +1934,10 @@ function agregarProductoPicking(vIndex) {
     // ✅ Limpiar y enfocar con delay
     codigoInput.value = '';
     setTimeout(() => {
-      codigoInput.focus();
-      codigoInput.select();
+      if (codigoInput) {
+        codigoInput.focus();
+        codigoInput.select();
+      }
     }, 50);
     
     mostrarResumenProductos(vIndex);
@@ -1939,10 +1947,65 @@ function agregarProductoPicking(vIndex) {
     mostrarFeedbackPicking(`❌ Código no encontrado: ${codigo}`, vIndex, 'error');
     codigoInput.value = '';
     setTimeout(() => {
-      codigoInput.focus();
-      codigoInput.select();
+      if (codigoInput) {
+        codigoInput.focus();
+        codigoInput.select();
+      }
     }, 50);
   }
+}
+// ✅ PREVENIR submit del formulario con Enter
+function prevenirSubmit(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault(); // Evita que el Enter mueva el foco o envíe el formulario
+  }
+}
+
+// ✅ MANEJAR Enter para picking (limpia saltos de línea adicionales)
+function manejarEnterPicking(event, vIndex) {
+  if (event.key === 'Enter') {
+    event.preventDefault(); // Prevenir comportamiento por defecto
+    
+    // ✅ Limpiar el valor del campo (eliminar saltos de línea adicionales)
+    const input = document.getElementById(`codigo-picking-${vIndex}`);
+    if (input) {
+      input.value = input.value.trim(); // Eliminar espacios y saltos de línea al inicio/final
+    }
+    
+    // ✅ Ejecutar picking
+    agregarProductoPicking(vIndex);
+    
+    // ✅ Forzar foco de vuelta al campo (con delay para asegurar)
+    setTimeout(() => {
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }, 100);
+  }
+}
+
+// ✅ VALIDACIÓN HÍBRIDA: números (máx 9) o alfanumérico (máx 20)
+function validarCodigoPicking(input) {
+  const valorOriginal = input.value.trim().toUpperCase();
+  
+  // ✅ Eliminar saltos de línea y caracteres no deseados mientras se escribe
+  let valorLimpio = valorOriginal.replace(/[\n\r\t]/g, ''); // Eliminar \n, \r, \t
+  
+  // ✅ Permitir letras, números y guiones bajos
+  valorLimpio = valorLimpio.replace(/[^A-Z0-9_]/g, '');
+  
+  // ✅ Detectar si es puramente numérico
+  const esNumerico = /^\d+$/.test(valorLimpio);
+  
+  // ✅ Aplicar límites según el tipo
+  if (esNumerico && valorLimpio.length > 9) {
+    valorLimpio = valorLimpio.substring(0, 9);
+  } else if (valorLimpio.length > 20) {
+    valorLimpio = valorLimpio.substring(0, 20);
+  }
+  
+  input.value = valorLimpio;
 }
 
 // ✅ VALIDACIÓN HÍBRIDA: números (máx 9) o alfanumérico (máx 20)
