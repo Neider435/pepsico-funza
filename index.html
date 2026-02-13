@@ -1691,8 +1691,9 @@ function validarCantidadBorrar(vIndex, codigo) {
 }
 
 // Eliminar producto específico del picking
+
 function eliminarProductoPicking(vIndex, codigo) {
-  // Verificar que exista el vehículo y el producto
+  // ✅ Verificar que exista el vehículo y el producto
   if (!productosEscaneadosPorVehiculo[vIndex] || !productosEscaneadosPorVehiculo[vIndex].productos[codigo]) {
     console.warn('Producto no encontrado para eliminar');
     return;
@@ -1700,7 +1701,7 @@ function eliminarProductoPicking(vIndex, codigo) {
   
   const producto = productosEscaneadosPorVehiculo[vIndex].productos[codigo];
   
-  // ✅ VERIFICACIÓN: Pedir confirmación al usuario
+  // ✅ PEDIR CONFIRMACIÓN AL USUARIO (VERIFICACIÓN)
   const confirmar = confirm(`⚠️ ¿Estás seguro de eliminar TODAS las ${producto.cantidad} cajas de:\n\n${producto.nombre}?\n\nEsta acción no se puede deshacer.`);
   
   if (!confirmar) {
@@ -1708,36 +1709,38 @@ function eliminarProductoPicking(vIndex, codigo) {
     return;
   }
   
-  // Eliminar producto
+  // ✅ Eliminar producto
   const cantidadEliminada = producto.cantidad;
   delete productosEscaneadosPorVehiculo[vIndex].productos[codigo];
   
-  // Actualizar total de cajas
+  // ✅ Actualizar total de cajas
   productosEscaneadosPorVehiculo[vIndex].totalCajas -= cantidadEliminada;
   
-  // Actualizar campo de cajas movidas
+  // ✅ Actualizar campo de cajas movidas
   const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
   if (cajasInput) {
     cajasInput.value = productosEscaneadosPorVehiculo[vIndex].totalCajas;
   }
   
-  // Actualizar total general
+  // ✅ Actualizar total general
   actualizarTotalCajas();
   
-  // Guardar progreso
+  // ✅ Guardar progreso
   guardarProgreso();
   
-  // Mostrar feedback
+  // ✅ Mostrar feedback
   mostrarFeedbackPicking(`✅ ${producto.nombre.substring(0, 30)}${producto.nombre.length > 30 ? '...' : ''} eliminado`, vIndex, 'success');
   
-  // Actualizar resumen
+  // ✅ Actualizar resumen
   mostrarResumenProductos(vIndex);
   
   console.log(`📦 Producto eliminado V${vIndex}: ${codigo}`);
 }
+
 // ✅ FUNCIÓN FALTANTE: Limpiar todo el picking de un vehículo
+
 function limpiarEscaneoVehiculo(vIndex) {
-  // ✅ VERIFICACIÓN: Pedir confirmación al usuario
+  // ✅ PEDIR CONFIRMACIÓN AL USUARIO (VERIFICACIÓN)
   const confirmar = confirm(`⚠️ ¿Estás seguro de LIMPIAR TODO el picking del vehículo ${vIndex + 1}?\n\nSe eliminarán TODOS los productos escaneados.\n\nEsta acción no se puede deshacer.`);
   
   if (!confirmar) {
@@ -1745,32 +1748,33 @@ function limpiarEscaneoVehiculo(vIndex) {
     return;
   }
   
-  // Limpiar productos escaneados
+  // ✅ Limpiar productos escaneados
   productosEscaneadosPorVehiculo[vIndex] = {
     productos: {},
     totalCajas: 0
   };
   
-  // Limpiar campo de cajas
+  // ✅ Limpiar campo de cajas
   const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
   if (cajasInput) {
     cajasInput.value = '';
   }
   
-  // Actualizar total general
+  // ✅ Actualizar total general
   actualizarTotalCajas();
   
-  // Guardar progreso
+  // ✅ Guardar progreso
   guardarProgreso();
   
-  // Mostrar feedback
+  // ✅ Mostrar feedback
   mostrarFeedbackPicking('✅ Picking limpiado completamente', vIndex, 'success');
   
-  // Actualizar resumen
+  // ✅ Actualizar resumen
   mostrarResumenProductos(vIndex);
   
   console.log(`🧹 Picking limpiado para vehículo V${vIndex}`);
 }
+
 // Guardar productos escaneados en localStorage
 function guardarProductosEscaneados() {
   localStorage.setItem('productos_escaneados_rf', JSON.stringify(productosEscaneadosPorVehiculo));
@@ -1796,7 +1800,7 @@ function cargarProductosEscaneados() {
 }
 
 function borrarCantidadPicking(vIndex, codigo, cantidadABorrar) {
-  // Verificar que exista el vehículo y el producto
+  // ✅ Verificar que exista el vehículo y el producto
   if (!productosEscaneadosPorVehiculo[vIndex] || !productosEscaneadosPorVehiculo[vIndex].productos[codigo]) {
     console.warn('Producto no encontrado para borrar');
     return;
@@ -1805,54 +1809,67 @@ function borrarCantidadPicking(vIndex, codigo, cantidadABorrar) {
   const producto = productosEscaneadosPorVehiculo[vIndex].productos[codigo];
   const cantidadActual = producto.cantidad;
   
-  // ✅ Obtener valor del input (con fallback a 1)
-  if (isNaN(cantidadABorrar) || cantidadABorrar === null || cantidadABorrar === undefined) {
+  // ✅ Obtener valor del input (con fallback a 1 si es inválido)
+  if (isNaN(cantidadABorrar) || cantidadABorrar === null || cantidadABorrar === undefined || cantidadABorrar === '') {
     cantidadABorrar = 1;
   }
   
-  // Verificar que no se borre más de lo que hay
+  // ✅ Verificar que no se borre más de lo que hay
   if (cantidadABorrar > cantidadActual) {
     alert(`⚠️ No puedes borrar ${cantidadABorrar} unidades. Solo hay ${cantidadActual} disponibles.`);
     return;
   }
   
+  // ✅ Verificar que la cantidad sea mayor a 0
   if (cantidadABorrar <= 0) {
     alert(`⚠️ La cantidad a borrar debe ser mayor a 0.`);
     return;
   }
   
-  // ✅ Resto del código sin cambios...
-  // Calcular nueva cantidad
+  // ✅ PEDIR CONFIRMACIÓN AL USUARIO (VERIFICACIÓN)
+  const productoNombre = producto.nombre.substring(0, 40) + (producto.nombre.length > 40 ? '...' : '');
+  const mensaje = cantidadABorrar === cantidadActual 
+    ? `⚠️ ¿Estás seguro de eliminar TODAS las ${cantidadActual} cajas de:\n\n${productoNombre}?\n\nEsta acción no se puede deshacer.`
+    : `⚠️ ¿Estás seguro de eliminar ${cantidadABorrar} caja${cantidadABorrar > 1 ? 's' : ''} de:\n\n${productoNombre}?\n\nQuedarán ${cantidadActual - cantidadABorrar} caja${(cantidadActual - cantidadABorrar) > 1 ? 's' : ''}.`;
+  
+  const confirmar = confirm(mensaje);
+  
+  if (!confirmar) {
+    console.log('Acción de borrado cancelada por el usuario');
+    return;
+  }
+  
+  // ✅ Calcular nueva cantidad
   const nuevaCantidad = cantidadActual - cantidadABorrar;
   
-  // Actualizar cantidad del producto
+  // ✅ Actualizar cantidad del producto
   if (nuevaCantidad > 0) {
     productosEscaneadosPorVehiculo[vIndex].productos[codigo].cantidad = nuevaCantidad;
   } else {
-    // Si queda 0, eliminar el producto completamente
+    // ✅ Si queda 0, eliminar el producto completamente
     delete productosEscaneadosPorVehiculo[vIndex].productos[codigo];
   }
   
-  // Actualizar total de cajas
+  // ✅ Actualizar total de cajas
   productosEscaneadosPorVehiculo[vIndex].totalCajas -= cantidadABorrar;
   
-  // Actualizar campo de cajas movidas
+  // ✅ Actualizar campo de cajas movidas
   const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
   if (cajasInput) {
     cajasInput.value = productosEscaneadosPorVehiculo[vIndex].totalCajas;
   }
   
-  // Actualizar total general
+  // ✅ Actualizar total general
   actualizarTotalCajas();
   
-  // Guardar progreso
+  // ✅ Guardar progreso
   guardarProgreso();
   
-  // Mostrar feedback
+  // ✅ Mostrar feedback
   const accion = cantidadABorrar === cantidadActual ? 'eliminado completamente' : `reducido en ${cantidadABorrar} unidades`;
   mostrarFeedbackPicking(`✅ ${producto.nombre.substring(0, 30)}${producto.nombre.length > 30 ? '...' : ''} ${accion}`, vIndex, 'success');
   
-  // Actualizar resumen
+  // ✅ Actualizar resumen
   mostrarResumenProductos(vIndex);
   
   console.log(`📦 Producto actualizado V${vIndex}: ${codigo} - Nueva cantidad: ${nuevaCantidad}`);
