@@ -1889,6 +1889,7 @@ function borrarCantidadPicking(vIndex, codigo, cantidadABorrar) {
 // ============================================
 
 // Agregar producto al picking con botón
+
 function agregarProductoPicking(vIndex) {
   const codigoInput = document.getElementById(`codigo-picking-${vIndex}`);
   const codigo = codigoInput.value.trim().toUpperCase();
@@ -1909,8 +1910,10 @@ function agregarProductoPicking(vIndex) {
   const producto = window.baseDatosProductos[codigo];
   
   if (producto) {
+    // ✅ Inicializar si no existe
     inicializarProductosEscaneados(vIndex);
     
+    // ✅ Agregar o incrementar producto
     if (!productosEscaneadosPorVehiculo[vIndex].productos[codigo]) {
       productosEscaneadosPorVehiculo[vIndex].productos[codigo] = {
         nombre: producto.nombre || codigo,
@@ -1919,16 +1922,23 @@ function agregarProductoPicking(vIndex) {
       };
     }
     
+    // ✅ Incrementar cantidad
     productosEscaneadosPorVehiculo[vIndex].productos[codigo].cantidad++;
     productosEscaneadosPorVehiculo[vIndex].totalCajas++;
     
+    // ✅ Actualizar campo de cajas movidas
     const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
     if (cajasInput) {
       cajasInput.value = productosEscaneadosPorVehiculo[vIndex].totalCajas;
     }
     
+    // ✅ Actualizar total general
     actualizarTotalCajas();
+    
+    // ✅ GUARDAR PROGRESO AUTOMÁTICAMENTE
     guardarProgreso();
+    
+    // ✅ Mostrar feedback exitoso
     mostrarFeedbackPicking(`✅ ${producto.nombre.substring(0, 40)}${producto.nombre.length > 40 ? '...' : ''}`, vIndex, 'success');
     
     // ✅ Limpiar y enfocar con delay
@@ -1940,7 +1950,9 @@ function agregarProductoPicking(vIndex) {
       }
     }, 50);
     
+    // ✅ Actualizar resumen
     mostrarResumenProductos(vIndex);
+    
     console.log(`📦 Producto agregado V${vIndex}: ${producto.nombre} - Total cajas: ${productosEscaneadosPorVehiculo[vIndex].totalCajas}`);
   } else {
     // ✅ Producto no encontrado - Borrar campo automáticamente
@@ -1954,6 +1966,7 @@ function agregarProductoPicking(vIndex) {
     }, 50);
   }
 }
+
 // ✅ PREVENIR submit del formulario con Enter
 function prevenirSubmit(event) {
   if (event.key === 'Enter') {
