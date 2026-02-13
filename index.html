@@ -989,10 +989,10 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
   
   <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
   <div style="display: flex; gap: 10px; align-items: center;">
-    <input type="text" id="codigo-picking-${vIndex}" placeholder="EAN"
-           style="flex: 3; padding: 10px 12px; border: 2px solid #001855; border-radius: 5px; font-size: 1.1em; font-family: Arial, sans-serif;"
-           onkeypress="if(event.key === 'Enter') agregarProductoPicking(${vIndex})"
-           oninput="this.value = this.value.replace(/[^0-9]/g, '').substring(0, 9);">
+    <input type="text" id="codigo-picking-${vIndex}" placeholder="EAN o código especial"
+       style="flex: 3; padding: 10px 12px; border: 2px solid #001855; border-radius: 5px; font-size: 1.1em; font-family: Arial, sans-serif;"
+       onkeypress="if(event.key === 'Enter') agregarProductoPicking(${vIndex})"
+       oninput="validarCodigoPicking(this)">
            
     <button type="button" onclick="agregarProductoPicking(${vIndex})"
             style="flex: 1; background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 100px; border-radius: 5px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 0.95em;">
