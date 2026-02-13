@@ -989,10 +989,10 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
   
   <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
   <div style="display: flex; gap: 10px; align-items: center;">
-    <input type="text" id="codigo-picking-${vIndex}" placeholder="EAN o código especial"
-       style="flex: 3; padding: 10px 12px; border: 2px solid #001855; border-radius: 5px; font-size: 1.1em; font-family: Arial, sans-serif;"
-       onkeypress="if(event.key === 'Enter') agregarProductoPicking(${vIndex})"
-       oninput="validarCodigoPicking(this)">
+    <input type="text" id="codigo-picking-${vIndex}" placeholder="EAN"
+           style="flex: 3; padding: 10px 12px; border: 2px solid #001855; border-radius: 5px; font-size: 1.1em; font-family: Arial, sans-serif;"
+           onkeypress="if(event.key === 'Enter') agregarProductoPicking(${vIndex})"
+           oninput="this.value = this.value.replace(/[^0-9]/g, '').substring(0, 9);">
            
     <button type="button" onclick="agregarProductoPicking(${vIndex})"
             style="flex: 1; background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 100px; border-radius: 5px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 0.95em;">
@@ -1326,52 +1326,47 @@ if (origenSelect) {
         // ============================================
 
         function setupFotoPreview(inputId, previewId, nombrePersonalizado) {
-  const input = document.getElementById(inputId);
-  const preview = document.getElementById(previewId);
-  const file = input.files[0];
-  
-  if (file) {
-    // ✅ Validar tamaño (máx 5 MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('⚠️ La imagen es demasiado grande. Máximo 5 MB.');
-      input.value = ''; // Limpiar input
-      return;
-    }
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      preview.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; border-radius: 5px; border: 2px solid #001855;">`;
-      
-      // ✅ Guardar en localStorage o subir a ImgBB
-      const fotoUrlInputId = inputId.replace('foto_vehiculo_', 'foto_url_');
-      const fotoUrlInput = document.getElementById(fotoUrlInputId);
-      
-      if (fotoUrlInput) {
-        fotoUrlInput.value = e.target.result;
-      }
-      
-      // ✅ GUARDAR PROGRESO SIN PERDER FOCO
-      setTimeout(() => {
-        guardarProgreso();
-        
-        // ✅ FORZAR FOCO DE VUELTA AL CAMPO EAN (si existe)
-        // Extraer vIndex del inputId (ej: "foto_vehiculo_0" -> vIndex = 0)
-        const match = inputId.match(/foto_vehiculo_(\d+)/);
-        if (match) {
-          const vIndex = parseInt(match[1]);
-          const codigoInput = document.getElementById(`codigo-picking-${vIndex}`);
-          if (codigoInput) {
-            setTimeout(() => {
-              codigoInput.focus();
-              codigoInput.select();
-            }, 150); // ✅ Delay de 150ms
-          }
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            
+            if (!input || !preview) return;
+            
+            const file = input.files[0];
+            if (!file || !file.type.match('image.*') || file.size > 5 * 1024 * 1024) {
+                input.value = '';
+                preview.innerHTML = '';
+                if (file && !file.type.match('image.*')) alert('Solo imágenes (JPG/PNG).');
+                if (file && file.size > 5 * 1024 * 1024) alert('Máx. 5 MB.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = e => preview.innerHTML = `<img src="${e.target.result}" alt="Vista previa">`;
+            reader.readAsDataURL(file);
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('key', 'e1d938a9ff4815f178c880552cd33a34');
+            formData.append('name', nombrePersonalizado);
+            
+            fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const vIdx = nombrePersonalizado.split('.').pop().replace('vehiculo_', '');
+                        const urlInput = document.getElementById(`foto_url_${vIdx}`);
+                        if (urlInput) urlInput.value = data.data.url;
+                        alert(`✅ Foto subida: ${nombrePersonalizado}`);
+                        guardarProgreso();
+                    } else {
+                        throw new Error(data.error.message || 'Error al subir la foto');
+                    }
+                })
+                .catch(error => {
+                    alert("❌ No se pudo subir la foto.");
+                    console.error(error);
+                });
         }
-      }, 50);
-    };
-    reader.readAsDataURL(file);
-  }
-}
 
         // ============================================
 // FILTRAR COORDINADORES POR LUGAR
@@ -1900,10 +1895,6 @@ function agregarProductoPicking(vIndex) {
   // ✅ Validación mínima: al menos 1 carácter (numérico o alfanumérico)
   if (!codigo || codigo.length < 1) {
     mostrarFeedbackPicking('⚠️ Por favor ingresa un código válido', vIndex, 'warning');
-    setTimeout(() => {
-      codigoInput.focus();
-      codigoInput.select();
-    }, 100); // ✅ Aumentar delay
     return;
   }
   
@@ -1934,12 +1925,12 @@ function agregarProductoPicking(vIndex) {
     guardarProgreso();
     mostrarFeedbackPicking(`✅ ${producto.nombre.substring(0, 40)}${producto.nombre.length > 40 ? '...' : ''}`, vIndex, 'success');
     
-    // ✅ Limpiar y enfocar con delay MÁS LARGO (para evitar conflictos)
+    // ✅ Limpiar y enfocar con delay
     codigoInput.value = '';
     setTimeout(() => {
       codigoInput.focus();
       codigoInput.select();
-    }, 200); // ✅ Aumentar a 200ms para evitar conflictos con guardarProgreso
+    }, 50);
     
     mostrarResumenProductos(vIndex);
     console.log(`📦 Producto agregado V${vIndex}: ${producto.nombre} - Total cajas: ${productosEscaneadosPorVehiculo[vIndex].totalCajas}`);
@@ -1950,7 +1941,7 @@ function agregarProductoPicking(vIndex) {
     setTimeout(() => {
       codigoInput.focus();
       codigoInput.select();
-    }, 200); // ✅ Aumentar a 200ms
+    }, 50);
   }
 }
 
@@ -2022,61 +2013,45 @@ function mostrarFeedbackPicking(mensaje, vIndex, tipo = 'info') {
         // ============================================
 
         function guardarProgreso() {
-  // ✅ Detectar si el campo EAN estaba enfocado
-  const activeElement = document.activeElement;
-  const wasEANFocused = activeElement && activeElement.id.startsWith('codigo-picking-');
-  const eanId = wasEANFocused ? activeElement.id : null;
-  
-  const form = document.forms['formulario-pepsico'];
-  if(!form) return;
-  
-  const formData = new FormData(form);
-  const data = {};
-  
-  formData.forEach((value, key) => {
-    if (!(value instanceof File) && key !== 'form-name') data[key] = value;
-  });
-  
-  // ✅ CAPTURAR TODOS LOS CAMPOS DE NOMBRES DEL PERSONAL DINÁMICAMENTE (NUEVO)
-  const vehiculos = document.querySelectorAll('.registro-vehiculo');
-  vehiculos.forEach((_, vIndex) => {
-    const totalPersonas = parseInt(document.querySelector(`input[name="vehiculo_${vIndex}_personas"]`)?.value) || 0;
-    for (let p = 1; p <= totalPersonas; p++) {
-      const nombreInput = document.querySelector(`input[name="vehiculo_${vIndex}_nombre_persona_${p}"]`);
-      if (nombreInput) {
-        data[`vehiculo_${vIndex}_nombre_persona_${p}`] = nombreInput.value || '';
-      }
-    }
-  });
-  
-  const paradasData = [];
-  document.querySelectorAll('#operacion-contenedor .parada-group').forEach(grupo => {
-    const idx = grupo.dataset.index;
-    const inicio = grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '';
-    const fin = grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '';
-    const motivo = grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '';
-    const otro_motivo = grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || '';
-    paradasData.push({ inicio, fin, motivo, otro_motivo });
-  });
-  
-  data._numVehiculos = vehiculosData.length;
-  data._paradasDetalle = paradasData;
-  // ✅ Guardar productos escaneados por vehículo
-  data._productosEscaneados = productosEscaneadosPorVehiculo;
-  
-  localStorage.setItem('pepsico_data', JSON.stringify(data));
-  
-  // ✅ RESTAURAR FOCO AL CAMPO EAN si estaba enfocado
-  if (eanId) {
-    setTimeout(() => {
-      const campoEAN = document.getElementById(eanId);
-      if (campoEAN) {
-        campoEAN.focus();
-        campoEAN.select();
-      }
-    }, 100); // ✅ Delay de 100ms para evitar conflictos
-  }
-}
+            const form = document.forms['formulario-pepsico'];
+            if(!form) return;
+            
+            const formData = new FormData(form);
+            const data = {};
+            
+            formData.forEach((value, key) => {
+                if (!(value instanceof File) && key !== 'form-name') data[key] = value;
+            });
+            
+            // ✅ CAPTURAR TODOS LOS CAMPOS DE NOMBRES DEL PERSONAL DINÁMICAMENTE (NUEVO)
+            const vehiculos = document.querySelectorAll('.registro-vehiculo');
+            vehiculos.forEach((_, vIndex) => {
+                const totalPersonas = parseInt(document.querySelector(`input[name="vehiculo_${vIndex}_personas"]`)?.value) || 0;
+                for (let p = 1; p <= totalPersonas; p++) {
+                    const nombreInput = document.querySelector(`input[name="vehiculo_${vIndex}_nombre_persona_${p}"]`);
+                    if (nombreInput) {
+                        data[`vehiculo_${vIndex}_nombre_persona_${p}`] = nombreInput.value || '';
+                    }
+                }
+            });
+            
+            const paradasData = [];
+            document.querySelectorAll('#operacion-contenedor .parada-group').forEach(grupo => {
+                const idx = grupo.dataset.index;
+                const inicio = grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '';
+                const fin = grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '';
+                const motivo = grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '';
+                const otro_motivo = grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || '';
+                paradasData.push({ inicio, fin, motivo, otro_motivo });
+            });
+            
+            data._numVehiculos = vehiculosData.length;
+            data._paradasDetalle = paradasData;
+            // ✅ Guardar productos escaneados por vehículo
+data._productosEscaneados = productosEscaneadosPorVehiculo;
+            
+            localStorage.setItem('pepsico_data', JSON.stringify(data));
+        }
 
         // ============================================
         // LIMPIEZA TOTAL
