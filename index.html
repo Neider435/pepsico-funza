@@ -844,6 +844,84 @@ function actualizarTipoOperacionPorLugar() {
                 <hr style="margin-top:25px; border-style:dashed;">
                 
                 <h4 style="text-align:center; color:#C76E00;">VEHÍCULO #${vIndex + 1}</h4>
+
+                <!-- ✅ SECCIÓN DE INSPECCIÓN DE VEHÍCULO -->
+            <hr style="margin-top:25px; border-style:dashed;">
+            <h5 style="text-align:center; color:#C76E00;">INSPECCIÓN DE VEHÍCULO</h5>
+            <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-top:15px;">
+            
+            <!-- INTERIOR CAMIÓN -->
+            <div class="form-group-custom">
+                <label style="margin-top:0;">INTERIOR CAMIÓN:</label>
+                <select name="vehiculo_${vIndex}_interior_camion" required>
+                <option value="">Seleccione</option>
+                <option value="BUENO" ${datos.interior_camion === 'BUENO' ? 'selected' : ''}>BUENO</option>
+                <option value="MALO" ${datos.interior_camion === 'MALO' ? 'selected' : ''}>MALO</option>
+                </select>
+            </div>
+
+            <!-- ESTADO DE LA CARPA -->
+            <div class="form-group-custom">
+                <label style="margin-top:0;">ESTADO DE LA CARPA:</label>
+                <select name="vehiculo_${vIndex}_estado_carpa" required>
+                <option value="">Seleccione</option>
+                <option value="BUENO" ${datos.estado_carpa === 'BUENO' ? 'selected' : ''}>BUENO</option>
+                <option value="MALO" ${datos.estado_carpa === 'MALO' ? 'selected' : ''}>MALO</option>
+                <option value="N/A" ${datos.estado_carpa === 'N/A' ? 'selected' : ''}>N/A</option>
+                </select>
+            </div>
+
+            <!-- OLORES EXTRAÑOS -->
+            <div class="form-group-custom">
+                <label style="margin-top:0;">OLORES EXTRAÑOS:</label>
+                <select name="vehiculo_${vIndex}_olores_extranos" required>
+                <option value="">Seleccione</option>
+                <option value="SI" ${datos.olores_extranos === 'SI' ? 'selected' : ''}>SI</option>
+                <option value="NO" ${datos.olores_extranos === 'NO' ? 'selected' : ''}>NO</option>
+                </select>
+            </div>
+
+            <!-- OBJETOS EXTRAÑOS -->
+            <div class="form-group-custom">
+                <label style="margin-top:0;">OBJETOS EXTRAÑOS:</label>
+                <select name="vehiculo_${vIndex}_objetos_extranos" required>
+                <option value="">Seleccione</option>
+                <option value="SI" ${datos.objetos_extranos === 'SI' ? 'selected' : ''}>SI</option>
+                <option value="NO" ${datos.objetos_extranos === 'NO' ? 'selected' : ''}>NO</option>
+                </select>
+            </div>
+
+            <!-- EVIDENCIAS DE PLAGAS -->
+            <div class="form-group-custom">
+                <label style="margin-top:0;">EVIDENCIAS DE PLAGAS:</label>
+                <select name="vehiculo_${vIndex}_evidencias_plagas" required>
+                <option value="">Seleccione</option>
+                <option value="SI" ${datos.evidencias_plagas === 'SI' ? 'selected' : ''}>SI</option>
+                <option value="NO" ${datos.evidencias_plagas === 'NO' ? 'selected' : ''}>NO</option>
+                </select>
+            </div>
+
+        <!-- ESTADO DEL SUELO -->
+        <div class="form-group-custom">
+            <label style="margin-top:0;">ESTADO DEL SUELO:</label>
+            <select name="vehiculo_${vIndex}_estado_suelo" required>
+            <option value="">Seleccione</option>
+            <option value="BUENO" ${datos.estado_suelo === 'BUENO' ? 'selected' : ''}>BUENO</option>
+            <option value="MALO" ${datos.estado_suelo === 'MALO' ? 'selected' : ''}>MALO</option>
+            </select>
+        </div>
+
+        <!-- APROBADO -->
+        <div class="form-group-custom">
+            <label style="margin-top:0;">APROBADO:</label>
+            <select name="vehiculo_${vIndex}_aprobado" required>
+            <option value="">Seleccione</option>
+            <option value="SI" ${datos.aprobado === 'SI' ? 'selected' : ''}>SI</option>
+            <option value="NO" ${datos.aprobado === 'NO' ? 'selected' : ''}>NO</option>
+            </select>
+        </div>
+        </div>
+        
                 <h5 style="text-align:center; color:#C76E00;">PARADA DE CARGUE/DESCARGUE</h5>
                 
                 <div class="parada-group">
@@ -1074,83 +1152,6 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
                 <p style="font-size:0.85em; color:#6c757d; margin-top:5px;">
                     📸 <strong>La foto se sube automáticamente.</strong> No necesita hacer nada más.
                 </p>
-
-                <!-- ✅ SECCIÓN DE INSPECCIÓN DE VEHÍCULO -->
-            <hr style="margin-top:25px; border-style:dashed;">
-            <h5 style="text-align:center; color:#C76E00;">INSPECCIÓN DE VEHÍCULO</h5>
-            <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-top:15px;">
-            
-            <!-- INTERIOR CAMIÓN -->
-            <div class="form-group-custom">
-                <label style="margin-top:0;">INTERIOR CAMIÓN:</label>
-                <select name="vehiculo_${vIndex}_interior_camion" required>
-                <option value="">Seleccione</option>
-                <option value="BUENO" ${datos.interior_camion === 'BUENO' ? 'selected' : ''}>BUENO</option>
-                <option value="MALO" ${datos.interior_camion === 'MALO' ? 'selected' : ''}>MALO</option>
-                </select>
-            </div>
-
-            <!-- ESTADO DE LA CARPA -->
-            <div class="form-group-custom">
-                <label style="margin-top:0;">ESTADO DE LA CARPA:</label>
-                <select name="vehiculo_${vIndex}_estado_carpa" required>
-                <option value="">Seleccione</option>
-                <option value="BUENO" ${datos.estado_carpa === 'BUENO' ? 'selected' : ''}>BUENO</option>
-                <option value="MALO" ${datos.estado_carpa === 'MALO' ? 'selected' : ''}>MALO</option>
-                <option value="N/A" ${datos.estado_carpa === 'N/A' ? 'selected' : ''}>N/A</option>
-                </select>
-            </div>
-
-            <!-- OLORES EXTRAÑOS -->
-            <div class="form-group-custom">
-                <label style="margin-top:0;">OLORES EXTRAÑOS:</label>
-                <select name="vehiculo_${vIndex}_olores_extranos" required>
-                <option value="">Seleccione</option>
-                <option value="SI" ${datos.olores_extranos === 'SI' ? 'selected' : ''}>SI</option>
-                <option value="NO" ${datos.olores_extranos === 'NO' ? 'selected' : ''}>NO</option>
-                </select>
-            </div>
-
-            <!-- OBJETOS EXTRAÑOS -->
-            <div class="form-group-custom">
-                <label style="margin-top:0;">OBJETOS EXTRAÑOS:</label>
-                <select name="vehiculo_${vIndex}_objetos_extranos" required>
-                <option value="">Seleccione</option>
-                <option value="SI" ${datos.objetos_extranos === 'SI' ? 'selected' : ''}>SI</option>
-                <option value="NO" ${datos.objetos_extranos === 'NO' ? 'selected' : ''}>NO</option>
-                </select>
-            </div>
-
-            <!-- EVIDENCIAS DE PLAGAS -->
-            <div class="form-group-custom">
-                <label style="margin-top:0;">EVIDENCIAS DE PLAGAS:</label>
-                <select name="vehiculo_${vIndex}_evidencias_plagas" required>
-                <option value="">Seleccione</option>
-                <option value="SI" ${datos.evidencias_plagas === 'SI' ? 'selected' : ''}>SI</option>
-                <option value="NO" ${datos.evidencias_plagas === 'NO' ? 'selected' : ''}>NO</option>
-                </select>
-            </div>
-
-        <!-- ESTADO DEL SUELO -->
-        <div class="form-group-custom">
-            <label style="margin-top:0;">ESTADO DEL SUELO:</label>
-            <select name="vehiculo_${vIndex}_estado_suelo" required>
-            <option value="">Seleccione</option>
-            <option value="BUENO" ${datos.estado_suelo === 'BUENO' ? 'selected' : ''}>BUENO</option>
-            <option value="MALO" ${datos.estado_suelo === 'MALO' ? 'selected' : ''}>MALO</option>
-            </select>
-        </div>
-
-        <!-- APROBADO -->
-        <div class="form-group-custom">
-            <label style="margin-top:0;">APROBADO:</label>
-            <select name="vehiculo_${vIndex}_aprobado" required>
-            <option value="">Seleccione</option>
-            <option value="SI" ${datos.aprobado === 'SI' ? 'selected' : ''}>SI</option>
-            <option value="NO" ${datos.aprobado === 'NO' ? 'selected' : ''}>NO</option>
-            </select>
-        </div>
-        </div>
             `;
             
             registro.innerHTML = html;
