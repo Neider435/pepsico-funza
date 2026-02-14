@@ -40,6 +40,7 @@ app.post('/api/registro', async (req, res) => {
     const {
       fecha,
       lugar,
+      res_diligenciamiento,
       lider_asignado,
       coordinador,
       coordinador_otro,
@@ -55,18 +56,27 @@ app.post('/api/registro', async (req, res) => {
     // 1. Insertar registro principal
     const [registroResult] = await connection.query(
       `INSERT INTO registros (
-        fecha, lugar, lider_asignado, coordinador, coordinador_otro,
+        fecha, lugar, res_diligenciamiento, lider_asignado, coordinador, coordinador_otro,
         lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        fecha, lugar, lider_asignado, coordinador, coordinador_otro,
-        lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales
+        fecha, 
+        lugar,
+        res_diligenciamiento, 
+        lider_asignado, 
+        coordinador, 
+        coordinador_otro,
+        lider_pepsico, 
+        lider_pepsico_otro, 
+        turno, 
+        total_personas, 
+        cajas_totales
       ]
     );
     
     const registroId = registroResult.insertId;
     
-    // 2. Insertar vehículos Y sus detalles de inspección
+    // 2. Insertar vehículos Y sus detalles
     for (let i = 0; i < datos_vehiculos.length; i++) {
       const vehiculo = datos_vehiculos[i];
       
@@ -74,14 +84,13 @@ app.post('/api/registro', async (req, res) => {
         ? JSON.stringify(vehiculo.nombres_personal) 
         : null;
       
-      // Insertar vehículo
+      // Insertar vehículo (SIN campos de tiempo muerto)
       const [vehiculoResult] = await connection.query(
         `INSERT INTO vehiculos (
           registro_id, inicio, fin, motivo, otro_motivo, muelle, otro_muelle_num,
           placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, personas, cajas,
-          justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_final, 
-          foto_url, nombres_personal, tipo_operacion
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          foto_url, nombres_personal, tipo_operacion, observaciones_especiales, detalle_observaciones
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           registroId,
           vehiculo.inicio,
@@ -98,19 +107,50 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.origen,
           vehiculo.personas,
           vehiculo.cajas,
-          vehiculo.justificacion,
-          vehiculo.otro_justificacion,
-          vehiculo.tiempo_muerto_inicio,
-          vehiculo.tiempo_muerto_final,
           vehiculo.foto_url,
           nombresJSON,
-          vehiculo.tipo_operacion
+          vehiculo.tipo_operacion,
+          vehiculo.observaciones_especiales || null,
+          vehiculo.detalle_observaciones || null
         ]
       );
       
       const vehiculoId = vehiculoResult.insertId;
       
-      // ✅ INSERTAR DETALLES DE INSPECCIÓN usando los campos del mismo objeto vehiculo
+      // ✅ INSERTAR TIEMPO MUERTO EN TABLA DEDICADA (SOLO SI HAY JUSTIFICACIÓN)
+      // ✅ INSERTAR TIEMPO MUERTO EN TABLA DEDICADA (SOLO SI HAY DATOS VÁLIDOS)
+if (vehiculo.justificacion && 
+    (vehiculo.tiempo_muerto_inicio || vehiculo.tiempo_muerto_final)) {
+  
+  // ✅ Validar que los tiempos no sean "00:00:00" o vacíos
+  const inicioValido = vehiculo.tiempo_muerto_inicio && 
+                       vehiculo.tiempo_muerto_inicio !== '00:00:00' && 
+                       vehiculo.tiempo_muerto_inicio !== '00:00' && 
+                       vehiculo.tiempo_muerto_inicio.trim() !== '';
+  
+  const finValido = vehiculo.tiempo_muerto_final && 
+                    vehiculo.tiempo_muerto_final !== '00:00:00' && 
+                    vehiculo.tiempo_muerto_final !== '00:00' && 
+                    vehiculo.tiempo_muerto_final.trim() !== '';
+  
+  // ✅ Solo insertar si al menos uno de los tiempos es válido
+  if (inicioValido || finValido) {
+    await connection.query(
+      `INSERT INTO time_out (
+        idvehiculo, justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_fin
+      ) VALUES (?, ?, ?, ?, ?)`,
+      [
+        vehiculoId,
+        vehiculo.justificacion,
+        vehiculo.otro_justificacion || null,
+        inicioValido ? vehiculo.tiempo_muerto_inicio : null,
+        finValido ? vehiculo.tiempo_muerto_final : null
+      ]
+    );
+  }
+}
+      
+      // ✅ INSERTAR DETALLES DE INSPECCIÓN
       await connection.query(
         `INSERT INTO detalles_vehiculos (
           vehiculo_id, interior_camion, estado_carpa, olores_extraños, objetos_extraños,
@@ -128,7 +168,7 @@ app.post('/api/registro', async (req, res) => {
         ]
       );
       
-      // ✅ NUEVO: Insertar productos escaneados por vehículo (AHORA DENTRO DEL BUCLE)
+      // ✅ INSERTAR PRODUCTOS ESCANEADOS
       if (vehiculo.productos_escaneados && Array.isArray(vehiculo.productos_escaneados)) {
         for (const producto of vehiculo.productos_escaneados) {
           await connection.query(
@@ -146,24 +186,42 @@ app.post('/api/registro', async (req, res) => {
           );
         }
       }
-      
-    } // <-- CIERRE DEL BUCLE FOR
+    }
     
     // 3. Insertar paradas de operación
-    for (const parada of datos_paradas_operacion) {
+    // 3. Insertar paradas de operación (SOLO SI HAY DATOS VÁLIDOS)
+if (datos_paradas_operacion && Array.isArray(datos_paradas_operacion)) {
+  for (const parada of datos_paradas_operacion) {
+    // ✅ Validar que la parada tenga datos significativos
+    const inicioValido = parada.inicio && 
+                         parada.inicio !== '00:00:00' && 
+                         parada.inicio !== '00:00' && 
+                         parada.inicio.trim() !== '';
+    
+    const finValido = parada.fin && 
+                      parada.fin !== '00:00:00' && 
+                      parada.fin !== '00:00' && 
+                      parada.fin.trim() !== '';
+    
+    const motivoValido = parada.motivo && parada.motivo.trim() !== '';
+    
+    // ✅ Solo insertar si hay al menos un dato válido (tiempo o motivo)
+    if (inicioValido || finValido || motivoValido) {
       await connection.query(
         `INSERT INTO paradas_operacion (
           registro_id, inicio, fin, motivo, otro_motivo
         ) VALUES (?, ?, ?, ?, ?)`,
         [
           registroId,
-          parada.inicio,
-          parada.fin,
-          parada.motivo,
-          parada.otro_motivo
+          inicioValido ? parada.inicio : null,
+          finValido ? parada.fin : null,
+          motivoValido ? parada.motivo : null,
+          (motivoValido && parada.motivo === 'otro') ? (parada.otro_motivo || null) : null
         ]
       );
     }
+  }
+}
     
     // Confirmar transacción
     await connection.commit();
@@ -171,7 +229,7 @@ app.post('/api/registro', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Registro guardado correctamente con detalles',
+      message: 'Registro guardado correctamente con tiempo muerto en tabla dedicada',
       id: registroId
     });
   } catch (error) {
