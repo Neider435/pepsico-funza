@@ -105,7 +105,7 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.destino,
           vehiculo.otro_destino,
           vehiculo.origen,
-          otro_origen,
+          vehiculo.otro_origen, 
           vehiculo.personas,
           vehiculo.cajas,
           vehiculo.foto_url,
