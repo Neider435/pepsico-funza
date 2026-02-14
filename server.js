@@ -88,7 +88,7 @@ app.post('/api/registro', async (req, res) => {
       const [vehiculoResult] = await connection.query(
         `INSERT INTO vehiculos (
           registro_id, inicio, fin, motivo, otro_motivo, muelle, otro_muelle_num,
-          placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, personas, cajas,
+          placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, otro_origen, personas, cajas,
           foto_url, nombres_personal, tipo_operacion, observaciones_especiales, detalle_observaciones
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
@@ -105,6 +105,7 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.destino,
           vehiculo.otro_destino,
           vehiculo.origen,
+          otro_origen,
           vehiculo.personas,
           vehiculo.cajas,
           vehiculo.foto_url,
