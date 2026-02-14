@@ -884,21 +884,15 @@ function manejarObservacionesEspeciales(vIndex) {
 }
 
 // ✅ FUNCIÓN: Validar observaciones especiales antes de enviar
+// ✅ FUNCIÓN: Validar observaciones especiales (detalles opcionales)
 function validarObservacionesEspeciales(vIndex) {
   const select = document.getElementById(`observaciones-especiales-${vIndex}`);
-  const detalleTextarea = document.getElementById(`detalle-observaciones-texto-${vIndex}`);
   
   if (!select || !select.value) {
     return true; // No hay observación seleccionada, es válido
   }
   
-  // ✅ Si hay observación seleccionada, validar que tenga detalles
-  if (detalleTextarea && !detalleTextarea.value.trim()) {
-    alert(`⚠️ Vehículo ${vIndex + 1}: Has seleccionado una observación especial pero no has proporcionado los detalles.\n\nPor favor, completa el campo de detalles.`);
-    detalleTextarea.focus();
-    return false;
-  }
-  
+  // ✅ Los detalles son OPCIONALES - no se requiere validación
   return true;
 }
 
