@@ -311,12 +311,9 @@
             <option value="Funza">Pepsico Funza</option>
             <option value="SantoDomingo">Santo Domingo</option> 
         </select>
-
-        <label for="lider">Encargado de Diligenciamiento:</label>
-        <input type="text" name="res_diligenciamiento" id="lider_diligenciamiento" required placeholder="Primer Nombre y Primer Apellido">
         
         <label for="lider">Líder Asignado:</label>
-        <input type="text" name="lider_asignado" id="lider" placeholder="Primer Nombre y Primer Apellido">
+        <input type="text" name="lider_asignado" id="lider" required placeholder="Primer Nombre y Primer Apellido">
         
         <label for="coordinador">Coordinador Asignado:</label>
         <select name="coordinador" id="coordinador" required onchange="manejarOtroCoordinador()">
@@ -432,7 +429,6 @@
 }
 
 // ✅ NUEVA FUNCIÓN: Actualizar muelles de todos los vehículos
-// ✅ FUNCIÓN: Actualizar muelles según el lugar seleccionado
 function actualizarMuellesPorLugar() {
   const lugar = document.getElementById('lugar').value;
   const muelles = obtenerMuellesPorLugar(lugar);
@@ -443,27 +439,17 @@ function actualizarMuellesPorLugar() {
     const muelleSelect = registro.querySelector(`#muelle-select-${index}`);
     const otroMuelleInput = registro.querySelector(`#otro_muelle_${index}`);
     if (muelleSelect) {
-      // ✅ Guardar valor actual antes de limpiar
       const valorActual = muelleSelect.value;
-      
-      // ✅ Limpiar opciones existentes
       muelleSelect.innerHTML = '<option value="">Seleccione</option>';
-      
-      // ✅ Añadir nuevas opciones según el lugar
       muelles.forEach(muelle => {
         const option = document.createElement('option');
         option.value = muelle.value;
         option.textContent = muelle.label;
-        
-        // ✅ Restaurar selección si coincide con valor anterior
         if (muelle.value === valorActual) {
           option.selected = true;
         }
-        
         muelleSelect.appendChild(option);
       });
-      
-      // ✅ Actualizar campo "otro" si es necesario
       manejarOtroMuelle(index);
     }
   });
@@ -471,29 +457,6 @@ function actualizarMuellesPorLugar() {
   // ✅ ACTUALIZAR TIPO DE OPERACIÓN CUANDO CAMBIE EL LUGAR
   actualizarTipoOperacionPorLugar();
   
-  // ✅ Guardar progreso
-  guardarProgreso();
-}
-
-// ✅ FUNCIÓN: Manejar campo "otro" para muelles
-function manejarOtroMuelle(vIndex) {
-  const muelleSelect = document.querySelector(`#muelle-select-${vIndex}`);
-  const otroInput = document.querySelector(`#otro_muelle_${vIndex}`);
-  
-  // ✅ Validar que existan los elementos
-  if (!muelleSelect || !otroInput) return;
-  
-  // ✅ Mostrar/ocultar campo "otro" según selección
-  if (muelleSelect.value === 'otro') {
-    otroInput.style.display = 'block';  // ✅ Mostrar campo
-    otroInput.required = true;          // ✅ Hacer obligatorio
-  } else {
-    otroInput.style.display = 'none';   // ✅ Ocultar campo
-    otroInput.required = false;         // ✅ No obligatorio
-    otroInput.value = '';               // ✅ Limpiar valor
-  }
-  
-  // ✅ Guardar progreso
   guardarProgreso();
 }
 
@@ -819,82 +782,19 @@ function manejarOtroMuelle(vIndex) {
             }
         }
 
-        // ✅ FUNCIÓN CORREGIDA: Forzar reflow para evitar desorganización
-function mostrarTiempoMuerto(select, vIndex) {
-  const tiempoMuertoContainer = document.getElementById(`tiempo-muerto-${vIndex}`);
-  if (tiempoMuertoContainer) {
-    // 1. Primero ocultar el contenedor (si está visible)
-    tiempoMuertoContainer.style.display = 'none';
-    
-    // 2. Forzar reflow (esto es clave)
-    void tiempoMuertoContainer.offsetWidth;
-    
-    // 3. Mostrar el contenedor con los estilos correctos
-    tiempoMuertoContainer.style.display = select.value ? 'block' : 'none';
-    
-    // 4. Si se está mostrando, forzar un segundo reflow para asegurar estilos
-    if (select.value) {
-      setTimeout(() => {
-        tiempoMuertoContainer.style.display = 'block';
-      }, 10);
-    }
-  }
-}
-// ✅ FUNCIÓN: Manejar observaciones especiales
-function manejarObservacionesEspeciales(vIndex) {
-  const select = document.getElementById(`observaciones-especiales-${vIndex}-v${vIndex}`);
-  const detalleContainer = document.getElementById(`detalle-observaciones-${vIndex}`);
-  const detalleTextarea = document.getElementById(`detalle-observaciones-texto-${vIndex}`);
-  
-  if (!select || !detalleContainer) return;
-  
-  // ✅ Mostrar/Ocultar campo de detalles según la selección
-  if (select.value) {
-    detalleContainer.style.display = 'block';
-    
-    // ✅ Aplicar estilos según el tipo de observación
-    if (select.value === 'posibles_trocados') {
-      select.style.borderColor = '#ffc107';
-      select.style.backgroundColor = '#fff3cd';
-      select.style.color = '#856404';
-    } else if (select.value === 'faltante_cajas') {
-      select.style.borderColor = '#dc3545';
-      select.style.backgroundColor = '#f8d7da';
-      select.style.color = '#721c24';
-    } else if (select.value === 'sobrante_cajas') {
-      select.style.borderColor = '#17a2b8';
-      select.style.backgroundColor = '#d1ecf1';
-      select.style.color = '#0c5460';
-    }
-  } else {
-    detalleContainer.style.display = 'none';
-    
-    // ✅ Restaurar estilos por defecto
-    select.style.borderColor = '#ced4da';
-    select.style.backgroundColor = 'white';
-    select.style.color = '#495057';
-    
-    // ✅ Limpiar campo de detalles
-    if (detalleTextarea) {
-      detalleTextarea.value = '';
-    }
-  }
-  
-  guardarProgreso();
-}
-
-// ✅ FUNCIÓN: Validar observaciones especiales antes de enviar
-// ✅ FUNCIÓN: Validar observaciones especiales (detalles opcionales)
-function validarObservacionesEspeciales(vIndex) {
-  const select = document.getElementById(`observaciones-especiales-${vIndex}-v${vIndex}`);
-  
-  if (!select || !select.value) {
-    return true; // No hay observación seleccionada, es válido
-  }
-  
-  // ✅ Los detalles son OPCIONALES - no se requiere validación
-  return true;
-}
+        function mostrarTiempoMuerto(select, vIndex) {
+            const div = document.getElementById(`tiempo-muerto-${vIndex}`);
+            if (select.value !== "") {
+                div.style.display = 'flex';
+            } else {
+                div.style.display = 'none';
+                const inicio = document.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_inicio"]`);
+                const fin = document.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_final"]`);
+                if (inicio) inicio.value = '';
+                if (fin) fin.value = '';
+            }
+            guardarProgreso();
+        }
 
         //FUNCIÓN: Mostrar/Ocultar Tipo de Operación basado en lugar
 function actualizarTipoOperacionPorLugar() {
@@ -944,140 +844,26 @@ function actualizarTipoOperacionPorLugar() {
                 <hr style="margin-top:25px; border-style:dashed;">
                 
                 <h4 style="text-align:center; color:#C76E00;">VEHÍCULO #${vIndex + 1}</h4>
-
-                <!-- ✅ SECCIÓN DE INSPECCIÓN DE VEHÍCULO -->
-            <hr style="margin-top:25px; border-style:dashed;">
-            <h5 style="text-align:center; color:#C76E00;">INSPECCIÓN DE VEHÍCULO</h5>
-            <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-top:15px;">
-            
-            <!-- INTERIOR CAMIÓN -->
-            <div class="form-group-custom">
-                <label style="margin-top:0;">INTERIOR CAMIÓN:</label>
-                <select name="vehiculo_${vIndex}_interior_camion" required>
-                <option value="">Seleccione</option>
-                <option value="BUENO" ${datos.interior_camion === 'BUENO' ? 'selected' : ''}>BUENO</option>
-                <option value="MALO" ${datos.interior_camion === 'MALO' ? 'selected' : ''}>MALO</option>
-                </select>
-            </div>
-
-            <!-- ESTADO DE LA CARPA -->
-            <div class="form-group-custom">
-                <label style="margin-top:0;">ESTADO DE LA CARPA:</label>
-                <select name="vehiculo_${vIndex}_estado_carpa" required>
-                <option value="">Seleccione</option>
-                <option value="BUENO" ${datos.estado_carpa === 'BUENO' ? 'selected' : ''}>BUENO</option>
-                <option value="MALO" ${datos.estado_carpa === 'MALO' ? 'selected' : ''}>MALO</option>
-                <option value="N/A" ${datos.estado_carpa === 'N/A' ? 'selected' : ''}>N/A</option>
-                </select>
-            </div>
-
-            <!-- OLORES EXTRAÑOS -->
-            <div class="form-group-custom">
-                <label style="margin-top:0;">OLORES EXTRAÑOS:</label>
-                <select name="vehiculo_${vIndex}_olores_extranos" required>
-                <option value="">Seleccione</option>
-                <option value="SI" ${datos.olores_extranos === 'SI' ? 'selected' : ''}>SI</option>
-                <option value="NO" ${datos.olores_extranos === 'NO' ? 'selected' : ''}>NO</option>
-                </select>
-            </div>
-
-            <!-- OBJETOS EXTRAÑOS -->
-            <div class="form-group-custom">
-                <label style="margin-top:0;">OBJETOS EXTRAÑOS:</label>
-                <select name="vehiculo_${vIndex}_objetos_extranos" required>
-                <option value="">Seleccione</option>
-                <option value="SI" ${datos.objetos_extranos === 'SI' ? 'selected' : ''}>SI</option>
-                <option value="NO" ${datos.objetos_extranos === 'NO' ? 'selected' : ''}>NO</option>
-                </select>
-            </div>
-
-            <!-- EVIDENCIAS DE PLAGAS -->
-            <div class="form-group-custom">
-                <label style="margin-top:0;">EVIDENCIAS DE PLAGAS:</label>
-                <select name="vehiculo_${vIndex}_evidencias_plagas" required>
-                <option value="">Seleccione</option>
-                <option value="SI" ${datos.evidencias_plagas === 'SI' ? 'selected' : ''}>SI</option>
-                <option value="NO" ${datos.evidencias_plagas === 'NO' ? 'selected' : ''}>NO</option>
-                </select>
-            </div>
-
-        <!-- ESTADO DEL SUELO -->
-        <div class="form-group-custom">
-            <label style="margin-top:0;">ESTADO DEL SUELO:</label>
-            <select name="vehiculo_${vIndex}_estado_suelo" required>
-            <option value="">Seleccione</option>
-            <option value="BUENO" ${datos.estado_suelo === 'BUENO' ? 'selected' : ''}>BUENO</option>
-            <option value="MALO" ${datos.estado_suelo === 'MALO' ? 'selected' : ''}>MALO</option>
-            </select>
-        </div>
-
-        <!-- APROBADO -->
-        <div class="form-group-custom">
-            <label style="margin-top:0;">APROBADO:</label>
-            <select name="vehiculo_${vIndex}_aprobado" required>
-            <option value="">Seleccione</option>
-            <option value="SI" ${datos.aprobado === 'SI' ? 'selected' : ''}>SI</option>
-            <option value="NO" ${datos.aprobado === 'NO' ? 'selected' : ''}>NO</option>
-            </select>
-        </div>
-        </div>
-        
                 <h5 style="text-align:center; color:#C76E00;">PARADA DE CARGUE/DESCARGUE</h5>
                 
                 <div class="parada-group">
                     <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #1 (Cargue/Descargue)</p>
                     
-                    <div class="time-control-section" style="background: #e7f3ff; padding: 15px; border-radius: 8px; border: 2px solid #001855; margin: 15px 0;">
-                      <h5 style="margin-top: 0; color: #001855; text-align: center;">Control de Tiempo</h5>
-                      
-                      <div style="display: flex; gap: 20px; margin: 20px 0; align-items: center; background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #dee2e6;">
-  <div style="flex: 1; text-align: center; padding: 10px; background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-radius: 8px; border: 2px solid #4caf50; box-shadow: 0 2px 8px rgba(76, 175, 80, 0.15);">
-    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px;">
-      <span style="font-size: 1.4em; color: #2e7d32;"></span>
-      <label class="time-label" style="display: block; font-weight: 700; color: #1b5e20; font-size: 0.95em; letter-spacing: 0.5px; margin: 0;">INICIO OPERACIÓN</label>
-    </div>
-    <input type="text" id="hora-inicio-${vIndex}" name="vehiculo_${vIndex}_inicio" class="time-display-large" readonly
-          style="width: 100%; padding: 14px 10px; font-size: 1.8em; font-weight: 700; font-family: 'Courier New', monospace; text-align: center; background: rgba(255, 255, 255, 0.95); color: #2e7d32; border: 2px solid #4caf50; border-radius: 8px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); letter-spacing: 2px;"
-          placeholder="--:--" value="${datos.inicio || ''}">
-  </div>
-  
-  <div style="display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 1.5em;">
-    →
-  </div>
-  
-  <div style="flex: 1; text-align: center; padding: 10px; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-radius: 8px; border: 2px solid #ff9800; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.15);">
-    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px;">
-      <span style="font-size: 1.4em; color: #e65100;"></span>
-      <label class="time-label" style="display: block; font-weight: 700; color: #e65100; font-size: 0.95em; letter-spacing: 0.5px; margin: 0;">FINALIZACIÓN</label>
-    </div>
-    <input type="text" id="hora-fin-${vIndex}" name="vehiculo_${vIndex}_fin" class="time-display-large" readonly
-          style="width: 100%; padding: 14px 10px; font-size: 1.8em; font-weight: 700; font-family: 'Courier New', monospace; text-align: center; background: rgba(255, 255, 255, 0.95); color: #e65100; border: 2px solid #ff9800; border-radius: 8px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); letter-spacing: -2px;"
-          placeholder="--:--" value="${datos.fin || ''}">
-  </div>
-</div>
-                      
-                      <!-- ✅ Botón inteligente que cambia de estado -->
-                      <div style="text-align: center; margin-top: 15px;">
-                        <button type="button" id="btn-control-tiempo-${vIndex}" 
-                                onclick="controlarTiempoVehiculo(${vIndex})"
-                                style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 15px 40px; border-radius: 5px; font-weight: bold; font-size: 1.1em; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%;"
-                                data-estado="${datos.inicio && !datos.fin ? 'finalizar' : datos.inicio && datos.fin ? 'reiniciar' : 'iniciar'}">
-                          ${datos.inicio && !datos.fin ? 'Finalizar Operación' : datos.inicio && datos.fin ? '🔄 Reiniciar' : 'Iniciar Operación'}
-                        </button>
-                      </div>
-                      
-                      <!-- ✅ Botón eliminar (oculto inicialmente) -->
-                      <div style="text-align: center; margin-top: 10px; display: ${datos.inicio && datos.fin ? 'block' : 'none'};" id="btn-eliminar-tiempo-container-${vIndex}">
-                        <button type="button" id="btn-eliminar-tiempo-${vIndex}" 
-                                onclick="eliminarRegistroTiempo(${vIndex})"
-                                style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; padding: 5px 20px; border-radius: 10px; font-weight: bold; font-size: 0.9em; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
-                                title="Eliminar registro de tiempo">
-                          🗑️ Eliminar Registro
-                        </button>
-                      </div>
-                      
-                      <!-- ✅ Feedback visual -->
-                      <div id="feedback-tiempo-${vIndex}" style="margin-top: 10px; padding: 8px; border-radius: 5px; text-align: center; display: none;"></div>
+                    <div class="time-row">
+                        <div>
+                            <label class="time-label">Hora Inicio (HH:MM):</label>
+                            <input type="tel" name="vehiculo_${vIndex}_inicio" class="time-input-masked" required
+                                placeholder="HH:MM" maxlength="5" value="${datos.inicio || ''}"
+                                onblur="applyTimeMask(this, '${inicioId}');">
+                            <span id="${inicioId}" class="time-display"></span>
+                        </div>
+                        <div>
+                            <label class="time-label">Hora Final (HH:MM):</label>
+                            <input type="tel" name="vehiculo_${vIndex}_fin" class="time-input-masked" required
+                                placeholder="HH:MM" maxlength="5" value="${datos.fin || ''}"
+                                onblur="applyTimeMask(this, '${finId}');">
+                            <span id="${finId}" class="time-display"></span>
+                        </div>
                     </div>
                     
                     <label style="margin-top:5px;">Motivo:</label>
@@ -1203,7 +989,7 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
   
   <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
   <div style="display: flex; gap: 10px; align-items: center;">
-  <input type="text" id="codigo-picking-${vIndex}-v${vIndex}" placeholder="EAN o código especial"
+    <input type="text" id="codigo-picking-${vIndex}" placeholder="EAN o código especial"
        style="flex: 3; padding: 10px 12px; border: 2px solid #001855; border-radius: 5px; font-size: 1.1em; font-family: Arial, sans-serif;"
        onkeypress="if(event.key === 'Enter') agregarProductoPicking(${vIndex})"
        oninput="validarCodigoPicking(this)">
@@ -1226,35 +1012,6 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
 
 <!-- ✅ RESUMEN DE PRODUCTOS ESCANEADOS -->
 <div id="resumen-productos-${vIndex}" style="margin-top: 20px; margin-bottom: 15px;"></div>
-
-<!-- ✅ CAMPO: Observaciones Especiales -->
-<div class="form-group-custom" style="margin-top: 15px; margin-bottom: 15px; padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 10px; border: 2px solid #6c757d; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-  <label style="margin: 0; font-weight: 700; color: #495057; font-size: 1.05em; display: flex; align-items: center; gap: 10px;">
-    <span style="background: #6c757d; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9em; font-weight: bold;">ℹ️</span>
-    Observaciones Especiales:
-  </label>
-  <select id="observaciones-especiales-${vIndex}" name="vehiculo_${vIndex}_observaciones_especiales" onchange="manejarObservacionesEspeciales(${vIndex})"
-          style="width: 100%; padding: 12px 15px; margin-top: 8px; border: 2px solid #ced4da; border-radius: 8px; font-size: 1em; font-weight: 600; background: white; color: #495057; cursor: pointer; transition: all 0.3s ease;"
-          onfocus="this.style.borderColor='#6c757d'; this.style.boxShadow='0 0 0 3px rgba(108, 117, 125, 0.2)';"
-          onblur="this.style.borderColor='#ced4da'; this.style.boxShadow='none';">
-    <option value="">Seleccione observación (opcional)</option>
-    <option value="posibles_trocados" style="background: #fff3cd; color: #856404; font-weight: 600;">⚠️ Posibles Trocados</option>
-    <option value="faltante_cajas" style="background: #f8d7da; color: #721c24; font-weight: 600;">📦 Faltante de Producto (Cajas)</option>
-    <option value="sobrante_cajas" style="background: #d1ecf1; color: #0c5460; font-weight: 600;">📦 Sobrante de Producto (Cajas)</option>
-  </select>
-  
-  <!-- ✅ Campo de texto adicional para detalles -->
-  <div id="detalle-observaciones-${vIndex}" style="display: none; margin-top: 12px;">
-    <label style="display: block; font-weight: 600; color: #6c757d; font-size: 0.9em; margin-bottom: 6px;">
-      Detalles adicionales:
-    </label>
-    <textarea id="detalle-observaciones-texto-${vIndex}" name="vehiculo_${vIndex}_detalle_observaciones" 
-              placeholder="Especifique los detalles de la observación..." 
-              rows="3" 
-              style="width: 100%; padding: 10px 12px; border: 2px solid #6c757d; border-radius: 6px; font-size: 0.95em; font-family: Arial, sans-serif; resize: vertical; background: #f8f9fa;"
-              oninput="guardarProgreso()"></textarea>
-  </div>
-</div>
                 
                 <label>Justificación del retraso o incidencia:</label>
                 <select name="vehiculo_${vIndex}_justificacion" onchange="mostrarTiempoMuerto(this, ${vIndex})">
@@ -1266,75 +1023,22 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
                 </select>
                 <input type="text" name="vehiculo_${vIndex}_otro_justificacion" id="otro_justificacion_${vIndex}" class="otro-input" placeholder="Especifique la incidencia" value="${datos.otro_justificacion || ''}">
                 
-                <!-- ✅ SECCIÓN CORREGIDA (control de tiempo muerto en justificación) -->
-<div class="time-control-section" id="tiempo-muerto-${vIndex}-v${vIndex}-${Date.now()}" style="display:${datos.justificacion ? 'block' : 'none'}; background: #fff8e1; padding: 15px; border-radius: 10px; border: 2px solid #ffc107; margin: 15px 0;">
-  <h5 style="margin-top: 0; color: #e65100; text-align: center; font-weight: 700; font-size: 1.1em;">⏸️ Control de Tiempo Muerto</h5>
-  
-  <div style="display: flex; gap: 20px; margin: 20px 0; align-items: center; background: #fafafa; padding: 15px; border-radius: 10px; border: 1px solid #e0e0e0;">
-    <div style="flex: 1; text-align: center; padding: 10px; background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-radius: 8px; border: 2px solid #2196f3; box-shadow: 0 2px 8px rgba(33, 150, 243, 0.15);">
-      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px;">
-        <span style="font-size: 1.4em; color: #0d47a1;">⏸️</span>
-        <label class="time-label" style="display: block; font-weight: 700; color: #0d47a1; font-size: 0.95em; letter-spacing: 0.5px; margin: 0;">INICIO</label>
-      </div>
-      <input type="text" id="tiempo-muerto-inicio-${vIndex}" 
-        name="vehiculo_${vIndex}_tiempo_muerto_inicio" 
-        class="time-display-large" readonly
-            style="width: 100%; padding: 14px 10px; font-size: 1.6em; font-weight: 700; font-family: 'Courier New', monospace; text-align: center; background: rgba(255, 255, 255, 0.95); color: #0d47a1; border: 2px solid #2196f3; border-radius: 8px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); letter-spacing: 2px;"
-            placeholder="--:--" value="${datos.tiempo_muerto_inicio || ''}">
-    </div>
-    
-    <div style="display: flex; align-items: center; justify-content: center; color: #757575; font-size: 1.5em;">
-      →
-    </div>
-    
-    <div style="flex: 1; text-align: center; padding: 10px; background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); border-radius: 8px; border: 2px solid #9c27b0; box-shadow: 0 2px 8px rgba(156, 39, 176, 0.15);">
-      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px;">
-        <span style="font-size: 1.4em; color: #4a148c;">▶️</span>
-        <label class="time-label" style="display: block; font-weight: 700; color: #4a148c; font-size: 0.95em; letter-spacing: 0.5px; margin: 0;">FINAL</label>
-      </div>
-      <input type="text" id="tiempo-muerto-fin-${vIndex}" name="vehiculo_${vIndex}_tiempo_muerto_final" class="time-display-large" readonly
-            style="width: 100%; padding: 14px 10px; font-size: 1.6em; font-weight: 700; font-family: 'Courier New', monospace; text-align: center; background: rgba(255, 255, 255, 0.95); color: #4a148c; border: 2px solid #9c27b0; border-radius: 8px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); letter-spacing: 2px;"
-            placeholder="--:--" value="${datos.tiempo_muerto_final || ''}">
-    </div>
-  </div>
-  
-  <!-- ✅ Botón inteligente que cambia de estado -->
-  <div style="text-align: center; margin-top: 15px;">
-    <button type="button" id="btn-control-tiempo-muerto-${vIndex}" 
-            onclick="controlarTiempoMuerto(${vIndex})"
-            style="background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color: white; border: none; padding: 12px 30px; border-radius: 5px; font-weight: bold; font-size: 1em; cursor: pointer; box-shadow: 0 3px 5px rgba(0,0,0,0.2); width: 100%;"
-            data-estado="iniciar">
-      ⏸️ Iniciar Tiempo Muerto
-    </button>
-  </div>
-  
-  <!-- ✅ Botón eliminar (oculto inicialmente) -->
-  <div style="text-align: center; margin-top: 10px; display: none;" id="btn-eliminar-tiempo-muerto-container-${vIndex}">
-    <button type="button" id="btn-eliminar-tiempo-muerto-${vIndex}" 
-            onclick="eliminarRegistroTiempoMuerto(${vIndex})"
-            style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; padding: 8px 16px; border-radius: 5px; font-weight: bold; font-size: 0.85em; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.15);"
-            title="Eliminar registro de tiempo muerto">
-      🗑️ Eliminar Registro
-    </button>
-  </div>
-  
-  <!-- ✅ Feedback visual -->
-  <div id="feedback-tiempo-muerto-${vIndex}" style="margin-top: 10px; padding: 8px; border-radius: 5px; text-align: center; display: none;"></div>
-</div>
-  
-  <!-- ✅ Botón eliminar (oculto inicialmente) -->
-  <div style="text-align: center; margin-top: 10px; display: none;" id="btn-eliminar-tiempo-muerto-container-${vIndex}">
-    <button type="button" id="btn-eliminar-tiempo-muerto-${vIndex}" 
-            onclick="eliminarRegistroTiempoMuerto(${vIndex})"
-            style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; padding: 8px 16px; border-radius: 5px; font-weight: bold; font-size: 0.85em; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.15);"
-            title="Eliminar registro de tiempo muerto">
-      🗑️ Eliminar Registro
-    </button>
-  </div>
-  
-  <!-- ✅ Feedback visual -->
-  <div id="feedback-tiempo-muerto-${vIndex}" style="margin-top: 10px; padding: 8px; border-radius: 5px; text-align: center; display: none;"></div>
-</div>
+                <div class="time-row" id="tiempo-muerto-${vIndex}" style="display:${datos.justificacion ? 'flex' : 'none'};">
+                    <div>
+                        <label class="time-label">Tiempo Muerto Inicio:</label>
+                        <input type="tel" name="vehiculo_${vIndex}_tiempo_muerto_inicio" class="time-input-masked"
+                            placeholder="HH:MM" maxlength="5" value="${datos.tiempo_muerto_inicio || ''}"
+                            onblur="applyTimeMask(this, 'muerto-inicio-${vIndex}')">
+                        <span id="muerto-inicio-${vIndex}" class="time-display"></span>
+                    </div>
+                    <div>
+                        <label class="time-label">Tiempo Muerto Final:</label>
+                        <input type="tel" name="vehiculo_${vIndex}_tiempo_muerto_final" class="time-input-masked"
+                            placeholder="HH:MM" maxlength="5" value="${datos.tiempo_muerto_final || ''}"
+                            onblur="applyTimeMask(this, 'muerto-final-${vIndex}')">
+                        <span id="muerto-final-${vIndex}" class="time-display"></span>
+                    </div>
+                </div>
                 
                 <label>Foto De vehiculo:</label>
                 <input type="file" name="vehiculo_${vIndex}_foto" id="${fotoInputId}" accept="image/*" capture="environment">
@@ -1344,6 +1048,83 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
                 <p style="font-size:0.85em; color:#6c757d; margin-top:5px;">
                     📸 <strong>La foto se sube automáticamente.</strong> No necesita hacer nada más.
                 </p>
+
+                <!-- ✅ SECCIÓN DE INSPECCIÓN DE VEHÍCULO -->
+            <hr style="margin-top:25px; border-style:dashed;">
+            <h5 style="text-align:center; color:#C76E00;">INSPECCIÓN DE VEHÍCULO</h5>
+            <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-top:15px;">
+            
+            <!-- INTERIOR CAMIÓN -->
+            <div class="form-group-custom">
+                <label style="margin-top:0;">INTERIOR CAMIÓN:</label>
+                <select name="vehiculo_${vIndex}_interior_camion" required>
+                <option value="">Seleccione</option>
+                <option value="BUENO" ${datos.interior_camion === 'BUENO' ? 'selected' : ''}>BUENO</option>
+                <option value="MALO" ${datos.interior_camion === 'MALO' ? 'selected' : ''}>MALO</option>
+                </select>
+            </div>
+
+            <!-- ESTADO DE LA CARPA -->
+            <div class="form-group-custom">
+                <label style="margin-top:0;">ESTADO DE LA CARPA:</label>
+                <select name="vehiculo_${vIndex}_estado_carpa" required>
+                <option value="">Seleccione</option>
+                <option value="BUENO" ${datos.estado_carpa === 'BUENO' ? 'selected' : ''}>BUENO</option>
+                <option value="MALO" ${datos.estado_carpa === 'MALO' ? 'selected' : ''}>MALO</option>
+                <option value="N/A" ${datos.estado_carpa === 'N/A' ? 'selected' : ''}>N/A</option>
+                </select>
+            </div>
+
+            <!-- OLORES EXTRAÑOS -->
+            <div class="form-group-custom">
+                <label style="margin-top:0;">OLORES EXTRAÑOS:</label>
+                <select name="vehiculo_${vIndex}_olores_extranos" required>
+                <option value="">Seleccione</option>
+                <option value="SI" ${datos.olores_extranos === 'SI' ? 'selected' : ''}>SI</option>
+                <option value="NO" ${datos.olores_extranos === 'NO' ? 'selected' : ''}>NO</option>
+                </select>
+            </div>
+
+            <!-- OBJETOS EXTRAÑOS -->
+            <div class="form-group-custom">
+                <label style="margin-top:0;">OBJETOS EXTRAÑOS:</label>
+                <select name="vehiculo_${vIndex}_objetos_extranos" required>
+                <option value="">Seleccione</option>
+                <option value="SI" ${datos.objetos_extranos === 'SI' ? 'selected' : ''}>SI</option>
+                <option value="NO" ${datos.objetos_extranos === 'NO' ? 'selected' : ''}>NO</option>
+                </select>
+            </div>
+
+            <!-- EVIDENCIAS DE PLAGAS -->
+            <div class="form-group-custom">
+                <label style="margin-top:0;">EVIDENCIAS DE PLAGAS:</label>
+                <select name="vehiculo_${vIndex}_evidencias_plagas" required>
+                <option value="">Seleccione</option>
+                <option value="SI" ${datos.evidencias_plagas === 'SI' ? 'selected' : ''}>SI</option>
+                <option value="NO" ${datos.evidencias_plagas === 'NO' ? 'selected' : ''}>NO</option>
+                </select>
+            </div>
+
+        <!-- ESTADO DEL SUELO -->
+        <div class="form-group-custom">
+            <label style="margin-top:0;">ESTADO DEL SUELO:</label>
+            <select name="vehiculo_${vIndex}_estado_suelo" required>
+            <option value="">Seleccione</option>
+            <option value="BUENO" ${datos.estado_suelo === 'BUENO' ? 'selected' : ''}>BUENO</option>
+            <option value="MALO" ${datos.estado_suelo === 'MALO' ? 'selected' : ''}>MALO</option>
+            </select>
+        </div>
+
+        <!-- APROBADO -->
+        <div class="form-group-custom">
+            <label style="margin-top:0;">APROBADO:</label>
+            <select name="vehiculo_${vIndex}_aprobado" required>
+            <option value="">Seleccione</option>
+            <option value="SI" ${datos.aprobado === 'SI' ? 'selected' : ''}>SI</option>
+            <option value="NO" ${datos.aprobado === 'NO' ? 'selected' : ''}>NO</option>
+            </select>
+        </div>
+        </div>
             `;
             
             registro.innerHTML = html;
@@ -1496,58 +1277,22 @@ if (origenSelect) {
             div.innerHTML = `
                 <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #<span class="numero-parada">${index + 1}</span> (Operación)</p>
                 
-                <div class="time-control-section" style="background: #e3f2fd; padding: 15px; border-radius: 10px; border: 2px solid #2196f3; margin: 15px 0;">
-  <h5 style="margin-top: 0; color: #0d47a1; text-align: center; font-weight: 700; font-size: 1.1em;">⏱️ Control de Tiempo - Parada</h5>
-  
-  <div style="display: flex; gap: 20px; margin: 20px 0; align-items: center; background: #fafafa; padding: 15px; border-radius: 10px; border: 1px solid #e0e0e0;">
-    <div style="flex: 1; text-align: center; padding: 10px; background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-radius: 8px; border: 2px solid #4caf50; box-shadow: 0 2px 8px rgba(76, 150, 80, 0.15);">
-      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px;">
-        <span style="font-size: 1.4em; color: #2e7d32;">🕗</span>
-        <label class="time-label" style="display: block; font-weight: 700; color: #1b5e20; font-size: 0.95em; letter-spacing: 0.5px; margin: 0;">INICIO</label>
-      </div>
-      <input type="text" id="parada-inicio-${tipo}-${index}" name="parada_inicio_${tipo}_${index}" class="time-display-large" readonly
-            style="width: 100%; padding: 14px 10px; font-size: 1.6em; font-weight: 700; font-family: 'Courier New', monospace; text-align: center; background: rgba(255, 255, 255, 0.95); color: #2e7d32; border: 2px solid #4caf50; border-radius: 8px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); letter-spacing: 2px;"
-            placeholder="--:--" value="${datos?.inicio || ''}">
-    </div>
-    
-    <div style="display: flex; align-items: center; justify-content: center; color: #757575; font-size: 1.5em;">
-      →
-    </div>
-    
-    <div style="flex: 1; text-align: center; padding: 10px; background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-radius: 8px; border: 2px solid #ff9800; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.15);">
-      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px;">
-        <span style="font-size: 1.4em; color: #e65100;">🏁</span>
-        <label class="time-label" style="display: block; font-weight: 700; color: #e65100; font-size: 0.95em; letter-spacing: 0.5px; margin: 0;">FINAL</label>
-      </div>
-      <input type="text" id="parada-fin-${tipo}-${index}" name="parada_fin_${tipo}_${index}" class="time-display-large" readonly
-            style="width: 100%; padding: 14px 10px; font-size: 1.6em; font-weight: 700; font-family: 'Courier New', monospace; text-align: center; background: rgba(255, 255, 255, 0.95); color: #e65100; border: 2px solid #ff9800; border-radius: 8px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); letter-spacing: 2px;"
-            placeholder="--:--" value="${datos?.fin || ''}">
-    </div>
-  </div>
-  
-  <!-- ✅ Botón inteligente que cambia de estado -->
-  <div style="text-align: center; margin-top: 15px;">
-    <button type="button" id="btn-control-parada-${tipo}-${index}" 
-            onclick="controlarTiempoParada('${tipo}', ${index})"
-            style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; border: none; padding: 12px 30px; border-radius: 5px; font-weight: bold; font-size: 1em; cursor: pointer; box-shadow: 0 3px 5px rgba(0,0,0,0.2); width: 100%;"
-            data-estado="iniciar">
-      🚀 Iniciar Parada
-    </button>
-  </div>
-  
-  <!-- ✅ Botón eliminar registro (oculto inicialmente) -->
-  <div style="text-align: center; margin-top: 10px; display: none;" id="btn-eliminar-parada-tiempo-container-${tipo}-${index}">
-    <button type="button" id="btn-eliminar-parada-tiempo-${tipo}-${index}" 
-            onclick="eliminarRegistroTiempoParada('${tipo}', ${index})"
-            style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; padding: 8px 16px; border-radius: 5px; font-weight: bold; font-size: 0.85em; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.15);"
-            title="Eliminar registro de tiempo">
-      🗑️ Eliminar Registro
-    </button>
-  </div>
-  
-  <!-- ✅ Feedback visual -->
-  <div id="feedback-parada-${tipo}-${index}" style="margin-top: 10px; padding: 8px; border-radius: 5px; text-align: center; display: none;"></div>
-</div>
+                <div class="time-row">
+                    <div>
+                        <label class="time-label">Hora Inicio (HH:MM):</label>
+                        <input type="tel" name="parada_inicio_operacion_${index}" class="time-input-masked"
+                            placeholder="HH:MM" maxlength="5" value="${datos.inicio || ''}"
+                            onblur="applyTimeMask(this, '${dInicio}')">
+                        <span id="${dInicio}" class="time-display"></span>
+                    </div>
+                    <div>
+                        <label class="time-label">Hora Final (HH:MM):</label>
+                        <input type="tel" name="parada_fin_operacion_${index}" class="time-input-masked"
+                            placeholder="HH:MM" maxlength="5" value="${datos.fin || ''}"
+                            onblur="applyTimeMask(this, '${dFin}')">
+                        <span id="${dFin}" class="time-display"></span>
+                    </div>
+                </div>
                 
                 <label style="margin-top:5px;">Motivo:</label>
                 <select name="parada_motivo_operacion_${index}">
@@ -1575,7 +1320,6 @@ if (origenSelect) {
                 }
             }
         }
-        
 
         // ============================================
         // MANEJO DE FOTOS
@@ -2132,7 +1876,7 @@ function borrarCantidadPicking(vIndex, codigo, cantidadABorrar) {
   
   // ✅ Enfocar el campo EAN para continuar escaneando
   setTimeout(() => {
-  const codigoInput = document.getElementById(`codigo-picking-${vIndex}-v${vIndex}`);
+    const codigoInput = document.getElementById(`codigo-picking-${vIndex}`);
     if (codigoInput) {
       codigoInput.focus();
     }
@@ -2218,664 +1962,6 @@ function agregarProductoPicking(vIndex) {
     }, 50);
   }
 }
-// ✅ ESTADO DEL CONTROL DE TIEMPO POR VEHÍCULO
-let estadoControlTiempo = {};
-
-// ✅ FUNCIÓN PRINCIPAL: Controlar tiempo (Iniciar → Finalizar → Eliminar)
-function controlarTiempoVehiculo(vIndex) {
-  const btn = document.getElementById(`btn-control-tiempo-${vIndex}`);
-  const estado = btn.getAttribute('data-estado');
-  
-  if (estado === 'iniciar') {
-    iniciarOperacion(vIndex);
-  } else if (estado === 'finalizar') {
-    finalizarOperacion(vIndex);
-  } else if (estado === 'reiniciar') {
-    reiniciarOperacion(vIndex);
-  }
-}
-
-// ✅ INICIAR OPERACIÓN
-function iniciarOperacion(vIndex) {
-  const horaInicioInput = document.getElementById(`hora-inicio-${vIndex}`);
-  const horaFinInput = document.getElementById(`hora-fin-${vIndex}`);
-  const btn = document.getElementById(`btn-control-tiempo-${vIndex}`);
-  
-  // ✅ Validar que no haya ya un registro
-  if (horaInicioInput.value || horaFinInput.value) {
-    alert('⚠️ Ya existe un registro de tiempo.\n\nSi quieres iniciar una nueva operación, primero elimina el registro actual usando el botón "Eliminar Registro".');
-    return;
-  }
-  
-  // ✅ Obtener hora actual
-  const ahora = new Date();
-  const hora = String(ahora.getHours()).padStart(2, '0');
-  const minuto = String(ahora.getMinutes()).padStart(2, '0');
-  const horaActual = `${hora}:${minuto}`;
-  
-  // ✅ Guardar hora de inicio
-  horaInicioInput.value = horaActual;
-  horaInicioInput.style.background = '#d4edda';
-  horaInicioInput.style.color = '#155724';
-  
-  // ✅ Cambiar botón a "Finalizar"
-  btn.textContent = '🏁 Finalizar Operación';
-  btn.style.background = 'linear-gradient(135deg, #ffc107 0%, #ff9800 100%)';
-  btn.style.color = '#000';
-  btn.setAttribute('data-estado', 'finalizar');
-  
-  // ✅ Mostrar feedback
-  mostrarFeedbackTiempo(vIndex, `✅ Operación iniciada a las ${horaActual}`, 'success');
-  
-  // ✅ Guardar en estado
-  if (!estadoControlTiempo[vIndex]) {
-    estadoControlTiempo[vIndex] = {};
-  }
-  estadoControlTiempo[vIndex].inicio = horaActual;
-  estadoControlTiempo[vIndex].timestampInicio = ahora.getTime();
-  
-  guardarProgreso();
-  
-  console.log(`⏱️ V${vIndex}: Operación iniciada a las ${horaActual}`);
-}
-
-// ✅ FINALIZAR OPERACIÓN
-function finalizarOperacion(vIndex) {
-  const horaInicioInput = document.getElementById(`hora-inicio-${vIndex}`);
-  const horaFinInput = document.getElementById(`hora-fin-${vIndex}`);
-  const btn = document.getElementById(`btn-control-tiempo-${vIndex}`);
-  
-  // ✅ Validar que haya hora de inicio
-  if (!horaInicioInput.value) {
-    alert('⚠️ Error: No se ha iniciado la operación.\n\nDebes iniciar la operación antes de finalizarla.');
-    return;
-  }
-  
-  // ✅ Pedir confirmación
-  const confirmar = confirm(`⚠️ ¿Estás seguro de FINALIZAR esta operación?\n\nHora de inicio: ${horaInicioInput.value}\n\nEsta acción no se puede deshacer. ¿Deseas continuar?`);
-  
-  if (!confirmar) {
-    console.log('Finalización cancelada por el usuario');
-    return;
-  }
-  
-  // ✅ Obtener hora actual
-  const ahora = new Date();
-  const hora = String(ahora.getHours()).padStart(2, '0');
-  const minuto = String(ahora.getMinutes()).padStart(2, '0');
-  const horaActual = `${hora}:${minuto}`;
-  
-  // ✅ Guardar hora de fin
-  horaFinInput.value = horaActual;
-  horaFinInput.style.background = '#f8d7da';
-  horaFinInput.style.color = '#721c24';
-  
-  // ✅ Calcular duración
-  const timestampInicio = estadoControlTiempo[vIndex]?.timestampInicio || ahora.getTime() - 3600000; // 1 hora por defecto
-  const duracionMs = ahora.getTime() - timestampInicio;
-  const duracionMinutos = Math.round(duracionMs / 60000);
-  
-  // ✅ Cambiar botón a "Reiniciar"
-  btn.textContent = '🔄 Reiniciar';
-  btn.style.background = 'linear-gradient(135deg, #17a2b8 0%, #138496 100%)';
-  btn.style.color = 'white';
-  btn.setAttribute('data-estado', 'reiniciar');
-  
-  // ✅ Mostrar botón eliminar
-  document.getElementById(`btn-eliminar-tiempo-container-${vIndex}`).style.display = 'block';
-  
-  // ✅ Mostrar feedback con duración
-  mostrarFeedbackTiempo(vIndex, `✅ Operación finalizada a las ${horaActual}\nDuración: ${duracionMinutos} minuto${duracionMinutos !== 1 ? 's' : ''}`, 'success');
-  
-  // ✅ Guardar en estado
-  estadoControlTiempo[vIndex].fin = horaActual;
-  estadoControlTiempo[vIndex].duracion = duracionMinutos;
-  
-  guardarProgreso();
-  
-  console.log(`⏱️ V${vIndex}: Operación finalizada a las ${horaActual} - Duración: ${duracionMinutos} minutos`);
-}
-
-// ✅ REINICIAR OPERACIÓN
-function reiniciarOperacion(vIndex) {
-  const confirmar = confirm('⚠️ ¿Estás seguro de REINICIAR el control de tiempo?\n\nSe eliminarán las horas de inicio y fin actuales y podrás comenzar una nueva operación.\n\n¿Deseas continuar?');
-  
-  if (!confirmar) {
-    console.log('Reinicio cancelado por el usuario');
-    return;
-  }
-  
-  limpiarRegistroTiempo(vIndex);
-  
-  mostrarFeedbackTiempo(vIndex, '✅ Control de tiempo reiniciado', 'success');
-}
-
-// ✅ ELIMINAR REGISTRO DE TIEMPO
-function eliminarRegistroTiempo(vIndex) {
-  const confirmar = confirm('⚠️ ¿Estás seguro de ELIMINAR este registro de tiempo?\n\nSe borrarán las horas de inicio y fin.\n\nEsta acción no se puede deshacer. ¿Deseas continuar?');
-  
-  if (!confirmar) {
-    console.log('Eliminación cancelada por el usuario');
-    return;
-  }
-  
-  limpiarRegistroTiempo(vIndex);
-  
-  mostrarFeedbackTiempo(vIndex, '✅ Registro de tiempo eliminado', 'success');
-}
-
-// ✅ LIMPIAR REGISTRO DE TIEMPO (función interna)
-function limpiarRegistroTiempo(vIndex) {
-  const horaInicioInput = document.getElementById(`hora-inicio-${vIndex}`);
-  const horaFinInput = document.getElementById(`hora-fin-${vIndex}`);
-  const btn = document.getElementById(`btn-control-tiempo-${vIndex}`);
-  
-  // ✅ Limpiar campos
-  horaInicioInput.value = '';
-  horaInicioInput.style.background = '';
-  horaInicioInput.style.color = '';
-  horaFinInput.value = '';
-  horaFinInput.style.background = '';
-  horaFinInput.style.color = '';
-  
-  // ✅ Restaurar botón a "Iniciar"
-  btn.textContent = '🚀 Iniciar Operación';
-  btn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
-  btn.style.color = 'white';
-  btn.setAttribute('data-estado', 'iniciar');
-  
-  // ✅ Ocultar botón eliminar
-  document.getElementById(`btn-eliminar-tiempo-container-${vIndex}`).style.display = 'none';
-  
-  // ✅ Limpiar feedback
-  const feedback = document.getElementById(`feedback-tiempo-${vIndex}`);
-  if (feedback) {
-    feedback.style.display = 'none';
-  }
-  
-  // ✅ Limpiar estado
-  delete estadoControlTiempo[vIndex];
-  
-  guardarProgreso();
-}
-
-// ✅ ESTADO DEL CONTROL DE TIEMPO MUERTO POR VEHÍCULO
-let estadoControlTiempoMuerto = {};
-
-// ✅ FUNCIÓN PRINCIPAL: Controlar tiempo muerto (Iniciar → Finalizar → Eliminar)
-function controlarTiempoMuerto(vIndex) {
-  
-  const btn = document.getElementById(`btn-control-tiempo-muerto-${vIndex}-v${vIndex}`);
-  const estado = btn.getAttribute('data-estado');
-  
-  if (estado === 'iniciar') {
-    iniciarTiempoMuerto(vIndex);
-  } else if (estado === 'finalizar') {
-    finalizarTiempoMuerto(vIndex);
-  } else if (estado === 'reiniciar') {
-    reiniciarTiempoMuerto(vIndex);
-  }
-}
-
-// ✅ INICIAR TIEMPO MUERTO
-function iniciarTiempoMuerto(vIndex) {
-  const horaInicioInput = document.getElementById(`tiempo-muerto-inicio-${vIndex}`);
-  const horaFinInput = document.getElementById(`tiempo-muerto-fin-${vIndex}`);
-  const btn = document.getElementById(`btn-control-tiempo-muerto-${vIndex}`);
-  
-  // ✅ Validar que no haya ya un registro
-  if (horaInicioInput.value || horaFinInput.value) {
-    alert('⚠️ Ya existe un registro de tiempo muerto.\n\nSi quieres iniciar uno nuevo, primero elimina el registro actual.');
-    return;
-  }
-  
-  // ✅ Obtener hora actual
-  const ahora = new Date();
-  const hora = String(ahora.getHours()).padStart(2, '0');
-  const minuto = String(ahora.getMinutes()).padStart(2, '0');
-  const horaActual = `${hora}:${minuto}`;
-  
-  // ✅ Guardar hora de inicio
-  horaInicioInput.value = horaActual;
-  horaInicioInput.style.background = 'rgba(255, 255, 255, 0.95)';
-  horaInicioInput.style.color = '#0d47a1';
-  
-  // ✅ Cambiar botón a "Finalizar"
-  btn.textContent = '▶️ Finalizar Tiempo Muerto';
-  btn.style.background = 'linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%)';
-  btn.style.color = 'white';
-  btn.setAttribute('data-estado', 'finalizar');
-  
-  // ✅ Mostrar feedback
-  mostrarFeedbackTiempoMuerto(vIndex, `✅ Tiempo muerto iniciado a las ${horaActual}`, 'success');
-  
-  // ✅ Guardar en estado
-  if (!estadoControlTiempoMuerto[vIndex]) {
-    estadoControlTiempoMuerto[vIndex] = {};
-  }
-  estadoControlTiempoMuerto[vIndex].inicio = horaActual;
-  estadoControlTiempoMuerto[vIndex].timestampInicio = ahora.getTime();
-  
-  guardarProgreso();
-  
-  console.log(`⏸️ V${vIndex}: Tiempo muerto iniciado a las ${horaActual}`);
-}
-
-// ✅ FINALIZAR TIEMPO MUERTO
-function finalizarTiempoMuerto(vIndex) {
-  const horaInicioInput = document.getElementById(`tiempo-muerto-inicio-${vIndex}`);
-  const horaFinInput = document.getElementById(`tiempo-muerto-fin-${vIndex}`);
-  const btn = document.getElementById(`btn-control-tiempo-muerto-${vIndex}`);
-  
-  // ✅ Validar que haya hora de inicio
-  if (!horaInicioInput.value) {
-    alert('⚠️ Error: No se ha iniciado el tiempo muerto.\n\nDebes iniciar antes de finalizar.');
-    return;
-  }
-  
-  // ✅ Pedir confirmación
-  const confirmar = confirm(`⚠️ ¿Estás seguro de FINALIZAR el tiempo muerto?\n\nHora de inicio: ${horaInicioInput.value}\n\nEsta acción no se puede deshacer. ¿Deseas continuar?`);
-  
-  if (!confirmar) {
-    console.log('Finalización de tiempo muerto cancelada');
-    return;
-  }
-  
-  // ✅ Obtener hora actual
-  const ahora = new Date();
-  const hora = String(ahora.getHours()).padStart(2, '0');
-  const minuto = String(ahora.getMinutes()).padStart(2, '0');
-  const horaActual = `${hora}:${minuto}`;
-  
-  // ✅ Guardar hora de fin
-  horaFinInput.value = horaActual;
-  horaFinInput.style.background = 'rgba(255, 255, 255, 0.95)';
-  horaFinInput.style.color = '#4a148c';
-  
-  // ✅ Calcular duración
-  const timestampInicio = estadoControlTiempoMuerto[vIndex]?.timestampInicio || ahora.getTime() - 3600000;
-  const duracionMs = ahora.getTime() - timestampInicio;
-  const duracionMinutos = Math.round(duracionMs / 60000);
-  
-  // ✅ Cambiar botón a "Reiniciar"
-  btn.textContent = '🔄 Reiniciar';
-  btn.style.background = 'linear-gradient(135deg, #1976d2 0%, #0d47a1 100%)';
-  btn.style.color = 'white';
-  btn.setAttribute('data-estado', 'reiniciar');
-  
-  // ✅ Mostrar botón eliminar
-  document.getElementById(`btn-eliminar-tiempo-muerto-container-${vIndex}`).style.display = 'block';
-  
-  // ✅ Mostrar feedback con duración
-  mostrarFeedbackTiempoMuerto(vIndex, `✅ Tiempo muerto finalizado a las ${horaActual}\nDuración: ${duracionMinutos} minuto${duracionMinutos !== 1 ? 's' : ''}`, 'success');
-  
-  // ✅ Guardar en estado
-  estadoControlTiempoMuerto[vIndex].fin = horaActual;
-  estadoControlTiempoMuerto[vIndex].duracion = duracionMinutos;
-  
-  guardarProgreso();
-  
-  console.log(`⏸️ V${vIndex}: Tiempo muerto finalizado a las ${horaActual} - Duración: ${duracionMinutos} minutos`);
-}
-
-// ✅ REINICIAR TIEMPO MUERTO
-function reiniciarTiempoMuerto(vIndex) {
-  const confirmar = confirm('⚠️ ¿Estás seguro de REINICIAR el control de tiempo muerto?\n\nSe eliminarán los tiempos actuales.\n\n¿Deseas continuar?');
-  
-  if (!confirmar) {
-    console.log('Reinicio de tiempo muerto cancelado');
-    return;
-  }
-  
-  limpiarRegistroTiempoMuerto(vIndex);
-  
-  mostrarFeedbackTiempoMuerto(vIndex, '✅ Control de tiempo muerto reiniciado', 'success');
-}
-
-// ✅ ELIMINAR REGISTRO DE TIEMPO MUERTO
-function eliminarRegistroTiempoMuerto(vIndex) {
-  const confirmar = confirm('⚠️ ¿Estás seguro de ELIMINAR este registro de tiempo muerto?\n\nSe borrarán las horas de inicio y fin.\n\nEsta acción no se puede deshacer. ¿Deseas continuar?');
-  
-  if (!confirmar) {
-    console.log('Eliminación de tiempo muerto cancelada');
-    return;
-  }
-  
-  limpiarRegistroTiempoMuerto(vIndex);
-  
-  mostrarFeedbackTiempoMuerto(vIndex, '✅ Registro de tiempo muerto eliminado', 'success');
-}
-
-// ✅ LIMPIAR REGISTRO DE TIEMPO MUERTO
-function limpiarRegistroTiempoMuerto(vIndex) {
-  const horaInicioInput = document.getElementById(`tiempo-muerto-inicio-${vIndex}`);
-  const horaFinInput = document.getElementById(`tiempo-muerto-fin-${vIndex}`);
-      const btn = document.getElementById(`btn-control-tiempo-muerto-${vIndex}-v${vIndex}-${Date.now()}`);
-  
-  // ✅ Limpiar campos
-  horaInicioInput.value = '';
-  horaInicioInput.style.background = '';
-  horaInicioInput.style.color = '';
-  horaFinInput.value = '';
-  horaFinInput.style.background = '';
-  horaFinInput.style.color = '';
-  
-  // ✅ Restaurar botón a "Iniciar"
-  btn.textContent = '⏸️ Iniciar Tiempo Muerto';
-  btn.style.background = 'linear-gradient(135deg, #2196f3 0%, #1976d2 100%)';
-  btn.style.color = 'white';
-  btn.setAttribute('data-estado', 'iniciar');
-  
-  // ✅ Ocultar botón eliminar
-  document.getElementById(`btn-eliminar-tiempo-muerto-container-${vIndex}`).style.display = 'none';
-  
-  // ✅ Limpiar feedback
-  const feedback = document.getElementById(`feedback-tiempo-muerto-${vIndex}`);
-  if (feedback) {
-    feedback.style.display = 'none';
-  }
-  
-  // ✅ Limpiar estado
-  delete estadoControlTiempoMuerto[vIndex];
-  
-  guardarProgreso();
-}
-
-// ✅ MOSTRAR FEEDBACK DE TIEMPO MUERTO
-function mostrarFeedbackTiempoMuerto(vIndex, mensaje, tipo) {
-  const feedback = document.getElementById(`feedback-tiempo-muerto-${vIndex}`);
-  if (!feedback) return;
-  
-  feedback.textContent = mensaje;
-  feedback.style.display = 'block';
-  
-  if (tipo === 'success') {
-    feedback.style.background = '#d4edda';
-    feedback.style.color = '#155724';
-    feedback.style.border = '1px solid #c3e6cb';
-  } else if (tipo === 'error') {
-    feedback.style.background = '#f8d7da';
-    feedback.style.color = '#721c24';
-    feedback.style.border = '1px solid #f5c6cb';
-  } else if (tipo === 'warning') {
-    feedback.style.background = '#fff3cd';
-    feedback.style.color = '#856404';
-    feedback.style.border = '1px solid #ffeaa7';
-  }
-  
-  // ✅ Ocultar después de 5 segundos
-  setTimeout(() => {
-    feedback.style.display = 'none';
-  }, 5000);
-}
-
-// ✅ ESTADO DEL CONTROL DE TIEMPO DE PARADAS
-let estadoControlTiempoParadas = {};
-
-// ✅ FUNCIÓN PRINCIPAL: Controlar tiempo de parada
-function controlarTiempoParada(tipo, index) {
-  const btn = document.getElementById(`btn-control-parada-${tipo}-${index}`);
-  const estado = btn.getAttribute('data-estado');
-  
-  if (estado === 'iniciar') {
-    iniciarTiempoParada(tipo, index);
-  } else if (estado === 'finalizar') {
-    finalizarTiempoParada(tipo, index);
-  } else if (estado === 'reiniciar') {
-    reiniciarTiempoParada(tipo, index);
-  }
-}
-
-// ✅ INICIAR TIEMPO DE PARADA
-function iniciarTiempoParada(tipo, index) {
-  const horaInicioInput = document.getElementById(`parada-inicio-${tipo}-${index}`);
-  const horaFinInput = document.getElementById(`parada-fin-${tipo}-${index}`);
-  const btn = document.getElementById(`btn-control-parada-${tipo}-${index}`);
-  
-  // ✅ Validar que no haya ya un registro
-  if (horaInicioInput.value || horaFinInput.value) {
-    alert('⚠️ Ya existe un registro de tiempo para esta parada.\n\nSi quieres iniciar uno nuevo, primero elimina el registro actual.');
-    return;
-  }
-  
-  // ✅ Obtener hora actual
-  const ahora = new Date();
-  const hora = String(ahora.getHours()).padStart(2, '0');
-  const minuto = String(ahora.getMinutes()).padStart(2, '0');
-  const horaActual = `${hora}:${minuto}`;
-  
-  // ✅ Guardar hora de inicio
-  horaInicioInput.value = horaActual;
-  horaInicioInput.style.background = 'rgba(255, 255, 255, 0.95)';
-  horaInicioInput.style.color = '#2e7d32';
-  
-  // ✅ Cambiar botón a "Finalizar"
-  btn.textContent = '🏁 Finalizar Parada';
-  btn.style.background = 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)';
-  btn.style.color = 'white';
-  btn.setAttribute('data-estado', 'finalizar');
-  
-  // ✅ Mostrar feedback
-  mostrarFeedbackTiempoParada(tipo, index, `✅ Parada iniciada a las ${horaActual}`, 'success');
-  
-  // ✅ Guardar en estado
-  const key = `${tipo}-${index}`;
-  if (!estadoControlTiempoParadas[key]) {
-    estadoControlTiempoParadas[key] = {};
-  }
-  estadoControlTiempoParadas[key].inicio = horaActual;
-  estadoControlTiempoParadas[key].timestampInicio = ahora.getTime();
-  
-  guardarProgreso();
-  
-  console.log(`⏱️ Parada ${tipo} ${index}: Iniciada a las ${horaActual}`);
-}
-
-// ✅ FINALIZAR TIEMPO DE PARADA
-function finalizarTiempoParada(tipo, index) {
-  const horaInicioInput = document.getElementById(`parada-inicio-${tipo}-${index}`);
-  const horaFinInput = document.getElementById(`parada-fin-${tipo}-${index}`);
-  const btn = document.getElementById(`btn-control-parada-${tipo}-${index}`);
-  
-  // ✅ Validar que haya hora de inicio
-  if (!horaInicioInput.value) {
-    alert('⚠️ Error: No se ha iniciado la parada.\n\nDebes iniciar antes de finalizar.');
-    return;
-  }
-  
-  // ✅ Pedir confirmación
-  const confirmar = confirm(`⚠️ ¿Estás seguro de FINALIZAR esta parada?\n\nHora de inicio: ${horaInicioInput.value}\n\nEsta acción no se puede deshacer. ¿Deseas continuar?`);
-  
-  if (!confirmar) {
-    console.log('Finalización de parada cancelada');
-    return;
-  }
-  
-  // ✅ Obtener hora actual
-  const ahora = new Date();
-  const hora = String(ahora.getHours()).padStart(2, '0');
-  const minuto = String(ahora.getMinutes()).padStart(2, '0');
-  const horaActual = `${hora}:${minuto}`;
-  
-  // ✅ Guardar hora de fin
-  horaFinInput.value = horaActual;
-  horaFinInput.style.background = 'rgba(255, 255, 255, 0.95)';
-  horaFinInput.style.color = '#e65100';
-  
-  // ✅ Calcular duración
-  const key = `${tipo}-${index}`;
-  const timestampInicio = estadoControlTiempoParadas[key]?.timestampInicio || ahora.getTime() - 3600000;
-  const duracionMs = ahora.getTime() - timestampInicio;
-  const duracionMinutos = Math.round(duracionMs / 60000);
-  
-  // ✅ Cambiar botón a "Reiniciar"
-  btn.textContent = '🔄 Reiniciar';
-  btn.style.background = 'linear-gradient(135deg, #388e3c 0%, #1b5e20 100%)';
-  btn.style.color = 'white';
-  btn.setAttribute('data-estado', 'reiniciar');
-  
-  // ✅ Mostrar botón eliminar
-  document.getElementById(`btn-eliminar-parada-tiempo-container-${tipo}-${index}`).style.display = 'block';
-  
-  // ✅ Mostrar feedback con duración
-  mostrarFeedbackTiempoParada(tipo, index, `✅ Parada finalizada a las ${horaActual}\nDuración: ${duracionMinutos} minuto${duracionMinutos !== 1 ? 's' : ''}`, 'success');
-  
-  // ✅ Guardar en estado
-  estadoControlTiempoParadas[key].fin = horaActual;
-  estadoControlTiempoParadas[key].duracion = duracionMinutos;
-  
-  guardarProgreso();
-  
-  console.log(`⏱️ Parada ${tipo} ${index}: Finalizada a las ${horaActual} - Duración: ${duracionMinutos} minutos`);
-}
-
-// ✅ REINICIAR TIEMPO DE PARADA
-function reiniciarTiempoParada(tipo, index) {
-  const confirmar = confirm('⚠️ ¿Estás seguro de REINICIAR el control de tiempo de esta parada?\n\nSe eliminarán los tiempos actuales.\n\n¿Deseas continuar?');
-  
-  if (!confirmar) {
-    console.log('Reinicio de parada cancelado');
-    return;
-  }
-  
-  limpiarRegistroTiempoParada(tipo, index);
-  
-  mostrarFeedbackTiempoParada(tipo, index, '✅ Control de tiempo de parada reiniciado', 'success');
-}
-
-// ✅ ELIMINAR REGISTRO DE TIEMPO DE PARADA
-function eliminarRegistroTiempoParada(tipo, index) {
-  const confirmar = confirm('⚠️ ¿Estás seguro de ELIMINAR este registro de tiempo de parada?\n\nSe borrarán las horas de inicio y fin.\n\nEsta acción no se puede deshacer. ¿Deseas continuar?');
-  
-  if (!confirmar) {
-    console.log('Eliminación de parada cancelada');
-    return;
-  }
-  
-  limpiarRegistroTiempoParada(tipo, index);
-  
-  mostrarFeedbackTiempoParada(tipo, index, '✅ Registro de tiempo de parada eliminado', 'success');
-}
-
-// ✅ LIMPIAR REGISTRO DE TIEMPO DE PARADA
-function limpiarRegistroTiempoParada(tipo, index) {
-  const horaInicioInput = document.getElementById(`parada-inicio-${tipo}-${index}`);
-  const horaFinInput = document.getElementById(`parada-fin-${tipo}-${index}`);
-  const btn = document.getElementById(`btn-control-parada-${tipo}-${index}`);
-  
-  // ✅ Limpiar campos
-  horaInicioInput.value = '';
-  horaInicioInput.style.background = '';
-  horaInicioInput.style.color = '';
-  horaFinInput.value = '';
-  horaFinInput.style.background = '';
-  horaFinInput.style.color = '';
-  
-  // ✅ Restaurar botón a "Iniciar"
-  btn.textContent = '🚀 Iniciar Parada';
-  btn.style.background = 'linear-gradient(135deg, #4caf50 0%, #388e3c 100%)';
-  btn.style.color = 'white';
-  btn.setAttribute('data-estado', 'iniciar');
-  
-  // ✅ Ocultar botón eliminar
-  document.getElementById(`btn-eliminar-parada-tiempo-container-${tipo}-${index}`).style.display = 'none';
-  
-  // ✅ Limpiar feedback
-  const feedback = document.getElementById(`feedback-parada-${tipo}-${index}`);
-  if (feedback) {
-    feedback.style.display = 'none';
-  }
-  
-  // ✅ Limpiar estado
-  const key = `${tipo}-${index}`;
-  delete estadoControlTiempoParadas[key];
-  
-  guardarProgreso();
-}
-
-// ✅ MOSTRAR FEEDBACK DE TIEMPO DE PARADA
-function mostrarFeedbackTiempoParada(tipo, index, mensaje, tipoMsg) {
-  const feedback = document.getElementById(`feedback-parada-${tipo}-${index}`);
-  if (!feedback) return;
-  
-  feedback.textContent = mensaje;
-  feedback.style.display = 'block';
-  
-  if (tipoMsg === 'success') {
-    feedback.style.background = '#d4edda';
-    feedback.style.color = '#155724';
-    feedback.style.border = '1px solid #c3e6cb';
-  } else if (tipoMsg === 'error') {
-    feedback.style.background = '#f8d7da';
-    feedback.style.color = '#721c24';
-    feedback.style.border = '1px solid #f5c6cb';
-  } else if (tipoMsg === 'warning') {
-    feedback.style.background = '#fff3cd';
-    feedback.style.color = '#856404';
-    feedback.style.border = '1px solid #ffeaa7';
-  }
-  
-  // ✅ Ocultar después de 5 segundos
-  setTimeout(() => {
-    feedback.style.display = 'none';
-  }, 5000);
-}
-
-// ✅ MOSTRAR FEEDBACK DE TIEMPO
-function mostrarFeedbackTiempo(vIndex, mensaje, tipo) {
-  const feedback = document.getElementById(`feedback-tiempo-${vIndex}`);
-  if (!feedback) return;
-  
-  feedback.textContent = mensaje;
-  feedback.style.display = 'block';
-  
-  if (tipo === 'success') {
-    feedback.style.background = '#d4edda';
-    feedback.style.color = '#155724';
-    feedback.style.border = '1px solid #c3e6cb';
-  } else if (tipo === 'error') {
-    feedback.style.background = '#f8d7da';
-    feedback.style.color = '#721c24';
-    feedback.style.border = '1px solid #f5c6cb';
-  } else if (tipo === 'warning') {
-    feedback.style.background = '#fff3cd';
-    feedback.style.color = '#856404';
-    feedback.style.border = '1px solid #ffeaa7';
-  }
-  
-  // ✅ Ocultar después de 5 segundos
-  setTimeout(() => {
-    feedback.style.display = 'none';
-  }, 5000);
-}
-
-// ✅ VALIDAR ANTES DE ENVIAR FORMULARIO
-function validarControlTiempo(vIndex) {
-  const horaInicioInput = document.getElementById(`hora-inicio-${vIndex}`);
-  const horaFinInput = document.getElementById(`hora-fin-${vIndex}`);
-  
-  if (!horaInicioInput.value) {
-    alert(`⚠️ Vehículo ${vIndex + 1}: Debes INICIAR la operación antes de enviar el formulario.`);
-    return false;
-  }
-  
-  if (!horaFinInput.value) {
-    const confirmar = confirm(`⚠️ Vehículo ${vIndex + 1}: La operación no ha sido FINALIZADA.\n\n¿Deseas finalizarla ahora automáticamente y continuar?`);
-    
-    if (confirmar) {
-      // ✅ Finalizar automáticamente
-      const ahora = new Date();
-      const hora = String(ahora.getHours()).padStart(2, '0');
-      const minuto = String(ahora.getMinutes()).padStart(2, '0');
-      horaFinInput.value = `${hora}:${minuto}`;
-      return true;
-    }
-    
-    return false;
-  }
-  
-  return true;
-}
 
 // ✅ VALIDACIÓN HÍBRIDA: números (máx 9) o alfanumérico (máx 20)
 function validarCodigoPicking(input) {
@@ -2945,60 +2031,44 @@ function mostrarFeedbackPicking(mensaje, vIndex, tipo = 'info') {
         // ============================================
 
         function guardarProgreso() {
-          const form = document.forms['formulario-pepsico'];
-          if(!form) return;
-          
-          const formData = new FormData(form);
-          const data = {};
-          
-          formData.forEach((value, key) => {
-            if (!(value instanceof File) && key !== 'form-name') data[key] = value;
-          });
-          
-          // ✅ CAPTURAR TODOS LOS CAMPOS DE NOMBRES DEL PERSONAL DINÁMICAMENTE (NUEVO)
-          const vehiculos = document.querySelectorAll('.registro-vehiculo');
-          vehiculos.forEach((_, vIndex) => {
-            const totalPersonas = parseInt(document.querySelector(`input[name="vehiculo_${vIndex}_personas"]`)?.value) || 0;
-            for (let p = 1; p <= totalPersonas; p++) {
-              const nombreInput = document.querySelector(`input[name="vehiculo_${vIndex}_nombre_persona_${p}"]`);
-              if (nombreInput) {
-                data[`vehiculo_${vIndex}_nombre_persona_${p}`] = nombreInput.value || '';
-              }
-            }
-             // ✅ GUARDAR OBSERVACIONES ESPECIALES
-    const observacionesSelect = document.getElementById(`observaciones-especiales-${vIndex}`);
-    const detalleTextarea = document.getElementById(`detalle-observaciones-texto-${vIndex}`);
-    
-    if (observacionesSelect) {
-      data[`vehiculo_${vIndex}_observaciones_especiales`] = observacionesSelect.value || '';
-    }
-    if (detalleTextarea) {
-      data[`vehiculo_${vIndex}_detalle_observaciones`] = detalleTextarea.value || '';
-    }
-          });
-
-          
-          const paradasData = [];
-          document.querySelectorAll('#operacion-contenedor .parada-group').forEach(grupo => {
-            const idx = grupo.dataset.index;
-            const inicio = grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '';
-            const fin = grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '';
-            const motivo = grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '';
-            const otro_motivo = grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || '';
-            paradasData.push({ inicio, fin, motivo, otro_motivo });
-          });
-          
-          data._numVehiculos = vehiculosData.length;
-          data._paradasDetalle = paradasData;
-          // ✅ Guardar productos escaneados por vehículo
-          data._productosEscaneados = productosEscaneadosPorVehiculo;
-          
-          // ✅ GUARDAR ESTADO DE LOS BOTONES DE TIEMPO
-          data._estadoControlTiempo = estadoControlTiempo;
-          data._estadoControlTiempoMuerto = estadoControlTiempoMuerto;
-          data._estadoControlTiempoParadas = estadoControlTiempoParadas;
-          
-          localStorage.setItem('pepsico_data', JSON.stringify(data));
+            const form = document.forms['formulario-pepsico'];
+            if(!form) return;
+            
+            const formData = new FormData(form);
+            const data = {};
+            
+            formData.forEach((value, key) => {
+                if (!(value instanceof File) && key !== 'form-name') data[key] = value;
+            });
+            
+            // ✅ CAPTURAR TODOS LOS CAMPOS DE NOMBRES DEL PERSONAL DINÁMICAMENTE (NUEVO)
+            const vehiculos = document.querySelectorAll('.registro-vehiculo');
+            vehiculos.forEach((_, vIndex) => {
+                const totalPersonas = parseInt(document.querySelector(`input[name="vehiculo_${vIndex}_personas"]`)?.value) || 0;
+                for (let p = 1; p <= totalPersonas; p++) {
+                    const nombreInput = document.querySelector(`input[name="vehiculo_${vIndex}_nombre_persona_${p}"]`);
+                    if (nombreInput) {
+                        data[`vehiculo_${vIndex}_nombre_persona_${p}`] = nombreInput.value || '';
+                    }
+                }
+            });
+            
+            const paradasData = [];
+            document.querySelectorAll('#operacion-contenedor .parada-group').forEach(grupo => {
+                const idx = grupo.dataset.index;
+                const inicio = grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '';
+                const fin = grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '';
+                const motivo = grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '';
+                const otro_motivo = grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || '';
+                paradasData.push({ inicio, fin, motivo, otro_motivo });
+            });
+            
+            data._numVehiculos = vehiculosData.length;
+            data._paradasDetalle = paradasData;
+            // ✅ Guardar productos escaneados por vehículo
+data._productosEscaneados = productosEscaneadosPorVehiculo;
+            
+            localStorage.setItem('pepsico_data', JSON.stringify(data));
         }
 
         // ============================================
@@ -3060,163 +2130,149 @@ Debe cumplir:
         // ENVÍO DEL FORMULARIO
         // ===========================================
         function enviarFormulario(event) {
-  event.preventDefault();
-  sincronizarVehiculosDesdeDOM();
-      
-  console.log('📊 Vehículos con nombres del personal:');
-    vehiculosData.forEach((vehiculo, index) => {
-      console.log(`Vehículo ${index}:`, {
-        placa: vehiculo.placa,
-        personas: vehiculo.personas,
-        nombres: vehiculo.nombres_personal
-      });
-    });
-  
-  // ✅ VALIDAR CONTROL DE TIEMPO DE TODOS LOS VEHÍCULOS
-  const nVehiculos = vehiculosData.length;
-  for (let i = 0; i < nVehiculos; i++) {
-    if (!validarControlTiempo(i)) {
-      return; // La validación ya muestra el mensaje de error
-    }
-  }
-
-   // ✅ VALIDAR OBSERVACIONES ESPECIALES
-  for (let i = 0; i < nVehiculos; i++) {
-    if (!validarObservacionesEspeciales(i)) {
-      return; // La validación ya muestra el mensaje de error
-    }
-  }
-  
-  // Validaciones existentes
-  const camposObligatorios = [
-      { id: 'lugar', nombre: 'Lugar de operación' },
-      { id: 'lider', nombre: 'Líder Asignado' },
-      { id: 'lider_pepsico', nombre: 'Líder De Pepsico' },
-      { id: 'fecha', nombre: 'Fecha' },
-      { id: 'turno', nombre: 'Turno' },
-      { id: 'total_personas', nombre: 'Total Personas En El Turno' },
-      { id: 'cajas_totales', nombre: 'Total Cajas Movidas' }
-  ];
-  
-  for (const campo of camposObligatorios) {
-      const el = document.getElementById(campo.id);
-      if (el && !el.value.trim()) {
-      alert(`❌ Por favor, complete el campo: "${campo.nombre}".`);
-      return;
-      }
-  }
-  
-  // Validar nombres por vehículo
-  for (let i = 0; i < vehiculosData.length; i++) {
-      const vehiculo = vehiculosData[i];
-      const totalPersonasVeh = parseInt(vehiculo.personas) || 0;
-      if (totalPersonasVeh > 0) {
-      const nombresContainer = document.querySelector(`#nombres-personal-${i}`);
-      if (nombresContainer) {
-          const inputsNombres = nombresContainer.querySelectorAll('input[type="text"]');
-          for (let j = 0; j < inputsNombres.length; j++) {
-          if (!inputsNombres[j].value.trim()) {
-              alert(`❌ Por favor, ingrese el nombre del trabajador ${j + 1} del Vehículo #${i + 1}.`);
-              inputsNombres[j].focus();
-              return;
-          }
-          }
-      }
-      }
-  }
-  
-  if (!validarPlacas()) return;
-  if (!validarSolapamientoVehiculos() || !validarSolapamientoParadas()) return;
-  
-  // ✅ Sincronizar productos escaneados con vehiculosData
-  sincronizarVehiculosDesdeDOM();
-  for (let i = 0; i < vehiculosData.length; i++) {
-    if (productosEscaneadosPorVehiculo[i]) {
-      // Convertir a array para enviar
-      const productosArray = Object.entries(productosEscaneadosPorVehiculo[i].productos).map(([codigo, prod]) => ({
-        codigo: codigo,
-        referencia: prod.referencia,
-        nombre: prod.nombre,
-        cantidad: prod.cantidad
-      }));
-      
-      vehiculosData[i].productos_escaneados = productosArray;
-      vehiculosData[i].total_cajas_escaneadas = productosEscaneadosPorVehiculo[i].totalCajas;
-    }
-  }
-  // Preparar datos para enviar
-  // Preparar datos para enviar
-  const formData = {
-    fecha: document.getElementById('fecha').value,
-    lugar: document.getElementById('lugar').value,
-    lider_asignado: document.getElementById('lider').value.toUpperCase(),
-    coordinador: document.getElementById('coordinador').value,
-    coordinador_otro: document.getElementById('coordinador_otro').value,
-    lider_pepsico: document.getElementById('lider_pepsico').value,
-    lider_pepsico_otro: document.getElementById('lider_pepsico_otro').value,
-    turno: document.getElementById('turno').value,
-    total_personas: document.getElementById('total_personas').value,
-    cajas_totales: document.getElementById('cajas_totales').value,
-    datos_vehiculos: vehiculosData,
-
+        event.preventDefault();
+        sincronizarVehiculosDesdeDOM();
+            
+        console.log('📊 Vehículos con nombres del personal:');
+          vehiculosData.forEach((vehiculo, index) => {
+            console.log(`Vehículo ${index}:`, {
+              placa: vehiculo.placa,
+              personas: vehiculo.personas,
+              nombres: vehiculo.nombres_personal
+            });
+          });
+        
+        // Validaciones existentes
+        const camposObligatorios = [
+            { id: 'lugar', nombre: 'Lugar de operación' },
+            { id: 'lider', nombre: 'Líder Asignado' },
+            { id: 'lider_pepsico', nombre: 'Líder De Pepsico' },
+            { id: 'fecha', nombre: 'Fecha' },
+            { id: 'turno', nombre: 'Turno' },
+            { id: 'total_personas', nombre: 'Total Personas En El Turno' },
+            { id: 'cajas_totales', nombre: 'Total Cajas Movidas' }
+        ];
+        
+        for (const campo of camposObligatorios) {
+            const el = document.getElementById(campo.id);
+            if (el && !el.value.trim()) {
+            alert(`❌ Por favor, complete el campo: "${campo.nombre}".`);
+            return;
+            }
+        }
     
-  
-    datos_paradas_operacion: Array.from(
-      document.querySelectorAll('#operacion-contenedor .parada-group')
-    ).map(grupo => {
-      return {
-        inicio: grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '',
-        fin: grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '',
-        motivo: grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '',
-        otro_motivo: grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || ''
-      };
-    })
-  };
-  
-  console.log('📝 Datos que se enviarán a MySQL:');
-  console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
-  
-  // ⚠️ URL DE RAILWAY
-  const RAILWAY_API_URL = 'https://pepsico-funza-production-b0f5.up.railway.app/api/registro  ';
-  
-  // Mostrar mensaje de carga
-  const submitBtn = document.querySelector('button[type="submit"]');
-  const originalText = submitBtn.textContent;
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Enviando...';
-  
-  // Enviar a Railway (MySQL)
-  fetch(RAILWAY_API_URL, {
-      method: 'POST',
-      headers: {
-      'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formData)
-  })
-  .then(response => {
-      if (!response.ok) {
-      throw new Error(`Error HTTP: ${response.status}`);
-      }
-      return response.json();
-  })
-  .then(result => {
-      if (result.success) {
-      // ✅ Eliminar datos de localStorage
-      localStorage.removeItem('pepsico_data');
-      
-      // ✅ Redirigir a aceptacion.html
-      window.location.href = 'aceptacion.html';
-      } else {
-      throw new Error(result.error || 'Error desconocido');
-      }
-  })
-  .catch(error => {
-      console.error('Error:', error);
-      alert('❌ Error al guardar: ' + error.message + '\n\nPor favor, inténtalo de nuevo.');
-      submitBtn.disabled = false;
-      submitBtn.textContent = originalText;
-  });
+        
+        // Validar nombres por vehículo
+        for (let i = 0; i < vehiculosData.length; i++) {
+            const vehiculo = vehiculosData[i];
+            const totalPersonasVeh = parseInt(vehiculo.personas) || 0;
+            if (totalPersonasVeh > 0) {
+            const nombresContainer = document.querySelector(`#nombres-personal-${i}`);
+            if (nombresContainer) {
+                const inputsNombres = nombresContainer.querySelectorAll('input[type="text"]');
+                for (let j = 0; j < inputsNombres.length; j++) {
+                if (!inputsNombres[j].value.trim()) {
+                    alert(`❌ Por favor, ingrese el nombre del trabajador ${j + 1} del Vehículo #${i + 1}.`);
+                    inputsNombres[j].focus();
+                    return;
+                }
+                }
+            }
+            }
+        }
+        
+        if (!validarPlacas()) return;
+        if (!validarSolapamientoVehiculos() || !validarSolapamientoParadas()) return;
+        
+        // ✅ Sincronizar productos escaneados con vehiculosData
+sincronizarVehiculosDesdeDOM();
+for (let i = 0; i < vehiculosData.length; i++) {
+  if (productosEscaneadosPorVehiculo[i]) {
+    // Convertir a array para enviar
+    const productosArray = Object.entries(productosEscaneadosPorVehiculo[i].productos).map(([codigo, prod]) => ({
+      codigo: codigo,
+      referencia: prod.referencia,
+      nombre: prod.nombre,
+      cantidad: prod.cantidad
+    }));
+    
+    vehiculosData[i].productos_escaneados = productosArray;
+    vehiculosData[i].total_cajas_escaneadas = productosEscaneadosPorVehiculo[i].totalCajas;
+  }
 }
+        // Preparar datos para enviar
+        // Preparar datos para enviar
+        const formData = {
+          fecha: document.getElementById('fecha').value,
+          lugar: document.getElementById('lugar').value,
+          lider_asignado: document.getElementById('lider').value.toUpperCase(),
+          coordinador: document.getElementById('coordinador').value,
+          coordinador_otro: document.getElementById('coordinador_otro').value,
+          lider_pepsico: document.getElementById('lider_pepsico').value,
+          lider_pepsico_otro: document.getElementById('lider_pepsico_otro').value,
+          turno: document.getElementById('turno').value,
+          total_personas: document.getElementById('total_personas').value,
+          cajas_totales: document.getElementById('cajas_totales').value,
+          datos_vehiculos: vehiculosData,
+
+          
+      
+          datos_paradas_operacion: Array.from(
+            document.querySelectorAll('#operacion-contenedor .parada-group')
+          ).map(grupo => {
+            return {
+              inicio: grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '',
+              fin: grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '',
+              motivo: grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '',
+              otro_motivo: grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || ''
+            };
+          })
+        };
+        
+        console.log('📝 Datos que se enviarán a MySQL:');
+        console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
+        
+        // ⚠️ URL DE RAILWAY
+        const RAILWAY_API_URL = 'https://pepsico-funza-production-b0f5.up.railway.app/api/registro';
+        
+        // Mostrar mensaje de carga
+        const submitBtn = document.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Enviando...';
+        
+        // Enviar a Railway (MySQL)
+        fetch(RAILWAY_API_URL, {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => {
+            if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(result => {
+            if (result.success) {
+            // ✅ Eliminar datos de localStorage
+            localStorage.removeItem('pepsico_data');
+            
+            // ✅ Redirigir a aceptacion.html
+            window.location.href = 'aceptacion.html';
+            } else {
+            throw new Error(result.error || 'Error desconocido');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Error al guardar: ' + error.message + '\n\nPor favor, inténtalo de nuevo.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
+        }
 
         // ============================================
         // GENERACIÓN DE CAMPOS DE NOMBRES TOTALES
@@ -3268,249 +2324,136 @@ Debe cumplir:
         // ============================================
 
         document.addEventListener('DOMContentLoaded', async function() {
-          const form = document.querySelector('form');
-          const savedData = localStorage.getItem('pepsico_data');
+  const form = document.querySelector('form');
+  const savedData = localStorage.getItem('pepsico_data');
 
-          if (savedData) {
-            const data = JSON.parse(savedData);
-            const nVehiculos = data._numVehiculos || 1;
+  if (savedData) {
+    const data = JSON.parse(savedData);
+    const nVehiculos = data._numVehiculos || 1;
 
-            // ✅ PASO 1: Establecer lugar primero
-            const lugarGuardado = data.lugar || 'Funza';
-            document.getElementById('lugar').value = lugarGuardado;
+    // ✅ PASO 1: Establecer lugar primero
+    const lugarGuardado = data.lugar || 'Funza';
+    document.getElementById('lugar').value = lugarGuardado;
 
-            // ✅ PASO 2: Limpiar contenedor ANTES de crear vehículos
-            document.getElementById('vehiculos-contenedor').innerHTML = '';
-            vehiculosData = [];
+    // ✅ PASO 2: Limpiar contenedor ANTES de crear vehículos
+    document.getElementById('vehiculos-contenedor').innerHTML = '';
+    vehiculosData = [];
 
-            // ✅ PASO 3: Crear vehículos
-            for(let i=0; i<nVehiculos; i++) {
-              const vObj = {
-                inicio: data[`vehiculo_${i}_inicio`] || '',
-                fin: data[`vehiculo_${i}_fin`] || '',
-                motivo: data[`vehiculo_${i}_motivo`] || '',
-                otro_motivo: data[`vehiculo_${i}_otro_motivo`] || '',
-                muelle: data[`vehiculo_${i}_muelle`] || '',
-                otro_muelle_num: data[`vehiculo_${i}_otro_muelle_num`] || '',
-                placa: data[`vehiculo_${i}_placa`] || '',
-                tipo_vehi: data[`vehiculo_${i}_tipo_vehi`] || '',
-                otro_tipo: data[`vehiculo_${i}_otro_tipo`] || '',
-                destino: data[`vehiculo_${i}_destino`] || '',
-                otro_destino: data[`vehiculo_${i}_otro_destino`] || '',
-                origen: data[`vehiculo_${i}_origen`] || '',
-                otro_origen: data[`vehiculo_${i}_otro_origen`] || '',
-                personas: data[`vehiculo_${i}_personas`] || '',
-                nombres_personal: [],
-                cajas: data[`vehiculo_${i}_cajas`] || '',
-                justificacion: data[`vehiculo_${i}_justificacion`] || '',
-                otro_justificacion: data[`vehiculo_${i}_otro_justificacion`] || '',
-                tiempo_muerto_inicio: data[`vehiculo_${i}_tiempo_muerto_inicio`] || '',
-                tiempo_muerto_final: data[`vehiculo_${i}_tiempo_muerto_final`] || '',
-                foto_url: data[`vehiculo_${i}_foto_url`] || '',
-                interior_camion: data[`vehiculo_${i}_interior_camion`] || '',
-                estado_carpa: data[`vehiculo_${i}_estado_carpa`] || '',
-                olores_extranos: data[`vehiculo_${i}_olores_extranos`] || '',
-                objetos_extranos: data[`vehiculo_${i}_objetos_extranos`] || '',
-                evidencias_plagas: data[`vehiculo_${i}_evidencias_plagas`] || '',
-                estado_suelo: data[`vehiculo_${i}_estado_suelo`] || '',
-                aprobado: data[`vehiculo_${i}_aprobado`] || '',
-                tipo_operacion: data[`vehiculo_${i}_tipo_operacion`] || '',
-                observaciones_especiales: data[`vehiculo_${i}_observaciones_especiales`] || '',
-                detalle_observaciones: data[`vehiculo_${i}_detalle_observaciones`] ||  '' // ✅ AÑADIR ESTA LÍNEA
-              };
+    // ✅ PASO 3: Crear vehículos
+    for(let i=0; i<nVehiculos; i++) {
+      const vObj = {
+        inicio: data[`vehiculo_${i}_inicio`] || '',
+        fin: data[`vehiculo_${i}_fin`] || '',
+        motivo: data[`vehiculo_${i}_motivo`] || '',
+        otro_motivo: data[`vehiculo_${i}_otro_motivo`] || '',
+        muelle: data[`vehiculo_${i}_muelle`] || '',
+        otro_muelle_num: data[`vehiculo_${i}_otro_muelle_num`] || '',
+        placa: data[`vehiculo_${i}_placa`] || '',
+        tipo_vehi: data[`vehiculo_${i}_tipo_vehi`] || '',
+        otro_tipo: data[`vehiculo_${i}_otro_tipo`] || '',
+        destino: data[`vehiculo_${i}_destino`] || '',
+        otro_destino: data[`vehiculo_${i}_otro_destino`] || '',
+        origen: data[`vehiculo_${i}_origen`] || '',
+        otro_origen: data[`vehiculo_${i}_otro_origen`] || '',
+        personas: data[`vehiculo_${i}_personas`] || '',
+        nombres_personal: [],
+        cajas: data[`vehiculo_${i}_cajas`] || '',
+        justificacion: data[`vehiculo_${i}_justificacion`] || '',
+        otro_justificacion: data[`vehiculo_${i}_otro_justificacion`] || '',
+        tiempo_muerto_inicio: data[`vehiculo_${i}_tiempo_muerto_inicio`] || '',
+        tiempo_muerto_final: data[`vehiculo_${i}_tiempo_muerto_final`] || '',
+        foto_url: data[`vehiculo_${i}_foto_url`] || '',
+        interior_camion: data[`vehiculo_${i}_interior_camion`] || '',
+        estado_carpa: data[`vehiculo_${i}_estado_carpa`] || '',
+        olores_extranos: data[`vehiculo_${i}_olores_extranos`] || '',
+        objetos_extranos: data[`vehiculo_${i}_objetos_extranos`] || '',
+        evidencias_plagas: data[`vehiculo_${i}_evidencias_plagas`] || '',
+        estado_suelo: data[`vehiculo_${i}_estado_suelo`] || '',
+        aprobado: data[`vehiculo_${i}_aprobado`] || '',
+        tipo_operacion: data[`vehiculo_${i}_tipo_operacion`] || ''  // ✅ AÑADIR ESTA LÍNEA
+      };
 
-              // ✅ Cargar nombres del personal desde localStorage (NUEVO)
-              for (let j = 1; ; j++) {
-                const nombreKey = `vehiculo_${i}_nombre_persona_${j}`;
-                if (data[nombreKey] !== undefined) {
-                  vObj.nombres_personal.push(data[nombreKey]);
-                } else {
-                  break;
-                }
-              }
-              vehiculosData.push(vObj);
-              crearVehiculoHTML(document.getElementById('vehiculos-contenedor'), i, vObj);
-
-              if (vObj.observaciones_especiales) {
-  const observacionesSelect = document.getElementById(`observaciones-especiales-${i}`);
-  if (observacionesSelect) {
-    observacionesSelect.value = vObj.observaciones_especiales;
-    // ✅ Llamar a la función para mostrar/ocultar detalles
-    manejarObservacionesEspeciales(i);
-    
-    // ✅ Restaurar detalles si existen
-    if (vObj.detalle_observaciones) {
-      const detalleTextarea = document.getElementById(`detalle-observaciones-texto-${i}`);
-      if (detalleTextarea) {
-        detalleTextarea.value = vObj.detalle_observaciones;
+      // ✅ Cargar nombres del personal desde localStorage (NUEVO)
+      for (let j = 1; ; j++) {
+        const nombreKey = `vehiculo_${i}_nombre_persona_${j}`;
+        if (data[nombreKey] !== undefined) {
+          vObj.nombres_personal.push(data[nombreKey]);
+        } else {
+          break;
+        }
+      }
+      vehiculosData.push(vObj);
+      crearVehiculoHTML(document.getElementById('vehiculos-contenedor'), i, vObj);
+      
+      // ✅ Restaurar valor de tipo de operación
+      if (vObj.tipo_operacion) {
+        const tipoOperacionSelect = document.getElementById(`tipo-operacion-${i}`);
+        if (tipoOperacionSelect) {
+          tipoOperacionSelect.value = vObj.tipo_operacion;
+        }
       }
     }
+
+    // ✅ PASO 4: Poblar muelles DESPUÉS de crear los vehículos
+    actualizarMuellesPorLugar();
+
+    // ✅ PASO 5: Restaurar valores de muelle - ID CORRECTO
+    for (let i = 0; i < nVehiculos; i++) {
+      const muelleSelect = document.getElementById(`muelle-select-${i}`);  // ✅ ID CORRECTO
+      if (muelleSelect && vehiculosData[i].muelle) {
+        muelleSelect.value = vehiculosData[i].muelle;
+        // ✅ Actualizar campo "otro" si es necesario
+        manejarOtroMuelle(i);
+      }
+    }
+
+    // Resto del código...
+    document.getElementById('operacion-contenedor').innerHTML = '';
+    if (data._paradasDetalle) {
+      data._paradasDetalle.forEach(p => agregarCampoParada('operacion', p));
+    }
+    for (const key in data) {
+      if (key.startsWith('_') || key.startsWith('vehiculo_') || key.startsWith('parada_')) continue;
+      const el = form.elements[key];
+      if (el) {
+        el.value = data[key];
+        if (el.id === 'coordinador') manejarOtroCoordinador();
+      }
+    }
+    actualizarTotalCajas();
+    
+    // ✅ Cargar productos escaneados desde localStorage
+    if (data._productosEscaneados) {
+      productosEscaneadosPorVehiculo = data._productosEscaneados;
+      // Actualizar resúmenes visuales
+      Object.keys(productosEscaneadosPorVehiculo).forEach(vIndex => {
+        mostrarResumenProductos(parseInt(vIndex));
+      });
+    }
+    
+    // ✅ Cargar base de datos de productos (TAMBIÉN aquí con await)
+    await cargarBaseDatosProductos();  // ← Añadir 'await' aquí
+    
+    generarCamposNombres();
+  } else {
+    agregarRegistroVehiculo();
+    agregarCampoParada('operacion');
+    actualizarCampos();
+    // ✅ También aquí:
+    actualizarMuellesPorLugar();
+    // ✅ Cargar base de datos de productos con await
+    await cargarBaseDatosProductos();  // ← Añadir 'await' aquí
+    // ✅ Cargar productos escaneados desde localStorage
+    cargarProductosEscaneados();
   }
-}
-              
-              // ✅ Restaurar valor de tipo de operación
-              if (vObj.tipo_operacion) {
-                // ✅ Usar ID único
-                const tipoOperacionSelect = document.getElementById(`tipo-operacion-${i}-v${i}`);
-                if (tipoOperacionSelect) {
-                  tipoOperacionSelect.value = vObj.tipo_operacion;
-                }
-              }
-            }
 
-            // ✅ PASO 4: Poblar muelles DESPUÉS de crear los vehículos
-            actualizarMuellesPorLugar();
-
-            // ✅ PASO 5: Restaurar valores de muelle - ID CORRECTO
-            for (let i = 0; i < nVehiculos; i++) {
-              const muelleSelect = document.getElementById(`muelle-select-${i}`);  // ✅ ID CORRECTO
-              if (muelleSelect && vehiculosData[i].muelle) {
-                muelleSelect.value = vehiculosData[i].muelle;
-                // ✅ Actualizar campo "otro" si es necesario
-                manejarOtroMuelle(i);
-              }
-            }
-
-            // ✅ RESTAURAR ESTADO DE LOS BOTONES DE TIEMPO
-            if (data._estadoControlTiempo) {
-              estadoControlTiempo = data._estadoControlTiempo;
-            }
-            if (data._estadoControlTiempoMuerto) {
-              estadoControlTiempoMuerto = data._estadoControlTiempoMuerto;
-            }
-            if (data._estadoControlTiempoParadas) {
-              estadoControlTiempoParadas = data._estadoControlTiempoParadas;
-            }
-            
-            // ✅ RESTAURAR VISUALMENTE LOS BOTONES DE TIEMPO
-            for (let i = 0; i < nVehiculos; i++) {
-              // Restaurar botón de tiempo principal
-              if (estadoControlTiempo[i]) {
-                const btn = document.getElementById(`btn-control-tiempo-${i}`);
-                const horaInicio = document.getElementById(`hora-inicio-${i}`);
-                const horaFin = document.getElementById(`hora-fin-${i}`);
-                
-                if (horaInicio.value && horaFin.value) {
-                  // Tiene inicio y fin → mostrar botón eliminar
-                  if (btn) {
-                    btn.textContent = '🔄 Reiniciar';
-                    btn.style.background = 'linear-gradient(135deg, #17a2b8 0%, #138496 100%)';
-                    btn.style.color = 'white';
-                    btn.setAttribute('data-estado', 'reiniciar');
-                  }
-                  document.getElementById(`btn-eliminar-tiempo-container-${i}`).style.display = 'block';
-                } else if (horaInicio.value) {
-                  // Solo tiene inicio → mostrar botón finalizar
-                  if (btn) {
-                    btn.textContent = '🏁 Finalizar Operación';
-                    btn.style.background = 'linear-gradient(135deg, #ffc107 0%, #ff9800 100%)';
-                    btn.style.color = '#000';
-                    btn.setAttribute('data-estado', 'finalizar');
-                  }
-                }
-              }
-              
-              // Restaurar botón de tiempo muerto
-              if (estadoControlTiempoMuerto[i]) {
-                const btnMuerto = document.getElementById(`btn-control-tiempo-muerto-${i}`);
-                const horaMuertoInicio = document.getElementById(`tiempo-muerto-inicio-${i}`);
-                const horaMuertoFin = document.getElementById(`tiempo-muerto-fin-${i}`);
-                
-                if (horaMuertoInicio.value && horaMuertoFin.value) {
-                  if (btnMuerto) {
-                    btnMuerto.textContent = '🔄 Reiniciar';
-                    btnMuerto.style.background = 'linear-gradient(135deg, #1976d2 0%, #0d47a1 100%)';
-                    btnMuerto.style.color = 'white';
-                    btnMuerto.setAttribute('data-estado', 'reiniciar');
-                  }
-                  document.getElementById(`btn-eliminar-tiempo-muerto-container-${i}`).style.display = 'block';
-                } else if (horaMuertoInicio.value) {
-                  if (btnMuerto) {
-                    btnMuerto.textContent = '▶️ Finalizar Tiempo Muerto';
-                    btnMuerto.style.background = 'linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%)';
-                    btnMuerto.style.color = 'white';
-                    btnMuerto.setAttribute('data-estado', 'finalizar');
-                  }
-                }
-              }
-            }
-
-            // Resto del código...
-            document.getElementById('operacion-contenedor').innerHTML = '';
-            if (data._paradasDetalle) {
-              data._paradasDetalle.forEach((p, index) => {
-                agregarCampoParada('operacion', p);
-                
-                // ✅ RESTAURAR BOTONES DE PARADAS
-                const tipo = 'operacion';
-                const key = `${tipo}-${index}`;
-                
-                if (estadoControlTiempoParadas[key]) {
-                  const btnParada = document.getElementById(`btn-control-parada-${tipo}-${index}`);
-                  const horaParadaInicio = document.getElementById(`parada-inicio-${tipo}-${index}`);
-                  const horaParadaFin = document.getElementById(`parada-fin-${tipo}-${index}`);
-                  
-                  if (horaParadaInicio.value && horaParadaFin.value) {
-                    if (btnParada) {
-                      btnParada.textContent = '🔄 Reiniciar';
-                      btnParada.style.background = 'linear-gradient(135deg, #388e3c 0%, #1b5e20 100%)';
-                      btnParada.style.color = 'white';
-                      btnParada.setAttribute('data-estado', 'reiniciar');
-                    }
-                    document.getElementById(`btn-eliminar-parada-tiempo-container-${tipo}-${index}`).style.display = 'block';
-                  } else if (horaParadaInicio.value) {
-                    if (btnParada) {
-                      btnParada.textContent = '🏁 Finalizar Parada';
-                      btnParada.style.background = 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)';
-                      btnParada.style.color = 'white';
-                      btnParada.setAttribute('data-estado', 'finalizar');
-                    }
-                  }
-                }
-              });
-            }
-            for (const key in data) {
-              if (key.startsWith('_') || key.startsWith('vehiculo_') || key.startsWith('parada_')) continue;
-              const el = form.elements[key];
-              if (el) {
-                el.value = data[key];
-                if (el.id === 'coordinador') manejarOtroCoordinador();
-              }
-            }
-            actualizarTotalCajas();
-            
-            // ✅ Cargar productos escaneados desde localStorage
-            if (data._productosEscaneados) {
-              productosEscaneadosPorVehiculo = data._productosEscaneados;
-              // Actualizar resúmenes visuales
-              Object.keys(productosEscaneadosPorVehiculo).forEach(vIndex => {
-                mostrarResumenProductos(parseInt(vIndex));
-              });
-            }
-            
-            // ✅ Cargar base de datos de productos (TAMBIÉN aquí con await)
-            await cargarBaseDatosProductos();  // ← Añadir 'await' aquí
-            
-            generarCamposNombres();
-          } else {
-            agregarRegistroVehiculo();
-            agregarCampoParada('operacion');
-            actualizarCampos();
-            // ✅ También aquí:
-            actualizarMuellesPorLugar();
-            // ✅ Cargar base de datos de productos con await
-            await cargarBaseDatosProductos();  // ← Añadir 'await' aquí
-            // ✅ Cargar productos escaneados desde localStorage
-            cargarProductosEscaneados();
-          }
-
-          form.addEventListener('submit', enviarFormulario);
-          form.addEventListener('input', guardarProgreso);
-          form.addEventListener('change', guardarProgreso);
-          
-          document.getElementById('lider_pepsico').addEventListener('change', function() {
-            this.dataset.manualChange = 'true';
-          });
-        });
+  form.addEventListener('submit', enviarFormulario);
+  form.addEventListener('input', guardarProgreso);
+  form.addEventListener('change', guardarProgreso);
+  
+  document.getElementById('lider_pepsico').addEventListener('change', function() {
+    this.dataset.manualChange = 'true';
+  });
+});
     </script>
 </body>
