@@ -2624,7 +2624,10 @@ function mostrarFeedbackPicking(mensaje, vIndex, tipo = 'info') {
             data._numVehiculos = vehiculosData.length;
             data._paradasDetalle = paradasData;
             // ✅ Guardar productos escaneados por vehículo
-data._productosEscaneados = productosEscaneadosPorVehiculo;
+            data._productosEscaneados = productosEscaneadosPorVehiculo;
+            data._estadoControlTiempo = estadoControlTiempo;
+            data._estadoControlTiempoMuerto = estadoControlTiempoMuerto;
+            data._estadoControlTiempoParadas = estadoControlTiempoParadas;
             
             localStorage.setItem('pepsico_data', JSON.stringify(data));
         }
@@ -2831,6 +2834,64 @@ for (let i = 0; i < vehiculosData.length; i++) {
             submitBtn.textContent = originalText;
         });
         }
+
+        function validarDatosParaEnvio() {
+  // ✅ Validar campos obligatorios
+  const camposObligatorios = [
+    { id: 'fecha', nombre: 'Fecha' },
+    { id: 'lugar', nombre: 'Lugar de operación' },
+    { id: 'lider', nombre: 'Líder Asignado' },
+    { id: 'lider_pepsico', nombre: 'Líder De Pepsico' },
+    { id: 'turno', nombre: 'Turno' },
+    { id: 'total_personas', nombre: 'Total Personas En El Turno' },
+    { id: 'cajas_totales', nombre: 'Total Cajas Movidas' }
+  ];
+  
+  for (const campo of camposObligatorios) {
+    const el = document.getElementById(campo.id);
+    if (el && !el.value.trim()) {
+      alert(`❌ Por favor, complete el campo: "${campo.nombre}".`);
+      el.focus();
+      return false;
+    }
+  }
+  
+  // ✅ Validar horas de inicio/fin de vehículos
+  for (let i = 0; i < vehiculosData.length; i++) {
+    const inicio = document.getElementById(`hora-inicio-${i}`);
+    const fin = document.getElementById(`hora-fin-${i}`);
+    
+    if (inicio && fin && inicio.value && !fin.value) {
+      alert(`⚠️ Vehículo ${i + 1}: Debe finalizar la operación antes de enviar.`);
+      return false;
+    }
+  }
+  
+  // ✅ Validar horas de tiempo muerto
+  for (let i = 0; i < vehiculosData.length; i++) {
+    const inicio = document.getElementById(`tiempo-muerto-inicio-${i}`);
+    const fin = document.getElementById(`tiempo-muerto-fin-${i}`);
+    
+    if (inicio && fin && inicio.value && !fin.value) {
+      alert(`⚠️ Vehículo ${i + 1}: Debe finalizar el tiempo muerto antes de enviar.`);
+      return false;
+    }
+  }
+  
+  // ✅ Validar paradas de operación
+  const paradas = document.querySelectorAll('#operacion-contenedor .parada-group');
+  for (let i = 0; i < paradas.length; i++) {
+    const inicio = paradas[i].querySelector(`input[name^="parada_inicio_operacion_"]`);
+    const fin = paradas[i].querySelector(`input[name^="parada_fin_operacion_"]`);
+    
+    if (inicio && fin && inicio.value && !fin.value) {
+      alert(`⚠️ Parada ${i + 1}: Debe finalizar la parada antes de enviar.`);
+      return false;
+    }
+  }
+  
+  return true;
+}
 
         // ============================================
         // GENERACIÓN DE CAMPOS DE NOMBRES TOTALES
