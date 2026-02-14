@@ -311,9 +311,12 @@
             <option value="Funza">Pepsico Funza</option>
             <option value="SantoDomingo">Santo Domingo</option> 
         </select>
+
+        <label for="lider">Encargado de Diligenciamiento:</label>
+        <input type="text" name="res_diligenciamiento" id="lider" required placeholder="Primer Nombre y Primer Apellido">
         
         <label for="lider">Líder Asignado:</label>
-        <input type="text" name="lider_asignado" id="lider" required placeholder="Primer Nombre y Primer Apellido">
+        <input type="text" name="lider_asignado" id="lider" placeholder="Primer Nombre y Primer Apellido">
         
         <label for="coordinador">Coordinador Asignado:</label>
         <select name="coordinador" id="coordinador" required onchange="manejarOtroCoordinador()">
@@ -837,6 +840,67 @@ function mostrarTiempoMuerto(select, vIndex) {
     }
   }
 }
+// ✅ FUNCIÓN: Manejar observaciones especiales
+function manejarObservacionesEspeciales(vIndex) {
+  const select = document.getElementById(`observaciones-especiales-${vIndex}`);
+  const detalleContainer = document.getElementById(`detalle-observaciones-${vIndex}`);
+  const detalleTextarea = document.getElementById(`detalle-observaciones-texto-${vIndex}`);
+  
+  if (!select || !detalleContainer) return;
+  
+  // ✅ Mostrar/Ocultar campo de detalles según la selección
+  if (select.value) {
+    detalleContainer.style.display = 'block';
+    
+    // ✅ Aplicar estilos según el tipo de observación
+    if (select.value === 'posibles_trocados') {
+      select.style.borderColor = '#ffc107';
+      select.style.backgroundColor = '#fff3cd';
+      select.style.color = '#856404';
+    } else if (select.value === 'faltante_cajas') {
+      select.style.borderColor = '#dc3545';
+      select.style.backgroundColor = '#f8d7da';
+      select.style.color = '#721c24';
+    } else if (select.value === 'sobrante_cajas') {
+      select.style.borderColor = '#17a2b8';
+      select.style.backgroundColor = '#d1ecf1';
+      select.style.color = '#0c5460';
+    }
+  } else {
+    detalleContainer.style.display = 'none';
+    
+    // ✅ Restaurar estilos por defecto
+    select.style.borderColor = '#ced4da';
+    select.style.backgroundColor = 'white';
+    select.style.color = '#495057';
+    
+    // ✅ Limpiar campo de detalles
+    if (detalleTextarea) {
+      detalleTextarea.value = '';
+    }
+  }
+  
+  guardarProgreso();
+}
+
+// ✅ FUNCIÓN: Validar observaciones especiales antes de enviar
+function validarObservacionesEspeciales(vIndex) {
+  const select = document.getElementById(`observaciones-especiales-${vIndex}`);
+  const detalleTextarea = document.getElementById(`detalle-observaciones-texto-${vIndex}`);
+  
+  if (!select || !select.value) {
+    return true; // No hay observación seleccionada, es válido
+  }
+  
+  // ✅ Si hay observación seleccionada, validar que tenga detalles
+  if (detalleTextarea && !detalleTextarea.value.trim()) {
+    alert(`⚠️ Vehículo ${vIndex + 1}: Has seleccionado una observación especial pero no has proporcionado los detalles.\n\nPor favor, completa el campo de detalles.`);
+    detalleTextarea.focus();
+    return false;
+  }
+  
+  return true;
+}
 
         //FUNCIÓN: Mostrar/Ocultar Tipo de Operación basado en lugar
 function actualizarTipoOperacionPorLugar() {
@@ -1168,6 +1232,35 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
 
 <!-- ✅ RESUMEN DE PRODUCTOS ESCANEADOS -->
 <div id="resumen-productos-${vIndex}" style="margin-top: 20px; margin-bottom: 15px;"></div>
+
+<!-- ✅ CAMPO: Observaciones Especiales -->
+<div class="form-group-custom" style="margin-top: 15px; margin-bottom: 15px; padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 10px; border: 2px solid #6c757d; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+  <label style="margin: 0; font-weight: 700; color: #495057; font-size: 1.05em; display: flex; align-items: center; gap: 10px;">
+    <span style="background: #6c757d; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9em; font-weight: bold;">ℹ️</span>
+    Observaciones Especiales:
+  </label>
+  <select id="observaciones-especiales-${vIndex}" name="vehiculo_${vIndex}_observaciones_especiales" onchange="manejarObservacionesEspeciales(${vIndex})"
+          style="width: 100%; padding: 12px 15px; margin-top: 8px; border: 2px solid #ced4da; border-radius: 8px; font-size: 1em; font-weight: 600; background: white; color: #495057; cursor: pointer; transition: all 0.3s ease;"
+          onfocus="this.style.borderColor='#6c757d'; this.style.boxShadow='0 0 0 3px rgba(108, 117, 125, 0.2)';"
+          onblur="this.style.borderColor='#ced4da'; this.style.boxShadow='none';">
+    <option value="">Seleccione observación (opcional)</option>
+    <option value="posibles_trocados" style="background: #fff3cd; color: #856404; font-weight: 600;">⚠️ Posibles Trocados</option>
+    <option value="faltante_cajas" style="background: #f8d7da; color: #721c24; font-weight: 600;">📦 Faltante de Producto (Cajas)</option>
+    <option value="sobrante_cajas" style="background: #d1ecf1; color: #0c5460; font-weight: 600;">📦 Sobrante de Producto (Cajas)</option>
+  </select>
+  
+  <!-- ✅ Campo de texto adicional para detalles -->
+  <div id="detalle-observaciones-${vIndex}" style="display: none; margin-top: 12px;">
+    <label style="display: block; font-weight: 600; color: #6c757d; font-size: 0.9em; margin-bottom: 6px;">
+      Detalles adicionales:
+    </label>
+    <textarea id="detalle-observaciones-texto-${vIndex}" name="vehiculo_${vIndex}_detalle_observaciones" 
+              placeholder="Especifique los detalles de la observación..." 
+              rows="3" 
+              style="width: 100%; padding: 10px 12px; border: 2px solid #6c757d; border-radius: 6px; font-size: 0.95em; font-family: Arial, sans-serif; resize: vertical; background: #f8f9fa;"
+              oninput="guardarProgreso()"></textarea>
+  </div>
+</div>
                 
                 <label>Justificación del retraso o incidencia:</label>
                 <select name="vehiculo_${vIndex}_justificacion" onchange="mostrarTiempoMuerto(this, ${vIndex})">
@@ -2875,7 +2968,18 @@ function mostrarFeedbackPicking(mensaje, vIndex, tipo = 'info') {
                 data[`vehiculo_${vIndex}_nombre_persona_${p}`] = nombreInput.value || '';
               }
             }
+             // ✅ GUARDAR OBSERVACIONES ESPECIALES
+    const observacionesSelect = document.getElementById(`observaciones-especiales-${vIndex}`);
+    const detalleTextarea = document.getElementById(`detalle-observaciones-texto-${vIndex}`);
+    
+    if (observacionesSelect) {
+      data[`vehiculo_${vIndex}_observaciones_especiales`] = observacionesSelect.value || '';
+    }
+    if (detalleTextarea) {
+      data[`vehiculo_${vIndex}_detalle_observaciones`] = detalleTextarea.value || '';
+    }
           });
+
           
           const paradasData = [];
           document.querySelectorAll('#operacion-contenedor .parada-group').forEach(grupo => {
@@ -2975,6 +3079,13 @@ Debe cumplir:
   const nVehiculos = vehiculosData.length;
   for (let i = 0; i < nVehiculos; i++) {
     if (!validarControlTiempo(i)) {
+      return; // La validación ya muestra el mensaje de error
+    }
+  }
+
+   // ✅ VALIDAR OBSERVACIONES ESPECIALES
+  for (let i = 0; i < nVehiculos; i++) {
+    if (!validarObservacionesEspeciales(i)) {
       return; // La validación ya muestra el mensaje de error
     }
   }
@@ -3206,7 +3317,9 @@ Debe cumplir:
                 evidencias_plagas: data[`vehiculo_${i}_evidencias_plagas`] || '',
                 estado_suelo: data[`vehiculo_${i}_estado_suelo`] || '',
                 aprobado: data[`vehiculo_${i}_aprobado`] || '',
-                tipo_operacion: data[`vehiculo_${i}_tipo_operacion`] || ''  // ✅ AÑADIR ESTA LÍNEA
+                tipo_operacion: data[`vehiculo_${i}_tipo_operacion`] || '',
+                observaciones_especiales: data[`vehiculo_${i}_observaciones_especiales`] || '',
+                detalle_observaciones: data[`vehiculo_${i}_detalle_observaciones`] ||  '' // ✅ AÑADIR ESTA LÍNEA
               };
 
               // ✅ Cargar nombres del personal desde localStorage (NUEVO)
@@ -3220,6 +3333,23 @@ Debe cumplir:
               }
               vehiculosData.push(vObj);
               crearVehiculoHTML(document.getElementById('vehiculos-contenedor'), i, vObj);
+
+              if (vObj.observaciones_especiales) {
+  const observacionesSelect = document.getElementById(`observaciones-especiales-${i}`);
+  if (observacionesSelect) {
+    observacionesSelect.value = vObj.observaciones_especiales;
+    // ✅ Llamar a la función para mostrar/ocultar detalles
+    manejarObservacionesEspeciales(i);
+    
+    // ✅ Restaurar detalles si existen
+    if (vObj.detalle_observaciones) {
+      const detalleTextarea = document.getElementById(`detalle-observaciones-texto-${i}`);
+      if (detalleTextarea) {
+        detalleTextarea.value = vObj.detalle_observaciones;
+      }
+    }
+  }
+}
               
               // ✅ Restaurar valor de tipo de operación
               if (vObj.tipo_operacion) {
