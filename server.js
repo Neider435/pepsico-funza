@@ -48,6 +48,7 @@ app.post('/api/registro', async (req, res) => {
       turno,
       total_personas,
       cajas_totales,
+      respo_diligen,  // ✅ Añadir responsable
       datos_vehiculos,
       datos_paradas_operacion
     } = req.body;
@@ -56,13 +57,13 @@ app.post('/api/registro', async (req, res) => {
     const [registroResult] = await connection.query(
       `INSERT INTO registros (
         fecha, lugar, lider_asignado, coordinador, coordinador_otro,
-        lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales, respo_diligen
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         fecha, lugar, lider_asignado, coordinador, coordinador_otro,
-        lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales
+        lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales, respo_diligen
       ]
-    );
+    )
     
     const registroId = registroResult.insertId;
     
@@ -78,7 +79,7 @@ app.post('/api/registro', async (req, res) => {
       const [vehiculoResult] = await connection.query(
         `INSERT INTO vehiculos (
           registro_id, inicio, fin, motivo, otro_motivo, muelle, otro_muelle_num,
-          placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, personas, cajas,
+          placa, tipo_vehi, otro_tipo, destino, otro_destino, origen,otro_origen, personas, cajas,
           justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_final, 
           foto_url, nombres_personal, tipo_operacion
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -96,6 +97,7 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.destino,
           vehiculo.otro_destino,
           vehiculo.origen,
+          vehiculo.otro_origen,
           vehiculo.personas,
           vehiculo.cajas,
           vehiculo.justificacion,
