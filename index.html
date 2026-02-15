@@ -392,42 +392,11 @@
         <hr style="margin-top: 25px; border-style: dotted;">
         
         <!-- SECCIÓN: PARADAS DE OPERACIÓN -->
-<!-- ✅ BOTÓN PARA ABRIR PARADAS DE OPERACIÓN -->
-<button type="button" onclick="abrirParadasOperacion()"
-        style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 15px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-    🛑 Paradas de Operación
-</button>
-
-
-<!-- ✅ OVERLAY/MODAL DE PARADAS DE OPERACIÓN (TAMAÑO FIJO) -->
-<div id="overlay-paradas-operacion" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center;">
-  <div style="background: white; border-radius: 10px; max-width: 700px; width: 90%; max-height: 90vh; display: flex; flex-direction: column;">
-    <!-- CABECERA -->
-    <div style="padding: 20px; background: #001855; color: white; border-radius: 10px 10px 0 0;">
-      <h4 style="margin: 0; text-align: center; font-size: 1.3em;">PARADAS DE OPERACIÓN</h4>
-    </div>
-    
-    <!-- CONTENEDOR DE PARADAS CON SCROLL -->
-    <div style="padding: 20px; flex: 1; overflow-y: auto; min-height: 200px;">
-      <div id="paradas-operacion-contenedor"></div>
-    </div>
-    
-    <!-- BOTONES (SIEMPRE VISIBLES) -->
-    <div style="padding: 20px; background: #f8f9fa; border-radius: 0 0 10px 10px; border-top: 2px solid #dee2e6;">
-      <div style="display: flex; gap: 15px;">
-        <button type="button" onclick="agregarParadaEnOverlay()"
-                style="flex: 1; background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em;">
-          ➕ Agregar Parada
+        <h3 style="text-align:center; font-size:1.3em; color:#001855;">PARADAS DE OPERACIÓN</h3>
+        <div id="operacion-contenedor"></div>
+        <button type="button" class="btn-agregar-parada-op" onclick="agregarCampoParada('operacion')">
+            + Agregar Parada
         </button>
-        <button type="button" onclick="cerrarParadasOperacion()"
-                id="btn-aceptar-paradas"
-                style="flex: 1; background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em;">
-          ✅ Aceptar
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
         
         <hr style="margin-top: 25px; border-style: dotted;">
         
@@ -497,289 +466,6 @@
       { value: 'otro', label: 'Otro' }
     ];
   }
-}
-
-// ✅ ABRIR OVERLAY DE PARADAS DE OPERACIÓN
-// ✅ ABRIR OVERLAY DE PARADAS DE OPERACIÓN (CORREGIDO)
-function abrirParadasOperacion() {
-  const overlay = document.getElementById('overlay-paradas-operacion');
-  if (overlay) {
-    overlay.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    
-    // ✅ Cargar paradas existentes o crear una vacía
-    const contenedor = document.getElementById('paradas-operacion-contenedor');
-    contenedor.innerHTML = '';
-    
-    let paradasExistentes = [];
-    
-    const savedData = localStorage.getItem('pepsico_data');
-    if (savedData) {
-      const data = JSON.parse(savedData);
-      if (data._paradasDetalle && Array.isArray(data._paradasDetalle) && data._paradasDetalle.length > 0) {
-        paradasExistentes = data._paradasDetalle;
-      }
-    }
-    
-    if (paradasExistentes.length === 0) {
-      crearParadaEnOverlay(0);
-    } else {
-      paradasExistentes.forEach((parada, index) => {
-        crearParadaEnOverlay(index, parada);
-      });
-    }
-    
-    // ✅ VALIDAR INMEDIATAMENTE AL ABRIR
-    setTimeout(() => {
-      validarParadasOperacion();
-    }, 100);
-  }
-}
-
-// ✅ CERRAR OVERLAY DE PARADAS DE OPERACIÓN
-function cerrarParadasOperacion() {
-  const overlay = document.getElementById('overlay-paradas-operacion');
-  if (overlay) {
-    // ✅ Guardar paradas antes de cerrar
-    guardarParadasDesdeOverlay();
-    
-    overlay.style.display = 'none';
-    document.body.style.overflow = 'auto';
-  }
-}
-
-// ✅ AGREGAR PARADA EN OVERLAY
-function agregarParadaEnOverlay() {
-  const contenedor = document.getElementById('paradas-operacion-contenedor');
-  const index = contenedor.children.length;
-  
-  crearParadaEnOverlay(index);
-  
-  // ✅ Validar después de agregar
-  setTimeout(() => {
-    validarParadasOperacion();
-  }, 100);
-}
-
-// ✅ CREAR PARADA EN OVERLAY
-function crearParadaEnOverlay(index, datos = {}) {
-  const contenedor = document.getElementById('paradas-operacion-contenedor');
-  
-  const div = document.createElement('div');
-  div.className = 'parada-overlay-item';
-  div.style = 'background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 2px solid #001855;';
-  
-  const dInicio = `overlay-inicio-${index}`;
-  const dFin = `overlay-fin-${index}`;
-  
-  div.innerHTML = `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-      <strong style="color: #001855; font-size: 1.1em;">🛑 Parada #${index + 1}</strong>
-      <button type="button" onclick="eliminarParadaEnOverlay(this)" 
-              style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; font-size: 0.85em; cursor: pointer;">
-        🗑️ Eliminar
-      </button>
-    </div>
-    
-    <div style="display: flex; gap: 15px; margin-bottom: 10px;">
-      <div style="flex: 1;">
-        <label style="display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.85em;">Hora Inicio:</label>
-        <input type="tel" id="overlay-inicio-${index}" class="time-input-masked overlay-time"
-               placeholder="HH:MM" maxlength="5" value="${datos.inicio || ''}"
-               style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 5px; font-size: 0.9em;"
-               onblur="applyTimeMask(this, '${dInicio}')">
-        <span id="${dInicio}" class="time-display" style="display: none;"></span>
-      </div>
-      <div style="flex: 1;">
-        <label style="display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.85em;">Hora Final:</label>
-        <input type="tel" id="overlay-fin-${index}" class="time-input-masked overlay-time"
-               placeholder="HH:MM" maxlength="5" value="${datos.fin || ''}"
-               style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 5px; font-size: 0.9em;"
-               onblur="applyTimeMask(this, '${dFin}')">
-        <span id="${dFin}" class="time-display" style="display: none;"></span>
-      </div>
-    </div>
-    
-    <div style="margin-bottom: 10px;">
-      <label style="display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.85em;">Motivo:</label>
-      <select id="overlay-motivo-${index}" onchange="manejarOtroMotivoOverlay(${index})"
-              style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 5px; font-size: 0.9em;">
-        <option value="">Seleccione</option>
-        <option value="pausas_activas" ${datos.motivo === 'pausas_activas' ? 'selected' : ''}>Pausas Activas y/o Charla</option>
-        <option value="liberacion_calidad" ${datos.motivo === 'liberacion_calidad' ? 'selected' : ''}>Liberacion De Calidad</option>
-        <option value="desayuno_almuerzo_cena" ${datos.motivo === 'desayuno_almuerzo_cena' ? 'selected' : ''}>Desayuno/Almuerzo/Cena</option>
-        <option value="aseo" ${datos.motivo === 'aseo' ? 'selected' : ''}>Aseo</option>
-        <option value="faltante_insumos" ${datos.motivo === 'faltante_insumos' ? 'selected' : ''}>Faltante (Canastillas, vinipel, estibas, etc)</option>
-        <option value="danos_equipo" ${datos.motivo === 'danos_equipo' ? 'selected' : ''}>Daños (Electricos, montacargas, etc)</option>
-        <option value="otro" ${datos.motivo === 'otro' ? 'selected' : ''}>Otro</option>
-      </select>
-    </div>
-    
-    <div style="display: none;" id="overlay-otro-motivo-container-${index}">
-      <label style="display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.85em;">Especifique:</label>
-      <input type="text" id="overlay-otro-motivo-${index}" 
-             value="${datos.otro_motivo || ''}"
-             style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 5px; font-size: 0.9em;">
-    </div>
-  `;
-  
-  contenedor.appendChild(div);
-  
-  // ✅ AÑADIR EVENTOS DE VALIDACIÓN EN TIEMPO REAL
-  const inicioInput = document.getElementById(`overlay-inicio-${index}`);
-  const finInput = document.getElementById(`overlay-fin-${index}`);
-  const motivoSelect = document.getElementById(`overlay-motivo-${index}`);
-  
-  if (inicioInput) {
-    inicioInput.addEventListener('input', validarParadasOperacion);
-    inicioInput.addEventListener('blur', validarParadasOperacion);
-  }
-  
-  if (finInput) {
-    finInput.addEventListener('input', validarParadasOperacion);
-    finInput.addEventListener('blur', validarParadasOperacion);
-  }
-  
-  if (motivoSelect) {
-    motivoSelect.addEventListener('change', validarParadasOperacion);
-  }
-  
-  // ✅ Manejar campo "otro" si ya está seleccionado
-  if (motivoSelect && motivoSelect.value === 'otro') {
-    manejarOtroMotivoOverlay(index);
-  }
-}
-
-// ✅ ELIMINAR PARADA EN OVERLAY
-function eliminarParadaEnOverlay(button) {
-  const paradaItem = button.closest('.parada-overlay-item');
-  if (paradaItem) {
-    paradaItem.remove();
-    
-    // ✅ Re-numerar paradas
-    const paradas = document.querySelectorAll('.parada-overlay-item');
-    paradas.forEach((parada, index) => {
-      const numeroSpan = parada.querySelector('strong');
-      if (numeroSpan) {
-        numeroSpan.textContent = `🛑 Parada #${index + 1}`;
-      }
-    });
-    
-    // ✅ VALIDAR DESPUÉS DE ELIMINAR
-    validarParadasOperacion();
-  }
-}
-
-// ✅ MANEJAR CAMPO "OTRO" EN OVERLAY
-function manejarOtroMotivoOverlay(index) {
-  const motivoSelect = document.getElementById(`overlay-motivo-${index}`);
-  const otroContainer = document.getElementById(`overlay-otro-motivo-container-${index}`);
-  
-  if (motivoSelect && otroContainer) {
-    if (motivoSelect.value === 'otro') {
-      otroContainer.style.display = 'block';
-    } else {
-      otroContainer.style.display = 'none';
-    }
-  }
-}
-
-// ✅ VALIDAR PARADAS DE OPERACIÓN
-function validarParadasOperacion() {
-  const paradas = document.querySelectorAll('.parada-overlay-item');
-  let todasCompletas = paradas.length > 0;
-  
-  paradas.forEach((parada, index) => {
-    const inicio = document.getElementById(`overlay-inicio-${index}`)?.value.trim();
-    const fin = document.getElementById(`overlay-fin-${index}`)?.value.trim();
-    const motivo = document.getElementById(`overlay-motivo-${index}`)?.value;
-    
-    if (!inicio || !fin || !motivo) {
-      todasCompletas = false;
-    }
-  });
-  
-  // ✅ CAMBIAR COLOR DEL BOTÓN ACEPTAR
-  const btnAceptar = document.getElementById('btn-aceptar-paradas');
-  if (todasCompletas) {
-    btnAceptar.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
-    btnAceptar.style.cursor = 'pointer';
-    btnAceptar.disabled = false;
-  } else {
-    btnAceptar.style.background = 'linear-gradient(135deg, #001855 0%, #003380 100%)';
-    btnAceptar.style.cursor = 'not-allowed';
-    btnAceptar.disabled = true;
-  }
-}
-
-// ✅ GUARDAR PARADAS DESDE OVERLAY (CORREGIDO)
-function guardarParadasDesdeOverlay() {
-  const paradas = document.querySelectorAll('.parada-overlay-item');
-  const paradasData = [];
-  
-  paradas.forEach((parada, index) => {
-    const inicio = document.getElementById(`overlay-inicio-${index}`)?.value.trim() || '';
-    const fin = document.getElementById(`overlay-fin-${index}`)?.value.trim() || '';
-    const motivo = document.getElementById(`overlay-motivo-${index}`)?.value || '';
-    const otroMotivo = document.getElementById(`overlay-otro-motivo-${index}`)?.value.trim() || '';
-    
-    // ✅ Solo guardar paradas con al menos un campo lleno
-    if (inicio || fin || motivo || otroMotivo) {
-      paradasData.push({
-        inicio: inicio,
-        fin: fin,
-        motivo: motivo,
-        otro_motivo: otroMotivo
-      });
-    }
-  });
-  
-  // ✅ Cargar datos existentes de localStorage
-  const savedData = localStorage.getItem('pepsico_data');
-  let data = savedData ? JSON.parse(savedData) : {};
-  
-  // ✅ GUARDAR PARADAS EN EL FORMATO CORRECTO
-  data._paradasDetalle = paradasData;
-  
-  // ✅ GUARDAR EN LOCALSTORAGE
-  localStorage.setItem('pepsico_data', JSON.stringify(data));
-  
-  console.log('✅ Paradas guardadas en localStorage:', paradasData);
-  
-  // ✅ Actualizar vista principal
-  actualizarVistaParadas();
-}
-  
-  // ✅ Guardar en localStorage
-  const savedData = localStorage.getItem('pepsico_data');
-  let data = savedData ? JSON.parse(savedData) : {};
-  
-  data._paradasDetalle = paradasData;
-  
-  localStorage.setItem('pepsico_data', JSON.stringify(data));
-  
-  // ✅ Actualizar vista principal (opcional)
-  actualizarVistaParadas();
-
-
-// ✅ ACTUALIZAR VISTA PRINCIPAL DE PARADAS
-function actualizarVistaParadas() {
-  const contenedorPrincipal = document.getElementById('operacion-contenedor');
-  if (!contenedorPrincipal) return;
-  
-  const savedData = localStorage.getItem('pepsico_data');
-  if (!savedData) return;
-  
-  const data = JSON.parse(savedData);
-  if (!data._paradasDetalle || !Array.isArray(data._paradasDetalle)) return;
-  
-  // Limpiar contenedor principal
-  contenedorPrincipal.innerHTML = '';
-  
-  // Agregar paradas desde localStorage
-  data._paradasDetalle.forEach((parada, index) => {
-    agregarCampoParada('operacion', parada);
-  });
 }
 
 // ✅ FORMATEAR CÉDULA COLOMBIANA (XXX.XXX.XXX o X.XXX.XXX.XXX)
@@ -1780,30 +1466,11 @@ function cerrarInspeccionVehiculo(vIndex) {
 
 // ✅ CERRAR OVERLAY AL HACER CLIC FUERA DEL CONTENIDO
 document.addEventListener('click', function(event) {
-  // ✅ Cerrar overlay de paradas de operación
-  const overlayParadas = document.getElementById('overlay-paradas-operacion');
-  const contenidoParadas = overlayParadas?.querySelector('div'); // El div interno
-  
-  if (overlayParadas && 
-      overlayParadas.style.display === 'flex' && 
-      event.target === overlayParadas) {
-    
-    // ✅ Guardar antes de cerrar
-    guardarParadasDesdeOverlay();
-    
-    overlayParadas.style.display = 'none';
+  if (event.target.classList.contains('overlay-inspeccion') || event.target.id.startsWith('overlay-inspeccion-')) {
+    const overlay = event.target;
+    overlay.style.display = 'none';
     document.body.style.overflow = 'auto';
   }
-  
-  // ✅ Cerrar overlay de inspección de vehículo (si tienes varios overlays)
-  const overlaysInspeccion = document.querySelectorAll('[id^="overlay-inspeccion-"]');
-  overlaysInspeccion.forEach(overlay => {
-    const contenido = overlay.querySelector('div');
-    if (overlay.style.display === 'flex' && event.target === overlay) {
-      overlay.style.display = 'none';
-      document.body.style.overflow = 'auto';
-    }
-  });
 });
 
         // ============================================
@@ -2592,65 +2259,45 @@ function mostrarFeedbackPicking(mensaje, vIndex, tipo = 'info') {
         // ============================================
 
         function guardarProgreso() {
-    const form = document.forms['formulario-pepsico'];
-    if (!form) return;
-    
-    const formData = new FormData(form);
-    const data = {};
-    
-    formData.forEach((value, key) => {
-        if (!(value instanceof File) && key !== 'form-name') data[key] = value;
-    });
-    
-    // ✅ CAPTURAR TODOS LOS CAMPOS DE NOMBRES DEL PERSONAL DINÁMICAMENTE
-    const vehiculos = document.querySelectorAll('.registro-vehiculo');
-    vehiculos.forEach((_, vIndex) => {
-        const totalPersonas = parseInt(document.querySelector(`input[name="vehiculo_${vIndex}_personas"]`)?.value) || 0;
-        for (let p = 1; p <= totalPersonas; p++) {
-            const nombreInput = document.querySelector(`input[name="vehiculo_${vIndex}_nombre_persona_${p}"]`);
-            if (nombreInput) {
-                data[`vehiculo_${vIndex}_nombre_persona_${p}`] = nombreInput.value || '';
-            }
-        }
-    });
-    
-    // ✅ GUARDAR PARADAS: desde overlay si está abierto, sino desde contenedor principal
-    const paradasData = [];
-    const overlayAbierto = document.getElementById('overlay-paradas-operacion')?.style.display === 'flex';
-    
-    if (overlayAbierto) {
-        // ✅ Guardar desde el overlay
-        const paradasOverlay = document.querySelectorAll('.parada-overlay-item');
-        paradasOverlay.forEach((parada, index) => {
-            const inicio = document.getElementById(`overlay-inicio-${index}`)?.value.trim() || '';
-            const fin = document.getElementById(`overlay-fin-${index}`)?.value.trim() || '';
-            const motivo = document.getElementById(`overlay-motivo-${index}`)?.value || '';
-            const otroMotivo = document.getElementById(`overlay-otro-motivo-${index}`)?.value.trim() || '';
+            const form = document.forms['formulario-pepsico'];
+            if(!form) return;
             
-            paradasData.push({
-                inicio: inicio,
-                fin: fin,
-                motivo: motivo,
-                otro_motivo: otroMotivo
+            const formData = new FormData(form);
+            const data = {};
+            
+            formData.forEach((value, key) => {
+                if (!(value instanceof File) && key !== 'form-name') data[key] = value;
             });
-        });
-    } else {
-        // ✅ Guardar desde el contenedor principal
-        document.querySelectorAll('#operacion-contenedor .parada-group').forEach(grupo => {
-            const inicio = grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '';
-            const fin = grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '';
-            const motivo = grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '';
-            const otro_motivo = grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || '';
-            paradasData.push({ inicio, fin, motivo, otro_motivo });
-        });
-    }
-    
-    data._numVehiculos = vehiculosData.length;
-    data._paradasDetalle = paradasData;
-    data._productosEscaneados = productosEscaneadosPorVehiculo;
-    
-    localStorage.setItem('pepsico_data', JSON.stringify(data));
-}
+            
+            // ✅ CAPTURAR TODOS LOS CAMPOS DE NOMBRES DEL PERSONAL DINÁMICAMENTE (NUEVO)
+            const vehiculos = document.querySelectorAll('.registro-vehiculo');
+            vehiculos.forEach((_, vIndex) => {
+                const totalPersonas = parseInt(document.querySelector(`input[name="vehiculo_${vIndex}_personas"]`)?.value) || 0;
+                for (let p = 1; p <= totalPersonas; p++) {
+                    const nombreInput = document.querySelector(`input[name="vehiculo_${vIndex}_nombre_persona_${p}"]`);
+                    if (nombreInput) {
+                        data[`vehiculo_${vIndex}_nombre_persona_${p}`] = nombreInput.value || '';
+                    }
+                }
+            });
+            
+            const paradasData = [];
+            document.querySelectorAll('#operacion-contenedor .parada-group').forEach(grupo => {
+                const idx = grupo.dataset.index;
+                const inicio = grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '';
+                const fin = grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '';
+                const motivo = grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '';
+                const otro_motivo = grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || '';
+                paradasData.push({ inicio, fin, motivo, otro_motivo });
+            });
+            
+            data._numVehiculos = vehiculosData.length;
+            data._paradasDetalle = paradasData;
+            // ✅ Guardar productos escaneados por vehículo
+data._productosEscaneados = productosEscaneadosPorVehiculo;
+            
+            localStorage.setItem('pepsico_data', JSON.stringify(data));
+        }
 
         // ============================================
         // LIMPIEZA TOTAL
@@ -2994,19 +2641,11 @@ Debe cumplir:
       }
     }
 
-    // ✅ PASO 6: RESTAURAR PARADAS DE OPERACIÓN (ÚNICO CAMBIO)
-    document.getElementById('operacion-contenedor').innerHTML = '';
-    if (data._paradasDetalle && Array.isArray(data._paradasDetalle) && data._paradasDetalle.length > 0) {
-      // Restaurar paradas guardadas
-      data._paradasDetalle.forEach(parada => {
-        agregarCampoParada('operacion', parada);
-      });
-    } else {
-      // Si no hay paradas guardadas, crear una vacía (requerimiento del overlay)
-      agregarCampoParada('operacion');
-    }
-
     // Resto del código...
+    document.getElementById('operacion-contenedor').innerHTML = '';
+    if (data._paradasDetalle) {
+      data._paradasDetalle.forEach(p => agregarCampoParada('operacion', p));
+    }
     for (const key in data) {
       if (key.startsWith('_') || key.startsWith('vehiculo_') || key.startsWith('parada_')) continue;
       const el = form.elements[key];
@@ -3032,7 +2671,7 @@ Debe cumplir:
     generarCamposNombres();
   } else {
     agregarRegistroVehiculo();
-    agregarCampoParada('operacion');  // ✅ Crear parada inicial vacía
+    agregarCampoParada('operacion');
     actualizarCampos();
     // ✅ También aquí:
     actualizarMuellesPorLugar();
