@@ -724,17 +724,27 @@ function manejarOtroMuelle(vIndex) {
       tiempo_muerto_inicio: getValue(`vehiculo_${i}_tiempo_muerto_inicio`),
       tiempo_muerto_final: getValue(`vehiculo_${i}_tiempo_muerto_final`),
       foto_url: getValue(`vehiculo_${i}_foto_url`),
-      // ✅ Nuevo campo para Santo Domingo
-      tipo_operacion: getValue(`vehiculo_${i}_tipo_operacion`),
-        interior_camion: getValue(`vehiculo_${i}_interior_camion`),
-  estado_carpa: getValue(`vehiculo_${i}_estado_carpa`),
-  olores_extranos: getValue(`vehiculo_${i}_olores_extranos`),
-  objetos_extranos: getValue(`vehiculo_${i}_objetos_extranos`),
-  evidencias_plagas: getValue(`vehiculo_${i}_evidencias_plagas`),
-  estado_suelo: getValue(`vehiculo_${i}_estado_suelo`),
-  aprobado: getValue(`vehiculo_${i}_aprobado`)
+      // ✅ Nuevo campo para Santo Domingo - ASEGURAR QUE SIEMPRE TENGA UN VALOR
+      tipo_operacion: getValue(`vehiculo_${i}_tipo_operacion`) || '',
+      interior_camion: getValue(`vehiculo_${i}_interior_camion`),
+      estado_carpa: getValue(`vehiculo_${i}_estado_carpa`),
+      olores_extranos: getValue(`vehiculo_${i}_olores_extranos`),
+      objetos_extranos: getValue(`vehiculo_${i}_objetos_extranos`),
+      evidencias_plagas: getValue(`vehiculo_${i}_evidencias_plagas`),
+      estado_suelo: getValue(`vehiculo_${i}_estado_suelo`),
+      aprobado: getValue(`vehiculo_${i}_aprobado`)
     };
   }
+  
+  // ✅ Depuración: Verificar que tipo_operacion siempre tenga valor
+  console.log('📊 Datos de vehículos sincronizados:');
+  vehiculosData.forEach((v, i) => {
+    console.log(`Vehículo ${i}:`, {
+      placa: v.placa,
+      tipo_operacion: v.tipo_operacion,
+      tipo_operacion_tipo: typeof v.tipo_operacion
+    });
+  });
 }
 
 
@@ -2170,7 +2180,6 @@ Debe cumplir:
         // Validaciones existentes
         const camposObligatorios = [
             { id: 'lugar', nombre: 'Lugar de operación' },
-            { id: 'lider', nombre: 'Líder Asignado' },
             { id: 'lider_pepsico', nombre: 'Líder De Pepsico' },
             { id: 'fecha', nombre: 'Fecha' },
             { id: 'turno', nombre: 'Turno' },
@@ -2227,6 +2236,7 @@ for (let i = 0; i < vehiculosData.length; i++) {
 }
         // Preparar datos para enviar
         // Preparar datos para enviar
+        // Preparar datos para enviar
         const formData = {
           fecha: document.getElementById('fecha').value,
           lugar: document.getElementById('lugar').value,
@@ -2239,10 +2249,15 @@ for (let i = 0; i < vehiculosData.length; i++) {
           total_personas: document.getElementById('total_personas').value,
           cajas_totales: document.getElementById('cajas_totales').value,
           respo_diligen: document.getElementById('responsable').value,
-          datos_vehiculos: vehiculosData,
-
+          datos_vehiculos: vehiculosData.map((v, i) => {
+            // ✅ Verificar que tipo_operacion tenga valor
+            if (v.tipo_operacion === undefined) {
+              console.warn(`⚠️ Vehículo ${i}: tipo_operacion es undefined, corrigiendo a ""`);
+              v.tipo_operacion = '';
+            }
+            return v;
+          }),
           
-      
           datos_paradas_operacion: Array.from(
             document.querySelectorAll('#operacion-contenedor .parada-group')
           ).map(grupo => {
