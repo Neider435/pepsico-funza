@@ -106,7 +106,7 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.tiempo_muerto_final,
           vehiculo.foto_url,
           nombresJSON,
-          vehiculo.tipo_operacion
+          vehiculo.tipo_operacion || ''
         ]
       );
       
