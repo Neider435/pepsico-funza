@@ -403,21 +403,35 @@
         <!-- SECCIÓN: TOTALES DE TURNO -->
         <h3 style="text-align:center; font-size:1.1em; color:#296097;">TOTALES DE TURNO</h3>
         
-        <label for="total_personas">Total Personas En El Turno:</label>
-        <input type="number" name="total_personas" id="total_personas" min="1" required
-            placeholder="Total de empleados en el turno">
-        <div id="nombres-contenedor" style="margin-top: 15px;"></div>
-        
-        <label for="cajas_totales">Total Cajas Movidas:</label>
-        <input type="number" name="cajas_totales" id="cajas_totales" min="0" required
-            placeholder="Cantidad total de cajas movidas" oninput="actualizarTotalCajas()">
-        
+        <!-- ✅ TOTAL PERSONAS Y TOTAL CAJAS EN LA MISMA LÍNEA -->
+        <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 15px;">
+          <!-- Total Personas En El Turno -->
+          <div style="flex: 1;">
+            <label for="total_personas" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Total Personas En El Turno:</label>
+            <input type="number" name="total_personas" id="total_personas" min="1" required
+                  placeholder="Total de empleados en el turno"
+                  style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+            <div id="nombres-contenedor" style="margin-top: 15px;"></div>
+          </div>
+          
+          <!-- Total Cajas Movidas -->
+          <div style="flex: 1;">
+            <label for="cajas_totales" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Total Cajas Movidas:</label>
+            <input type="number" name="cajas_totales" id="cajas_totales" min="0" required
+                  placeholder="Cantidad total de cajas movidas"
+                  oninput="actualizarTotalCajas()"
+                  style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+          </div>
+        </div>
+
+        <!-- ✅ CAMPOS HIDDEN (sin cambios) -->
         <input type="hidden" name="datos_vehiculos" id="datos_vehiculos" value="">
         <input type="hidden" name="datos_paradas_operacion" id="datos_paradas_operacion" value="">
-        
+
+        <!-- ✅ BOTONES ENVIAR Y BORRAR TODO (sin cambios) -->
         <div style="display: flex; gap: 10px;">
-            <button type="submit" style="flex: 3;">Enviar</button>
-            <button type="button" class="btn-borrar-todo" style="flex: 1;" onclick="limpiarTodo()">🗑️ Borrar Todo</button>
+            <button type="submit" style="flex: 3; padding: 12px; background: #001855; color: white; border: none; border-radius: 5px; font-weight: bold; font-size: 1.1em; cursor: pointer;">Enviar</button>
+            <button type="button" class="btn-borrar-todo" style="flex: 1; padding: 12px; background: #dc3545; color: white; border: none; border-radius: 5px; font-weight: bold; font-size: 1em; cursor: pointer;" onclick="limpiarTodo()">🗑️ Borrar Todo</button>
         </div>
         
     </form>
@@ -2349,35 +2363,6 @@ for (let i = 0; i < vehiculosData.length; i++) {
             if (!container) return;
             
             container.innerHTML = '';
-            
-            for (let i = 1; i <= total; i++) {
-                const div = document.createElement('div');
-                div.style.marginBottom = '10px';
-                
-                const label = document.createElement('label');
-                label.textContent = `Nombre persona ${i}:`;
-                label.style.display = 'block';
-                label.style.fontWeight = 'bold';
-                label.style.marginBottom = '5px';
-                label.htmlFor = `nombre_persona_${i}`;
-                
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.id = `nombre_persona_${i}`;
-                input.name = `nombre_persona_${i}`;
-                input.placeholder = `Nombre del trabajador ${i}`;
-                input.required = true;
-                input.style.width = '100%';
-                input.style.padding = '8px';
-                input.style.border = '1px solid #170303';
-                input.style.borderRadius = '8px';
-                input.style.boxSizing = 'border-box';
-                
-                div.appendChild(label);
-                div.appendChild(input);
-                container.appendChild(div);
-            }
-            
             guardarProgreso();
         }
 
