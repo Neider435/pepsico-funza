@@ -320,44 +320,65 @@
         <label for="lider">Líder Asignado:</label>
         <input type="text" name="lider_asignado" id="lider" placeholder="Primer Nombre y Primer Apellido">
         
-        <label for="coordinador">Coordinador Asignado:</label>
-        <select name="coordinador" id="coordinador" required onchange="manejarOtroCoordinador()">
-          <option value="">Seleccione coordinador</option>
-          <!-- Opciones para Funza -->
-          <option value="Jeison Aranda" data-lugar="Funza">Jeison Aranda</option>
-          <option value="Julian Espitia" data-lugar="Funza">Julian Espitia</option>
-          <!-- Opciones para Santo Domingo -->
-          <option value="Olga Valdez" data-lugar="SantoDomingo">Olga Valdez</option>
-          <option value="Arnold Ospina" data-lugar="SantoDomingo">Arnold Ospina</option>
-          <option value="Jeison Aranda" data-lugar="SantoDomingo">Jeison Aranda</option>
-          <option value="Leonor Nariño" data-lugar="SantoDomingo">Leonor Nariño</option>
-          <option value="Javier Torres" data-lugar="SantoDomingo">Javier Torres</option>
-          <option value="Ingrid Lisarazo" data-lugar="SantoDomingo">Ingrid Lisarazo</option>
-          <option value="otro">Otro</option>
-        </select>
-        <input type="text" name="coordinador_otro" id="coordinador_otro" class="otro-input" placeholder="Especifique el coordinador">
-        
-        <label for="lider_pepsico">Líder De Pepsico:</label>
-        <select name="lider_pepsico" id="lider_pepsico" required onchange="manejarOtroLiderPepsico()">
-            <option value="">Seleccione un líder</option>
-            <option value="Alejandro Ariza">Alejandro Ariza</option>
-            <option value="Alejandro Monroy">Alejandro Monroy</option>
-            <option value="Carlos Ruiz">Carlos Ruiz</option>
-            <option value="Carlos Valencia">Carlos Valencia</option>
-            <option value="otro">Otro</option>
-        </select>
-        <input type="text" name="lider_pepsico_otro" id="lider_pepsico_otro" class="otro-input" placeholder="Especifique el líder de Pepsico">
-        
-        <label for="fecha">Fecha:</label>
-        <input type="date" name="fecha" id="fecha" required>
-        
-        <label for="turno">Turno Asignado:</label>
-        <select name="turno" id="turno" required>
-            <option value="">Seleccione un turno</option>
-            <option value="Manana">Mañana</option>
-            <option value="Tarde">Tarde</option>
-            <option value="Noche">Noche</option>
-        </select>
+        <!-- ✅ COORDINADOR Y LÍDER PEPSICO EN LA MISMA LÍNEA -->
+        <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 15px;">
+          <!-- Coordinador Asignado -->
+          <div style="flex: 1;">
+            <label for="coordinador" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Coordinador Asignado:</label>
+            <select name="coordinador" id="coordinador" required onchange="manejarOtroCoordinador()"
+                    style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+              <option value="">Seleccione coordinador</option>
+              <!-- Opciones para Funza -->
+              <option value="Jeison Aranda" data-lugar="Funza">Jeison Aranda</option>
+              <option value="Julian Espitia" data-lugar="Funza">Julian Espitia</option>
+              <!-- Opciones para Santo Domingo -->
+              <option value="Olga Valdez" data-lugar="SantoDomingo">Olga Valdez</option>
+              <option value="Arnold Ospina" data-lugar="SantoDomingo">Arnold Ospina</option>
+              <option value="Jeison Aranda" data-lugar="SantoDomingo">Jeison Aranda</option>
+              <option value="Leonor Nariño" data-lugar="SantoDomingo">Leonor Nariño</option>
+              <option value="Javier Torres" data-lugar="SantoDomingo">Javier Torres</option>
+              <option value="Ingrid Lisarazo" data-lugar="SantoDomingo">Ingrid Lisarazo</option>
+              <option value="otro">Otro</option>
+            </select>
+            <input type="text" name="coordinador_otro" id="coordinador_otro" class="otro-input" placeholder="Especifique el coordinador"
+                  style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
+          </div>
+          
+          <!-- Líder De Pepsico -->
+          <div style="flex: 1;">
+            <label for="lider_pepsico" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Líder De Pepsico:</label>
+            <select name="lider_pepsico" id="lider_pepsico" required onchange="manejarOtroLiderPepsico()"
+                    style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+              <option value="">Seleccione un líder</option>
+              <option value="Alejandro Ariza">Alejandro Ariza</option>
+              <option value="Alejandro Monroy">Alejandro Monroy</option>
+              <option value="Carlos Ruiz">Carlos Ruiz</option>
+              <option value="Carlos Valencia">Carlos Valencia</option>
+              <option value="otro">Otro</option>
+            </select>
+            <input type="text" name="lider_pepsico_otro" id="lider_pepsico_otro" class="otro-input" placeholder="Especifique el líder de Pepsico"
+                  style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
+          </div>
+        </div>
+        <!-- ✅ FECHA Y TURNO EN LA MISMA LÍNEA -->
+        <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 15px;">
+          <div style="flex: 1;">
+            <label for="fecha" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Fecha:</label>
+            <input type="date" name="fecha" id="fecha" required
+                  style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+          </div>
+          
+          <div style="flex: 1;">
+            <label for="turno" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Turno Asignado:</label>
+            <select name="turno" id="turno" required
+                    style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+              <option value="">Seleccione un turno</option>
+              <option value="Manana">Mañana</option>
+              <option value="Tarde">Tarde</option>
+              <option value="Noche">Noche</option>
+            </select>
+          </div>
+        </div>
         
         <hr style="margin-top: 25px; border-style: dotted;">
         
