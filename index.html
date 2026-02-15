@@ -726,7 +726,7 @@ function manejarOtroMuelle(vIndex) {
       return el ? el.value || '' : '';
     };
     
-    // ✅ Obtener datos de nombres del personal (NUEVO)
+    // ✅ Obtener datos de nombres del personal
     const nombresPersonal = [];
     const nombresContainer = reg.querySelector(`#nombres-personal-${i}`);
     if (nombresContainer) {
@@ -735,6 +735,15 @@ function manejarOtroMuelle(vIndex) {
         nombresPersonal.push(input.value || '');
       });
     }
+    
+    // ✅ CAPTURAR DATOS DEL OVERLAY DE INSPECCIÓN (CORREGIDO)
+    const interiorCamion = document.getElementById(`interior_camion_${i}`)?.value || '';
+    const estadoCarpa = document.getElementById(`estado_carpa_${i}`)?.value || '';
+    const oloresExtranos = document.getElementById(`olores_extranos_${i}`)?.value || '';
+    const objetosExtranos = document.getElementById(`objetos_extranos_${i}`)?.value || '';
+    const evidenciasPlagas = document.getElementById(`evidencias_plagas_${i}`)?.value || '';
+    const estadoSuelo = document.getElementById(`estado_suelo_${i}`)?.value || '';
+    const aprobado = document.getElementById(`aprobado_${i}`)?.value || '';
     
     vehiculosData[i] = {
       inicio: getValue(`vehiculo_${i}_inicio`),
@@ -751,7 +760,6 @@ function manejarOtroMuelle(vIndex) {
       origen: getValue(`vehiculo_${i}_origen`),
       otro_origen: getValue(`vehiculo_${i}_otro_origen`),
       personas: getValue(`vehiculo_${i}_personas`),
-      // ✅ Guardar nombres del personal (NUEVO)
       nombres_personal: nombresPersonal,
       cajas: getValue(`vehiculo_${i}_cajas`),
       justificacion: getValue(`vehiculo_${i}_justificacion`),
@@ -759,29 +767,30 @@ function manejarOtroMuelle(vIndex) {
       tiempo_muerto_inicio: getValue(`vehiculo_${i}_tiempo_muerto_inicio`),
       tiempo_muerto_final: getValue(`vehiculo_${i}_tiempo_muerto_final`),
       foto_url: getValue(`vehiculo_${i}_foto_url`),
-      // ✅ Nuevo campo para Santo Domingo - ASEGURAR QUE SIEMPRE TENGA UN VALOR
       tipo_operacion: getValue(`vehiculo_${i}_tipo_operacion`) || '',
-      interior_camion: getValue(`vehiculo_${i}_interior_camion`),
-      estado_carpa: getValue(`vehiculo_${i}_estado_carpa`),
-      olores_extranos: getValue(`vehiculo_${i}_olores_extranos`),
-      objetos_extranos: getValue(`vehiculo_${i}_objetos_extranos`),
-      evidencias_plagas: getValue(`vehiculo_${i}_evidencias_plagas`),
-      estado_suelo: getValue(`vehiculo_${i}_estado_suelo`),
-      aprobado: getValue(`vehiculo_${i}_aprobado`)
+      // ✅ DATOS DE INSPECCIÓN DEL OVERLAY
+      interior_camion: interiorCamion,
+      estado_carpa: estadoCarpa,
+      olores_extranos: oloresExtranos,
+      objetos_extranos: objetosExtranos,
+      evidencias_plagas: evidenciasPlagas,
+      estado_suelo: estadoSuelo,
+      aprobado: aprobado
     };
   }
   
-  // ✅ Depuración: Verificar que tipo_operacion siempre tenga valor
+  // ✅ Depuración
   console.log('📊 Datos de vehículos sincronizados:');
   vehiculosData.forEach((v, i) => {
     console.log(`Vehículo ${i}:`, {
       placa: v.placa,
       tipo_operacion: v.tipo_operacion,
-      tipo_operacion_tipo: typeof v.tipo_operacion
+      interior_camion: v.interior_camion,
+      estado_carpa: v.estado_carpa,
+      aprobado: v.aprobado
     });
   });
 }
-
 
         // ============================================
         // MANEJO DE CAMPOS "OTRO"
@@ -1119,82 +1128,98 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
                     📸 <strong>La foto se sube automáticamente.</strong> No necesita hacer nada más.
                 </p>
 
-                <!-- ✅ SECCIÓN DE INSPECCIÓN DE VEHÍCULO -->
-            <hr style="margin-top:25px; border-style:dashed;">
-            <h5 style="text-align:center; color:#C76E00;">INSPECCIÓN DE VEHÍCULO</h5>
-            <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-top:15px;">
-            
-            <!-- INTERIOR CAMIÓN -->
-            <div class="form-group-custom">
-                <label style="margin-top:0;">INTERIOR CAMIÓN:</label>
-                <select name="vehiculo_${vIndex}_interior_camion" required>
-                <option value="">Seleccione</option>
-                <option value="BUENO" ${datos.interior_camion === 'BUENO' ? 'selected' : ''}>BUENO</option>
-                <option value="MALO" ${datos.interior_camion === 'MALO' ? 'selected' : ''}>MALO</option>
-                </select>
-            </div>
+                <!-- ✅ BOTÓN PARA ABRIR INSPECCIÓN -->
+<button type="button" onclick="abrirInspeccionVehiculo(${vIndex})"
+        style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 15px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+    🔍 Inspección de Vehículo
+</button>
 
-            <!-- ESTADO DE LA CARPA -->
-            <div class="form-group-custom">
-                <label style="margin-top:0;">ESTADO DE LA CARPA:</label>
-                <select name="vehiculo_${vIndex}_estado_carpa" required>
-                <option value="">Seleccione</option>
-                <option value="BUENO" ${datos.estado_carpa === 'BUENO' ? 'selected' : ''}>BUENO</option>
-                <option value="MALO" ${datos.estado_carpa === 'MALO' ? 'selected' : ''}>MALO</option>
-                <option value="N/A" ${datos.estado_carpa === 'N/A' ? 'selected' : ''}>N/A</option>
-                </select>
-            </div>
+<!-- ✅ OVERLAY/MODAL DE INSPECCIÓN -->
+<div id="overlay-inspeccion-${vIndex}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center;">
+  <div style="background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+    <h4 style="text-align: center; color: #C76E00; margin-top: 0;">INSPECCIÓN DE VEHÍCULO #${vIndex + 1}</h4>
+    <hr style="margin: 15px 0; border-style: dashed;">
+    
+    <!-- INTERIOR CAMIÓN -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">INTERIOR CAMIÓN:</label>
+        <select name="vehiculo_${vIndex}_interior_camion" id="interior_camion_${vIndex}" required>
+        <option value="">Seleccione</option>
+        <option value="BUENO" ${datos.interior_camion === 'BUENO' ? 'selected' : ''}>BUENO</option>
+        <option value="MALO" ${datos.interior_camion === 'MALO' ? 'selected' : ''}>MALO</option>
+        </select>
+    </div>
 
-            <!-- OLORES EXTRAÑOS -->
-            <div class="form-group-custom">
-                <label style="margin-top:0;">OLORES EXTRAÑOS:</label>
-                <select name="vehiculo_${vIndex}_olores_extranos" required>
-                <option value="">Seleccione</option>
-                <option value="SI" ${datos.olores_extranos === 'SI' ? 'selected' : ''}>SI</option>
-                <option value="NO" ${datos.olores_extranos === 'NO' ? 'selected' : ''}>NO</option>
-                </select>
-            </div>
+    <!-- ESTADO DE LA CARPA -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">ESTADO DE LA CARPA:</label>
+        <select name="vehiculo_${vIndex}_estado_carpa" id="estado_carpa_${vIndex}" required>
+        <option value="">Seleccione</option>
+        <option value="BUENO" ${datos.estado_carpa === 'BUENO' ? 'selected' : ''}>BUENO</option>
+        <option value="MALO" ${datos.estado_carpa === 'MALO' ? 'selected' : ''}>MALO</option>
+        <option value="N/A" ${datos.estado_carpa === 'N/A' ? 'selected' : ''}>N/A</option>
+        </select>
+    </div>
 
-            <!-- OBJETOS EXTRAÑOS -->
-            <div class="form-group-custom">
-                <label style="margin-top:0;">OBJETOS EXTRAÑOS:</label>
-                <select name="vehiculo_${vIndex}_objetos_extranos" required>
-                <option value="">Seleccione</option>
-                <option value="SI" ${datos.objetos_extranos === 'SI' ? 'selected' : ''}>SI</option>
-                <option value="NO" ${datos.objetos_extranos === 'NO' ? 'selected' : ''}>NO</option>
-                </select>
-            </div>
+    <!-- OLORES EXTRAÑOS -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">OLORES EXTRAÑOS:</label>
+        <select name="vehiculo_${vIndex}_olores_extranos" id="olores_extranos_${vIndex}" required>
+        <option value="">Seleccione</option>
+        <option value="SI" ${datos.olores_extranos === 'SI' ? 'selected' : ''}>SI</option>
+        <option value="NO" ${datos.olores_extranos === 'NO' ? 'selected' : ''}>NO</option>
+        </select>
+    </div>
 
-            <!-- EVIDENCIAS DE PLAGAS -->
-            <div class="form-group-custom">
-                <label style="margin-top:0;">EVIDENCIAS DE PLAGAS:</label>
-                <select name="vehiculo_${vIndex}_evidencias_plagas" required>
-                <option value="">Seleccione</option>
-                <option value="SI" ${datos.evidencias_plagas === 'SI' ? 'selected' : ''}>SI</option>
-                <option value="NO" ${datos.evidencias_plagas === 'NO' ? 'selected' : ''}>NO</option>
-                </select>
-            </div>
+    <!-- OBJETOS EXTRAÑOS -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">OBJETOS EXTRAÑOS:</label>
+        <select name="vehiculo_${vIndex}_objetos_extranos" id="objetos_extranos_${vIndex}" required>
+        <option value="">Seleccione</option>
+        <option value="SI" ${datos.objetos_extranos === 'SI' ? 'selected' : ''}>SI</option>
+        <option value="NO" ${datos.objetos_extranos === 'NO' ? 'selected' : ''}>NO</option>
+        </select>
+    </div>
 
-        <!-- ESTADO DEL SUELO -->
-        <div class="form-group-custom">
-            <label style="margin-top:0;">ESTADO DEL SUELO:</label>
-            <select name="vehiculo_${vIndex}_estado_suelo" required>
-            <option value="">Seleccione</option>
-            <option value="BUENO" ${datos.estado_suelo === 'BUENO' ? 'selected' : ''}>BUENO</option>
-            <option value="MALO" ${datos.estado_suelo === 'MALO' ? 'selected' : ''}>MALO</option>
-            </select>
-        </div>
+    <!-- EVIDENCIAS DE PLAGAS -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">EVIDENCIAS DE PLAGAS:</label>
+        <select name="vehiculo_${vIndex}_evidencias_plagas" id="evidencias_plagas_${vIndex}" required>
+        <option value="">Seleccione</option>
+        <option value="SI" ${datos.evidencias_plagas === 'SI' ? 'selected' : ''}>SI</option>
+        <option value="NO" ${datos.evidencias_plagas === 'NO' ? 'selected' : ''}>NO</option>
+        </select>
+    </div>
 
-        <!-- APROBADO -->
-        <div class="form-group-custom">
-            <label style="margin-top:0;">APROBADO:</label>
-            <select name="vehiculo_${vIndex}_aprobado" required>
-            <option value="">Seleccione</option>
-            <option value="SI" ${datos.aprobado === 'SI' ? 'selected' : ''}>SI</option>
-            <option value="NO" ${datos.aprobado === 'NO' ? 'selected' : ''}>NO</option>
-            </select>
-        </div>
-        </div>
+    <!-- ESTADO DEL SUELO -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">ESTADO DEL SUELO:</label>
+        <select name="vehiculo_${vIndex}_estado_suelo" id="estado_suelo_${vIndex}" required>
+        <option value="">Seleccione</option>
+        <option value="BUENO" ${datos.estado_suelo === 'BUENO' ? 'selected' : ''}>BUENO</option>
+        <option value="MALO" ${datos.estado_suelo === 'MALO' ? 'selected' : ''}>MALO</option>
+        </select>
+    </div>
+
+    <!-- APROBADO -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">APROBADO:</label>
+        <select name="vehiculo_${vIndex}_aprobado" id="aprobado_${vIndex}" required>
+        <option value="">Seleccione</option>
+        <option value="SI" ${datos.aprobado === 'SI' ? 'selected' : ''}>SI</option>
+        <option value="NO" ${datos.aprobado === 'NO' ? 'selected' : ''}>NO</option>
+        </select>
+    </div>
+
+    <!-- BOTÓN ACEPTAR -->
+    <div style="text-align: center; margin-top: 25px;">
+      <button type="button" onclick="cerrarInspeccionVehiculo(${vIndex})"
+              style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 12px 40px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1.1em;">
+        ✅ Aceptar
+      </button>
+    </div>
+  </div>
+</div>
             `;
             
             registro.innerHTML = html;
@@ -1314,6 +1339,35 @@ if (origenSelect) {
                 setupFotoPreview(fotoInputId, previewFotoId, nombrePersonalizado);
             });
         }
+
+        // ✅ ABRIR OVERLAY DE INSPECCIÓN
+function abrirInspeccionVehiculo(vIndex) {
+  const overlay = document.getElementById(`overlay-inspeccion-${vIndex}`);
+  if (overlay) {
+    overlay.style.display = 'flex';
+    // Prevenir scroll del body cuando el overlay está abierto
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+// ✅ CERRAR OVERLAY DE INSPECCIÓN
+function cerrarInspeccionVehiculo(vIndex) {
+  const overlay = document.getElementById(`overlay-inspeccion-${vIndex}`);
+  if (overlay) {
+    overlay.style.display = 'none';
+    // Restaurar scroll del body
+    document.body.style.overflow = 'auto';
+  }
+}
+
+// ✅ CERRAR OVERLAY AL HACER CLIC FUERA DEL CONTENIDO
+document.addEventListener('click', function(event) {
+  if (event.target.classList.contains('overlay-inspeccion') || event.target.id.startsWith('overlay-inspeccion-')) {
+    const overlay = event.target;
+    overlay.style.display = 'none';
+    document.body.style.overflow = 'auto';
+  }
+});
 
         // ============================================
         // GESTIÓN DE PARADAS DE OPERACIÓN
