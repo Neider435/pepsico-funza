@@ -1134,7 +1134,7 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
     🔍 Inspección de Vehículo
 </button>
 
-<!-- ✅ OVERLAY/MODAL DE INSPECCIÓN -->
+<!-- ✅ OVERLAY/MODAL DE INSPECCIÓN (sin required) -->
 <div id="overlay-inspeccion-${vIndex}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center;">
   <div style="background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
     <h4 style="text-align: center; color: #C76E00; margin-top: 0;">INSPECCIÓN DE VEHÍCULO #${vIndex + 1}</h4>
@@ -1143,7 +1143,7 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
     <!-- INTERIOR CAMIÓN -->
     <div class="form-group-custom">
         <label style="margin-top:0; font-weight: bold;">INTERIOR CAMIÓN:</label>
-        <select name="vehiculo_${vIndex}_interior_camion" id="interior_camion_${vIndex}" required>
+        <select name="vehiculo_${vIndex}_interior_camion" id="interior_camion_${vIndex}">
         <option value="">Seleccione</option>
         <option value="BUENO" ${datos.interior_camion === 'BUENO' ? 'selected' : ''}>BUENO</option>
         <option value="MALO" ${datos.interior_camion === 'MALO' ? 'selected' : ''}>MALO</option>
@@ -1153,7 +1153,7 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
     <!-- ESTADO DE LA CARPA -->
     <div class="form-group-custom">
         <label style="margin-top:0; font-weight: bold;">ESTADO DE LA CARPA:</label>
-        <select name="vehiculo_${vIndex}_estado_carpa" id="estado_carpa_${vIndex}" required>
+        <select name="vehiculo_${vIndex}_estado_carpa" id="estado_carpa_${vIndex}">
         <option value="">Seleccione</option>
         <option value="BUENO" ${datos.estado_carpa === 'BUENO' ? 'selected' : ''}>BUENO</option>
         <option value="MALO" ${datos.estado_carpa === 'MALO' ? 'selected' : ''}>MALO</option>
@@ -1164,7 +1164,7 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
     <!-- OLORES EXTRAÑOS -->
     <div class="form-group-custom">
         <label style="margin-top:0; font-weight: bold;">OLORES EXTRAÑOS:</label>
-        <select name="vehiculo_${vIndex}_olores_extranos" id="olores_extranos_${vIndex}" required>
+        <select name="vehiculo_${vIndex}_olores_extranos" id="olores_extranos_${vIndex}">
         <option value="">Seleccione</option>
         <option value="SI" ${datos.olores_extranos === 'SI' ? 'selected' : ''}>SI</option>
         <option value="NO" ${datos.olores_extranos === 'NO' ? 'selected' : ''}>NO</option>
@@ -1174,7 +1174,7 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
     <!-- OBJETOS EXTRAÑOS -->
     <div class="form-group-custom">
         <label style="margin-top:0; font-weight: bold;">OBJETOS EXTRAÑOS:</label>
-        <select name="vehiculo_${vIndex}_objetos_extranos" id="objetos_extranos_${vIndex}" required>
+        <select name="vehiculo_${vIndex}_objetos_extranos" id="objetos_extranos_${vIndex}">
         <option value="">Seleccione</option>
         <option value="SI" ${datos.objetos_extranos === 'SI' ? 'selected' : ''}>SI</option>
         <option value="NO" ${datos.objetos_extranos === 'NO' ? 'selected' : ''}>NO</option>
@@ -1184,7 +1184,7 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
     <!-- EVIDENCIAS DE PLAGAS -->
     <div class="form-group-custom">
         <label style="margin-top:0; font-weight: bold;">EVIDENCIAS DE PLAGAS:</label>
-        <select name="vehiculo_${vIndex}_evidencias_plagas" id="evidencias_plagas_${vIndex}" required>
+        <select name="vehiculo_${vIndex}_evidencias_plagas" id="evidencias_plagas_${vIndex}">
         <option value="">Seleccione</option>
         <option value="SI" ${datos.evidencias_plagas === 'SI' ? 'selected' : ''}>SI</option>
         <option value="NO" ${datos.evidencias_plagas === 'NO' ? 'selected' : ''}>NO</option>
@@ -1194,7 +1194,7 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
     <!-- ESTADO DEL SUELO -->
     <div class="form-group-custom">
         <label style="margin-top:0; font-weight: bold;">ESTADO DEL SUELO:</label>
-        <select name="vehiculo_${vIndex}_estado_suelo" id="estado_suelo_${vIndex}" required>
+        <select name="vehiculo_${vIndex}_estado_suelo" id="estado_suelo_${vIndex}">
         <option value="">Seleccione</option>
         <option value="BUENO" ${datos.estado_suelo === 'BUENO' ? 'selected' : ''}>BUENO</option>
         <option value="MALO" ${datos.estado_suelo === 'MALO' ? 'selected' : ''}>MALO</option>
@@ -1204,7 +1204,7 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
     <!-- APROBADO -->
     <div class="form-group-custom">
         <label style="margin-top:0; font-weight: bold;">APROBADO:</label>
-        <select name="vehiculo_${vIndex}_aprobado" id="aprobado_${vIndex}" required>
+        <select name="vehiculo_${vIndex}_aprobado" id="aprobado_${vIndex}">
         <option value="">Seleccione</option>
         <option value="SI" ${datos.aprobado === 'SI' ? 'selected' : ''}>SI</option>
         <option value="NO" ${datos.aprobado === 'NO' ? 'selected' : ''}>NO</option>
