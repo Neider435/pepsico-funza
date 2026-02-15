@@ -40,7 +40,6 @@ app.post('/api/registro', async (req, res) => {
     const {
       fecha,
       lugar,
-      res_diligenciamiento,
       lider_asignado,
       coordinador,
       coordinador_otro,
@@ -56,11 +55,11 @@ app.post('/api/registro', async (req, res) => {
     // 1. Insertar registro principal
     const [registroResult] = await connection.query(
       `INSERT INTO registros (
-        fecha, lugar, res_diligenciamiento, lider_asignado, coordinador, coordinador_otro,
+        fecha, lugar, lider_asignado, coordinador, coordinador_otro,
         lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        fecha, lugar,res_diligenciamiento, lider_asignado, coordinador, coordinador_otro,
+        fecha, lugar, lider_asignado, coordinador, coordinador_otro,
         lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales
       ]
     );
