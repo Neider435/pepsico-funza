@@ -48,10 +48,12 @@ app.post('/api/registro', async (req, res) => {
       turno,
       total_personas,
       cajas_totales,
+      respo_diligen,  // ✅ AÑADIDO: Capturar responsable
       datos_vehiculos,
       datos_paradas_operacion
     } = req.body;
-    
+
+    // 1. Insertar registro principal
     const [registroResult] = await connection.query(
       `INSERT INTO registros (
         fecha, lugar, lider_asignado, coordinador, coordinador_otro,
@@ -61,7 +63,7 @@ app.post('/api/registro', async (req, res) => {
         fecha, lugar, lider_asignado, coordinador, coordinador_otro,
         lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales, respo_diligen
       ]
-    )
+    );
     
     const registroId = registroResult.insertId;
     
@@ -69,56 +71,56 @@ app.post('/api/registro', async (req, res) => {
     for (let i = 0; i < datos_vehiculos.length; i++) {
       const vehiculo = datos_vehiculos[i];
       
+      // ✅ Depuración: Verificar qué llega al servidor
+      console.log('📥 Vehículo recibido:', {
+        placa: vehiculo.placa,
+        tipo_operacion: vehiculo.tipo_operacion,
+        tipo_operacion_tipo: typeof vehiculo.tipo_operacion,
+        tiene_tipo_operacion: vehiculo.hasOwnProperty('tipo_operacion')
+      });
+      
       const nombresJSON = vehiculo.nombres_personal && Array.isArray(vehiculo.nombres_personal) && vehiculo.nombres_personal.length > 0 
         ? JSON.stringify(vehiculo.nombres_personal) 
         : null;
       
       // Insertar vehículo
-      // ✅ Depuración: Verificar qué llega al servidor
-console.log('📥 Vehículo recibido:', {
-  placa: vehiculo.placa,
-  tipo_operacion: vehiculo.tipo_operacion,
-  tipo_operacion_tipo: typeof vehiculo.tipo_operacion,
-  tiene_tipo_operacion: vehiculo.hasOwnProperty('tipo_operacion')
-});
-
-const [vehiculoResult] = await connection.query(
-  `INSERT INTO vehiculos (
-    registro_id, inicio, fin, motivo, otro_motivo, muelle, otro_muelle_num,
-    placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, otro_origen, personas, cajas,
-    justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_final, 
-    foto_url, nombres_personal, tipo_operacion
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  [
-    registroId,
-    vehiculo.inicio || '',
-    vehiculo.fin || '',
-    vehiculo.motivo || '',
-    vehiculo.otro_motivo || '',
-    vehiculo.muelle || '',
-    vehiculo.otro_muelle_num || '',
-    vehiculo.placa || '',
-    vehiculo.tipo_vehi || '',
-    vehiculo.otro_tipo || '',
-    vehiculo.destino || '',
-    vehiculo.otro_destino || '',
-    vehiculo.origen || '',
-    vehiculo.otro_origen || '',
-    vehiculo.personas || '',
-    vehiculo.cajas || '',
-    vehiculo.justificacion || '',
-    vehiculo.otro_justificacion || '',
-    vehiculo.tiempo_muerto_inicio || '',
-    vehiculo.tiempo_muerto_final || '',
-    vehiculo.foto_url || '',
-    nombresJSON,
-    vehiculo.tipo_operacion || ''  // ✅ CORREGIDO: valor por defecto
-  ]
-);
+      const [vehiculoResult] = await connection.query(
+        `INSERT INTO vehiculos (
+          registro_id, inicio, fin, motivo, otro_motivo, muelle, otro_muelle_num,
+          placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, otro_origen, personas, cajas,
+          justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_final, 
+          foto_url, nombres_personal, tipo_operacion
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          registroId,
+          vehiculo.inicio || '',
+          vehiculo.fin || '',
+          vehiculo.motivo || '',
+          vehiculo.otro_motivo || '',
+          vehiculo.muelle || '',
+          vehiculo.otro_muelle_num || '',
+          vehiculo.placa || '',
+          vehiculo.tipo_vehi || '',
+          vehiculo.otro_tipo || '',
+          vehiculo.destino || '',
+          vehiculo.otro_destino || '',
+          vehiculo.origen || '',
+          vehiculo.otro_origen || '',
+          vehiculo.personas || '',
+          vehiculo.cajas || '',
+          vehiculo.justificacion || '',
+          vehiculo.otro_justificacion || '',
+          vehiculo.tiempo_muerto_inicio || '',
+          vehiculo.tiempo_muerto_final || '',
+          vehiculo.foto_url || '',
+          nombresJSON,
+          vehiculo.tipo_operacion || ''  // ✅ CORREGIDO: valor por defecto
+        ]
+      );
       
       const vehiculoId = vehiculoResult.insertId;
       
-      // ✅ INSERTAR DETALLES DE INSPECCIÓN usando los campos del mismo objeto vehiculo
+      // ✅ INSERTAR DETALLES DE INSPECCIÓN
       await connection.query(
         `INSERT INTO detalles_vehiculos (
           vehiculo_id, interior_camion, estado_carpa, olores_extraños, objetos_extraños,
@@ -136,7 +138,7 @@ const [vehiculoResult] = await connection.query(
         ]
       );
       
-      // ✅ NUEVO: Insertar productos escaneados por vehículo (AHORA DENTRO DEL BUCLE)
+      // ✅ Insertar productos escaneados
       if (vehiculo.productos_escaneados && Array.isArray(vehiculo.productos_escaneados)) {
         for (const producto of vehiculo.productos_escaneados) {
           await connection.query(
@@ -154,8 +156,7 @@ const [vehiculoResult] = await connection.query(
           );
         }
       }
-      
-    } // <-- CIERRE DEL BUCLE FOR
+    }
     
     // 3. Insertar paradas de operación
     for (const parada of datos_paradas_operacion) {
