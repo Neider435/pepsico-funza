@@ -392,11 +392,36 @@
         <hr style="margin-top: 25px; border-style: dotted;">
         
         <!-- SECCIÓN: PARADAS DE OPERACIÓN -->
-        <h3 style="text-align:center; font-size:1.3em; color:#001855;">PARADAS DE OPERACIÓN</h3>
-        <div id="operacion-contenedor"></div>
-        <button type="button" class="btn-agregar-parada-op" onclick="agregarCampoParada('operacion')">
-            + Agregar Parada
-        </button>
+        <!-- ✅ BOTÓN PARA ABRIR PARADAS DE OPERACIÓN -->
+<button type="button" onclick="abrirParadasOperacion()"
+        style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 15px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+    🛑 Paradas de Operación
+</button>
+
+<!-- ✅ CONTENEDOR OCULTO PARA PARADAS (se sincroniza con el overlay) -->
+<div id="operacion-contenedor" style="display: none;"></div>
+
+<!-- ✅ OVERLAY/MODAL DE PARADAS DE OPERACIÓN -->
+<div id="overlay-paradas-operacion" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center; padding: 20px;">
+  <div style="background: white; padding: 25px; border-radius: 10px; width: 95%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
+    <h4 style="text-align: center; color: #C76E00; margin-top: 0;">PARADAS DE OPERACIÓN</h4>
+    <hr style="margin: 15px 0; border-style: dashed;">
+    
+    <div id="paradas-operacion-contenedor" style="margin-bottom: 20px;"></div>
+    
+    <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px; padding-top: 15px; border-top: 2px solid #001855;">
+      <button type="button" onclick="agregarParadaOperacionOverlay()"
+              style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; border: none; padding: 10px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; flex: 1;">
+        ➕ Agregar Parada
+      </button>
+      
+      <button type="button" onclick="cerrarParadasOperacion()"
+              style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 10px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; flex: 1;">
+        ✅ Aceptar
+      </button>
+    </div>
+  </div>
+</div>
         
         <hr style="margin-top: 25px; border-style: dotted;">
         
@@ -467,6 +492,451 @@
     ];
   }
 }
+
+// ✅ ABRIR OVERLAY DE PARADAS DE OPERACIÓN
+function abrirParadasOperacion() {
+  const overlay = document.getElementById('overlay-paradas-operacion');
+  const contenedorOverlay = document.getElementById('paradas-operacion-contenedor');
+  const contenedorOculto = document.getElementById('operacion-contenedor');
+  
+  if (!overlay || !contenedorOverlay || !contenedorOculto) {
+    console.error('Error: Elementos del overlay no encontrados');
+    return;
+  }
+  
+  // Limpiar contenedor del overlay
+  contenedorOverlay.innerHTML = '';
+  
+  // Copiar paradas del contenedor oculto al overlay
+  const paradasOcultas = contenedorOculto.querySelectorAll('.parada-group');
+  paradasOcultas.forEach((paradaOculta, index) => {
+    // ✅ Crear nueva parada manualmente (no clonar) para mantener eventos
+    const div = document.createElement('div');
+    div.className = 'parada-group';
+    div.dataset.index = index;
+    
+    const botonEliminar = document.createElement('button');
+    botonEliminar.type = 'button';
+    botonEliminar.className = 'btn-eliminar';
+    botonEliminar.textContent = 'Eliminar';
+    botonEliminar.style.marginTop = '10px';
+    botonEliminar.style.background = '#dc3545';
+    botonEliminar.style.color = 'white';
+    botonEliminar.style.border = 'none';
+    botonEliminar.style.padding = '5px 10px';
+    botonEliminar.style.borderRadius = '3px';
+    botonEliminar.style.cursor = 'pointer';
+    botonEliminar.onclick = function() {
+      div.remove();
+      actualizarNumerosParadasOverlay();
+      guardarProgreso();
+    };
+    
+    const dInicio = `operacion-inicio-${index}-overlay`;
+    const dFin = `operacion-fin-${index}-overlay`;
+    
+    // ✅ Obtener valores del contenedor oculto
+    const inicio = paradaOculta.querySelector(`input[name="parada_inicio_operacion_${index}"]`)?.value || '';
+    const fin = paradaOculta.querySelector(`input[name="parada_fin_operacion_${index}"]`)?.value || '';
+    const motivo = paradaOculta.querySelector(`select[name="parada_motivo_operacion_${index}"]`)?.value || '';
+    const otro_motivo = paradaOculta.querySelector(`input[name="parada_otro_motivo_operacion_${index}"]`)?.value || '';
+    
+    div.innerHTML = `
+      <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #<span class="numero-parada">${index + 1}</span> (Operación)</p>
+      
+      <div class="time-row">
+        <div>
+          <label class="time-label">Hora Inicio (HH:MM):</label>
+          <input type="tel" name="parada_inicio_operacion_${index}_overlay" class="time-input-masked"
+              placeholder="HH:MM" maxlength="5" value="${inicio}"
+              onblur="applyTimeMask(this, '${dInicio}')">
+          <span id="${dInicio}" class="time-display"></span>
+        </div>
+        <div>
+          <label class="time-label">Hora Final (HH:MM):</label>
+          <input type="tel" name="parada_fin_operacion_${index}_overlay" class="time-input-masked"
+              placeholder="HH:MM" maxlength="5" value="${fin}"
+              onblur="applyTimeMask(this, '${dFin}')">
+          <span id="${dFin}" class="time-display"></span>
+        </div>
+      </div>
+      
+      <label style="margin-top:5px;">Motivo:</label>
+      <select name="parada_motivo_operacion_${index}_overlay" id="motivo-overlay-${index}">
+        <option value="">Seleccione</option>
+        <option value="pausas_activas" ${motivo === 'pausas_activas' ? 'selected' : ''}>Pausas Activas y/o Charla</option>
+        <option value="liberacion_calidad" ${motivo === 'liberacion_calidad' ? 'selected' : ''}>Liberacion De Calidad</option>
+        <option value="desayuno_almuerzo_cena" ${motivo === 'desayuno_almuerzo_cena' ? 'selected' : ''}>Desayuno/Almuerzo/Cena</option>
+        <option value="aseo" ${motivo === 'aseo' ? 'selected' : ''}>Aseo</option>
+        <option value="faltante_insumos" ${motivo === 'faltante_insumos' ? 'selected' : ''}>Faltante (Canastillas, vinipel, estibas, etc)</option>
+        <option value="danos_equipo" ${motivo === 'danos_equipo' ? 'selected' : ''}>Daños (Electricos, montacargas, etc)</option>
+        <option value="otro" ${motivo === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      <input type="text" name="parada_otro_motivo_operacion_${index}_overlay" id="otro-motivo-overlay-${index}" placeholder="Especifique" class="otro-input" value="${otro_motivo}" style="${motivo === 'otro' ? 'display: block;' : 'display: none;'}">
+    `;
+    
+    div.appendChild(botonEliminar);
+    contenedorOverlay.appendChild(div);
+    
+    // ✅ Configurar evento onchange para mostrar/ocultar "otro motivo"
+    const motivoSelect = div.querySelector(`#motivo-overlay-${index}`);
+    const otroMotivoInput = div.querySelector(`#otro-motivo-overlay-${index}`);
+    
+    if (motivoSelect && otroMotivoInput) {
+      motivoSelect.addEventListener('change', function() {
+        if (this.value === 'otro') {
+          otroMotivoInput.style.display = 'block';
+          otroMotivoInput.required = true;
+        } else {
+          otroMotivoInput.style.display = 'none';
+          otroMotivoInput.required = false;
+          otroMotivoInput.value = '';
+        }
+        guardarProgreso();
+      });
+    }
+    
+    // ✅ Configurar eventos de tiempo
+    const inputsTiempo = div.querySelectorAll('.time-input-masked');
+    inputsTiempo.forEach(input => {
+      input.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '').substring(0, 5);
+      });
+    });
+  });
+  
+  // Si no hay paradas, agregar la primera vacía
+  if (contenedorOverlay.children.length === 0) {
+    agregarParadaOperacionOverlay();
+  }
+  
+  // Mostrar overlay
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+// ✅ CERRAR OVERLAY DE PARADAS DE OPERACIÓN
+function cerrarParadasOperacion() {
+  const contenedorOculto = document.getElementById('operacion-contenedor');
+  const contenedorOverlay = document.getElementById('paradas-operacion-contenedor');
+  const overlay = document.getElementById('overlay-paradas-operacion');
+  
+  if (!contenedorOculto || !contenedorOverlay || !overlay) return;
+  
+  // Limpiar contenedor oculto
+  contenedorOculto.innerHTML = '';
+  
+  // Copiar paradas del overlay al contenedor oculto
+  const paradasOverlay = contenedorOverlay.querySelectorAll('.parada-group');
+  paradasOverlay.forEach((paradaOverlay, index) => {
+    // ✅ Crear nueva parada manualmente
+    const div = document.createElement('div');
+    div.className = 'parada-group';
+    div.dataset.index = index;
+    
+    const botonEliminar = document.createElement('button');
+    botonEliminar.type = 'button';
+    botonEliminar.className = 'btn-eliminar';
+    botonEliminar.textContent = 'Eliminar';
+    botonEliminar.onclick = function() {
+      div.remove();
+      const paradas = contenedorOculto.querySelectorAll('.parada-group');
+      paradas.forEach((p, i) => {
+        const span = p.querySelector('.numero-parada');
+        if (span) span.textContent = i + 1;
+      });
+      guardarProgreso();
+    };
+    
+    const dInicio = `operacion-inicio-${index}`;
+    const dFin = `operacion-fin-${index}`;
+    
+    // ✅ Obtener valores del overlay
+    const inicio = paradaOverlay.querySelector(`input[name="parada_inicio_operacion_${index}_overlay"]`)?.value || '';
+    const fin = paradaOverlay.querySelector(`input[name="parada_fin_operacion_${index}_overlay"]`)?.value || '';
+    const motivo = paradaOverlay.querySelector(`select[name="parada_motivo_operacion_${index}_overlay"]`)?.value || '';
+    const otro_motivo = paradaOverlay.querySelector(`input[name="parada_otro_motivo_operacion_${index}_overlay"]`)?.value || '';
+    
+    div.innerHTML = `
+      <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #<span class="numero-parada">${index + 1}</span> (Operación)</p>
+      
+      <div class="time-row">
+        <div>
+          <label class="time-label">Hora Inicio (HH:MM):</label>
+          <input type="tel" name="parada_inicio_operacion_${index}" class="time-input-masked"
+              placeholder="HH:MM" maxlength="5" value="${inicio}"
+              onblur="applyTimeMask(this, '${dInicio}')">
+          <span id="${dInicio}" class="time-display"></span>
+        </div>
+        <div>
+          <label class="time-label">Hora Final (HH:MM):</label>
+          <input type="tel" name="parada_fin_operacion_${index}" class="time-input-masked"
+              placeholder="HH:MM" maxlength="5" value="${fin}"
+              onblur="applyTimeMask(this, '${dFin}')">
+          <span id="${dFin}" class="time-display"></span>
+        </div>
+      </div>
+      
+      <label style="margin-top:5px;">Motivo:</label>
+      <select name="parada_motivo_operacion_${index}" id="motivo-${index}">
+        <option value="">Seleccione</option>
+        <option value="pausas_activas" ${motivo === 'pausas_activas' ? 'selected' : ''}>Pausas Activas y/o Charla</option>
+        <option value="liberacion_calidad" ${motivo === 'liberacion_calidad' ? 'selected' : ''}>Liberacion De Calidad</option>
+        <option value="desayuno_almuerzo_cena" ${motivo === 'desayuno_almuerzo_cena' ? 'selected' : ''}>Desayuno/Almuerzo/Cena</option>
+        <option value="aseo" ${motivo === 'aseo' ? 'selected' : ''}>Aseo</option>
+        <option value="faltante_insumos" ${motivo === 'faltante_insumos' ? 'selected' : ''}>Faltante (Canastillas, vinipel, estibas, etc)</option>
+        <option value="danos_equipo" ${motivo === 'danos_equipo' ? 'selected' : ''}>Daños (Electricos, montacargas, etc)</option>
+        <option value="otro" ${motivo === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      <input type="text" name="parada_otro_motivo_operacion_${index}" id="otro-motivo-${index}" placeholder="Especifique" class="otro-input" value="${otro_motivo}" style="${motivo === 'otro' ? 'display: block;' : 'display: none;'}">
+    `;
+    
+    div.appendChild(botonEliminar);
+    contenedorOculto.appendChild(div);
+    
+    // ✅ Configurar evento onchange para el contenedor oculto
+    const motivoSelect = div.querySelector(`#motivo-${index}`);
+    const otroMotivoInput = div.querySelector(`#otro-motivo-${index}`);
+    
+    if (motivoSelect && otroMotivoInput) {
+      motivoSelect.addEventListener('change', function() {
+        if (this.value === 'otro') {
+          otroMotivoInput.style.display = 'block';
+          otroMotivoInput.required = true;
+        } else {
+          otroMotivoInput.style.display = 'none';
+          otroMotivoInput.required = false;
+          otroMotivoInput.value = '';
+        }
+        guardarProgreso();
+      });
+    }
+    
+    // ✅ Configurar eventos de tiempo
+    const inputsTiempo = div.querySelectorAll('.time-input-masked');
+    inputsTiempo.forEach(input => {
+      input.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '').substring(0, 5);
+      });
+    });
+  });
+  
+  // Ocultar overlay
+  overlay.style.display = 'none';
+  document.body.style.overflow = 'auto';
+  
+  guardarProgreso();
+}
+
+// ✅ ACTUALIZAR NÚMEROS DE PARADAS EN EL OVERLAY
+function actualizarNumerosParadasOverlay() {
+  const contenedor = document.getElementById('paradas-operacion-contenedor');
+  if (!contenedor) return;
+  
+  const paradas = contenedor.querySelectorAll('.parada-group');
+  paradas.forEach((parada, index) => {
+    const span = parada.querySelector('.numero-parada');
+    if (span) span.textContent = index + 1;
+  });
+}
+
+// ✅ AGREGAR PARADA EN EL OVERLAY
+function agregarParadaOperacionOverlay() {
+  const index = document.getElementById('paradas-operacion-contenedor')?.children.length || 0;
+  const contenedor = document.getElementById('paradas-operacion-contenedor');
+  if (!contenedor) return;
+  
+  const div = document.createElement('div');
+  div.className = 'parada-group';
+  div.dataset.index = index;
+  
+  const botonEliminar = document.createElement('button');
+  botonEliminar.type = 'button';
+  botonEliminar.className = 'btn-eliminar';
+  botonEliminar.textContent = 'Eliminar';
+  botonEliminar.style.marginTop = '10px';
+  botonEliminar.style.background = '#dc3545';
+  botonEliminar.style.color = 'white';
+  botonEliminar.style.border = 'none';
+  botonEliminar.style.padding = '5px 10px';
+  botonEliminar.style.borderRadius = '3px';
+  botonEliminar.style.cursor = 'pointer';
+  botonEliminar.onclick = function() {
+    div.remove();
+    actualizarNumerosParadasOverlay();
+    guardarProgreso();
+  };
+  
+  const dInicio = `operacion-inicio-${index}-overlay`;
+  const dFin = `operacion-fin-${index}-overlay`;
+  
+  div.innerHTML = `
+    <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #<span class="numero-parada">${index + 1}</span> (Operación)</p>
+    
+    <div class="time-row">
+      <div>
+        <label class="time-label">Hora Inicio (HH:MM):</label>
+        <input type="tel" name="parada_inicio_operacion_${index}_overlay" class="time-input-masked"
+            placeholder="HH:MM" maxlength="5"
+            onblur="applyTimeMask(this, '${dInicio}')">
+        <span id="${dInicio}" class="time-display"></span>
+      </div>
+      <div>
+        <label class="time-label">Hora Final (HH:MM):</label>
+        <input type="tel" name="parada_fin_operacion_${index}_overlay" class="time-input-masked"
+            placeholder="HH:MM" maxlength="5"
+            onblur="applyTimeMask(this, '${dFin}')">
+        <span id="${dFin}" class="time-display"></span>
+      </div>
+    </div>
+    
+    <label style="margin-top:5px;">Motivo:</label>
+    <select name="parada_motivo_operacion_${index}_overlay" id="motivo-overlay-${index}">
+      <option value="">Seleccione</option>
+      <option value="pausas_activas">Pausas Activas y/o Charla</option>
+      <option value="liberacion_calidad">Liberacion De Calidad</option>
+      <option value="desayuno_almuerzo_cena">Desayuno/Almuerzo/Cena</option>
+      <option value="aseo">Aseo</option>
+      <option value="faltante_insumos">Faltante (Canastillas, vinipel, estibas, etc)</option>
+      <option value="danos_equipo">Daños (Electricos, montacargas, etc)</option>
+      <option value="otro">Otro</option>
+    </select>
+    <input type="text" name="parada_otro_motivo_operacion_${index}_overlay" id="otro-motivo-overlay-${index}" placeholder="Especifique" class="otro-input" style="display: none;">
+  `;
+  
+  div.appendChild(botonEliminar);
+  contenedor.appendChild(div);
+  
+  // ✅ Configurar evento onchange para mostrar/ocultar "otro motivo"
+  const motivoSelect = div.querySelector(`#motivo-overlay-${index}`);
+  const otroMotivoInput = div.querySelector(`#otro-motivo-overlay-${index}`);
+  
+  if (motivoSelect && otroMotivoInput) {
+    motivoSelect.addEventListener('change', function() {
+      if (this.value === 'otro') {
+        otroMotivoInput.style.display = 'block';
+        otroMotivoInput.required = true;
+      } else {
+        otroMotivoInput.style.display = 'none';
+        otroMotivoInput.required = false;
+        otroMotivoInput.value = '';
+      }
+      guardarProgreso();
+    });
+  }
+  
+  // ✅ Configurar eventos de tiempo
+  const inputsTiempo = div.querySelectorAll('.time-input-masked');
+  inputsTiempo.forEach(input => {
+    input.addEventListener('input', function() {
+      this.value = this.value.replace(/[^0-9]/g, '').substring(0, 5);
+    });
+  });
+  
+  actualizarNumerosParadasOverlay();
+}
+
+// ✅ AGREGAR CAMPO DE PARADA EN EL OVERLAY
+function agregarCampoParadaOverlay(tipo, index) {
+  const contenedor = document.getElementById('paradas-operacion-contenedor');
+  if (!contenedor) return;
+  
+  const div = document.createElement('div');
+  div.className = 'parada-group';
+  div.dataset.index = index;
+  
+  const botonEliminar = document.createElement('button');
+  botonEliminar.type = 'button';
+  botonEliminar.className = 'btn-eliminar';
+  botonEliminar.textContent = 'Eliminar';
+  botonEliminar.style.marginTop = '10px';
+  botonEliminar.style.background = '#dc3545';
+  botonEliminar.style.color = 'white';
+  botonEliminar.style.border = 'none';
+  botonEliminar.style.padding = '5px 10px';
+  botonEliminar.style.borderRadius = '3px';
+  botonEliminar.style.cursor = 'pointer';
+  botonEliminar.onclick = function() {
+    div.remove();
+    actualizarNumerosParadasOverlay();
+    guardarProgreso();
+  };
+  
+  const dInicio = `operacion-inicio-${index}-overlay`;
+  const dFin = `operacion-fin-${index}-overlay`;
+  
+  div.innerHTML = `
+    <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #<span class="numero-parada">${index + 1}</span> (Operación)</p>
+    
+    <div class="time-row">
+      <div>
+        <label class="time-label">Hora Inicio (HH:MM):</label>
+        <input type="tel" name="parada_inicio_operacion_${index}_overlay" class="time-input-masked"
+            placeholder="HH:MM" maxlength="5"
+            onblur="applyTimeMask(this, '${dInicio}')">
+        <span id="${dInicio}" class="time-display"></span>
+      </div>
+      <div>
+        <label class="time-label">Hora Final (HH:MM):</label>
+        <input type="tel" name="parada_fin_operacion_${index}_overlay" class="time-input-masked"
+            placeholder="HH:MM" maxlength="5"
+            onblur="applyTimeMask(this, '${dFin}')">
+        <span id="${dFin}" class="time-display"></span>
+      </div>
+    </div>
+    
+    <label style="margin-top:5px;">Motivo:</label>
+    <select name="parada_motivo_operacion_${index}_overlay">
+      <option value="">Seleccione</option>
+      <option value="pausas_activas">Pausas Activas y/o Charla</option>
+      <option value="liberacion_calidad">Liberacion De Calidad</option>
+      <option value="desayuno_almuerzo_cena">Desayuno/Almuerzo/Cena</option>
+      <option value="aseo">Aseo</option>
+      <option value="faltante_insumos">Faltante (Canastillas, vinipel, estibas, etc)</option>
+      <option value="danos_equipo">Daños (Electricos, montacargas, etc)</option>
+      <option value="otro">Otro</option>
+    </select>
+    <input type="text" name="parada_otro_motivo_operacion_${index}_overlay" placeholder="Especifique" class="otro-input">
+  `;
+  
+  div.appendChild(botonEliminar);
+  contenedor.appendChild(div);
+  
+  // Configurar eventos
+  const motivoSelect = div.querySelector(`select[name="parada_motivo_operacion_${index}_overlay"]`);
+  if (motivoSelect) {
+    motivoSelect.addEventListener('change', function() {
+      const otroInput = div.querySelector('.otro-input');
+      if (otroInput) {
+        if (this.value === 'otro') {
+          otroInput.style.display = 'block';
+        } else {
+          otroInput.style.display = 'none';
+          otroInput.value = '';
+        }
+      }
+    });
+  }
+  
+  // Configurar eventos de tiempo
+  const inputsTiempo = div.querySelectorAll('.time-input-masked');
+  inputsTiempo.forEach(input => {
+    input.addEventListener('input', function() {
+      this.value = this.value.replace(/[^0-9]/g, '').substring(0, 5);
+    });
+  });
+}
+
+// ✅ CERRAR OVERLAY AL HACER CLIC FUERA
+document.addEventListener('click', function(event) {
+  const overlay = document.getElementById('overlay-paradas-operacion');
+  if (overlay && overlay.style.display === 'flex') {
+    const contenido = overlay.querySelector('div');
+    if (contenido && !contenido.contains(event.target) && event.target === overlay) {
+      cerrarParadasOperacion();
+    }
+  }
+});
 
 // ✅ FORMATEAR CÉDULA COLOMBIANA (XXX.XXX.XXX o X.XXX.XXX.XXX)
 function formatearCedula(input) {
@@ -1478,76 +1948,78 @@ document.addEventListener('click', function(event) {
         // ============================================
 
         function agregarCampoParada(tipo, datos = {}) {
-            const contenedor = document.getElementById('operacion-contenedor');
-            const index = contenedor.children.length;
-            
-            const div = document.createElement('div');
-            div.className = 'parada-group';
-            div.dataset.index = index;
-            
-            const botonEliminar = document.createElement('button');
-            botonEliminar.type = 'button';
-            botonEliminar.className = 'btn-eliminar';
-            botonEliminar.textContent = 'Eliminar';
-            botonEliminar.onclick = function() {
-                div.remove();
-                const paradas = contenedor.getElementsByClassName('parada-group');
-                for (let i = 0; i < paradas.length; i++) {
-                    const span = paradas[i].querySelector('.numero-parada');
-                    if (span) span.textContent = i + 1;
-                }
-                guardarProgreso();
-            };
-            
-            const dInicio = `operacion-inicio-${index}`;
-            const dFin = `operacion-fin-${index}`;
-            
-            div.innerHTML = `
-                <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #<span class="numero-parada">${index + 1}</span> (Operación)</p>
-                
-                <div class="time-row">
-                    <div>
-                        <label class="time-label">Hora Inicio (HH:MM):</label>
-                        <input type="tel" name="parada_inicio_operacion_${index}" class="time-input-masked"
-                            placeholder="HH:MM" maxlength="5" value="${datos.inicio || ''}"
-                            onblur="applyTimeMask(this, '${dInicio}')">
-                        <span id="${dInicio}" class="time-display"></span>
-                    </div>
-                    <div>
-                        <label class="time-label">Hora Final (HH:MM):</label>
-                        <input type="tel" name="parada_fin_operacion_${index}" class="time-input-masked"
-                            placeholder="HH:MM" maxlength="5" value="${datos.fin || ''}"
-                            onblur="applyTimeMask(this, '${dFin}')">
-                        <span id="${dFin}" class="time-display"></span>
-                    </div>
-                </div>
-                
-                <label style="margin-top:5px;">Motivo:</label>
-                <select name="parada_motivo_operacion_${index}">
-                    <option value="">Seleccione</option>
-                    <option value="pausas_activas" ${datos.motivo === 'pausas_activas' ? 'selected' : ''}>Pausas Activas y/o Charla</option>
-                    <option value="liberacion_calidad" ${datos.motivo === 'liberacion_calidad' ? 'selected' : ''}>Liberacion De Calidad</option>
-                    <option value="desayuno_almuerzo_cena" ${datos.motivo === 'desayuno_almuerzo_cena' ? 'selected' : ''}>Desayuno/Almuerzo/Cena</option>
-                    <option value="aseo" ${datos.motivo === 'aseo' ? 'selected' : ''}>Aseo</option>
-                    <option value="faltante_insumos" ${datos.motivo === 'faltante_insumos' ? 'selected' : ''}>Faltante (Canastillas, vinipel, estibas, etc)</option>
-                    <option value="danos_equipo" ${datos.motivo === 'danos_equipo' ? 'selected' : ''}>Daños (Electricos, montacargas, etc)</option>
-                    <option value="otro" ${datos.motivo === 'otro' ? 'selected' : ''}>Otro</option>
-                </select>
-                <input type="text" name="parada_otro_motivo_operacion_${index}" placeholder="Especifique" class="otro-input" value="${datos.otro_motivo || ''}">
-            `;
-            
-            div.appendChild(botonEliminar);
-            contenedor.appendChild(div);
-            
-            const motivoSelect = div.querySelector(`select[name="parada_motivo_operacion_${index}"]`);
-            if (motivoSelect) {
-                motivoSelect.addEventListener('change', () => manejarOtroCampo(motivoSelect));
-                if (motivoSelect.value === 'otro') {
-                    const otroInput = div.querySelector('.otro-input');
-                    if (otroInput) otroInput.style.display = 'block';
-                }
-            }
-        }
+  const contenedor = document.getElementById('operacion-contenedor');
+  const index = contenedor.children.length;
+  
+  const div = document.createElement('div');
+  div.className = 'parada-group';
+  div.dataset.index = index;
+  
+  const botonEliminar = document.createElement('button');
+  botonEliminar.type = 'button';
+  botonEliminar.className = 'btn-eliminar';
+  botonEliminar.textContent = 'Eliminar';
+  botonEliminar.onclick = function() {
+    div.remove();
+    const paradas = contenedor.getElementsByClassName('parada-group');
+    for (let i = 0; i < paradas.length; i++) {
+      const span = paradas[i].querySelector('.numero-parada');
+      if (span) span.textContent = i + 1;
+    }
+    guardarProgreso();
+  };
+  
+  const dInicio = `operacion-inicio-${index}`;
+  const dFin = `operacion-fin-${index}`;
+  
+  div.innerHTML = `
+    <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #<span class="numero-parada">${index + 1}</span> (Operación)</p>
+    
+    <div class="time-row">
+      <div>
+        <label class="time-label">Hora Inicio (HH:MM):</label>
+        <input type="tel" name="parada_inicio_operacion_${index}" class="time-input-masked"
+            placeholder="HH:MM" maxlength="5" value="${datos.inicio || ''}"
+            onblur="applyTimeMask(this, '${dInicio}')">
+        <span id="${dInicio}" class="time-display"></span>
+      </div>
+      <div>
+        <label class="time-label">Hora Final (HH:MM):</label>
+        <input type="tel" name="parada_fin_operacion_${index}" class="time-input-masked"
+            placeholder="HH:MM" maxlength="5" value="${datos.fin || ''}"
+            onblur="applyTimeMask(this, '${dFin}')">
+        <span id="${dFin}" class="time-display"></span>
+      </div>
+    </div>
+    
+    <label style="margin-top:5px;">Motivo:</label>
+    <select name="parada_motivo_operacion_${index}">
+      <option value="">Seleccione</option>
+      <option value="pausas_activas" ${datos.motivo === 'pausas_activas' ? 'selected' : ''}>Pausas Activas y/o Charla</option>
+      <option value="liberacion_calidad" ${datos.motivo === 'liberacion_calidad' ? 'selected' : ''}>Liberacion De Calidad</option>
+      <option value="desayuno_almuerzo_cena" ${datos.motivo === 'desayuno_almuerzo_cena' ? 'selected' : ''}>Desayuno/Almuerzo/Cena</option>
+      <option value="aseo" ${datos.motivo === 'aseo' ? 'selected' : ''}>Aseo</option>
+      <option value="faltante_insumos" ${datos.motivo === 'faltante_insumos' ? 'selected' : ''}>Faltante (Canastillas, vinipel, estibas, etc)</option>
+      <option value="danos_equipo" ${datos.motivo === 'danos_equipo' ? 'selected' : ''}>Daños (Electricos, montacargas, etc)</option>
+      <option value="otro" ${datos.motivo === 'otro' ? 'selected' : ''}>Otro</option>
+    </select>
+    <input type="text" name="parada_otro_motivo_operacion_${index}" placeholder="Especifique" class="otro-input" value="${datos.otro_motivo || ''}">
+  `;
+  
+  div.appendChild(botonEliminar);
+  contenedor.appendChild(div);
+  
+  // ✅ Configurar eventos después de añadir al DOM
+  const motivoSelect = div.querySelector(`select[name="parada_motigo_operacion_${index}"]`);
+  if (motivoSelect) {
+    motivoSelect.addEventListener('change', () => manejarOtroCampo(motivoSelect));
+    // ✅ Mostrar campo "otro" si ya está seleccionado
+    if (motivoSelect.value === 'otro') {
+      const otroInput = div.querySelector('.otro-input');
+      if (otroInput) otroInput.style.display = 'block';
+    }
+  }
+}
 
         // ============================================
         // MANEJO DE FOTOS
@@ -2259,45 +2731,62 @@ function mostrarFeedbackPicking(mensaje, vIndex, tipo = 'info') {
         // ============================================
 
         function guardarProgreso() {
-            const form = document.forms['formulario-pepsico'];
-            if(!form) return;
-            
-            const formData = new FormData(form);
-            const data = {};
-            
-            formData.forEach((value, key) => {
-                if (!(value instanceof File) && key !== 'form-name') data[key] = value;
-            });
-            
-            // ✅ CAPTURAR TODOS LOS CAMPOS DE NOMBRES DEL PERSONAL DINÁMICAMENTE (NUEVO)
-            const vehiculos = document.querySelectorAll('.registro-vehiculo');
-            vehiculos.forEach((_, vIndex) => {
-                const totalPersonas = parseInt(document.querySelector(`input[name="vehiculo_${vIndex}_personas"]`)?.value) || 0;
-                for (let p = 1; p <= totalPersonas; p++) {
-                    const nombreInput = document.querySelector(`input[name="vehiculo_${vIndex}_nombre_persona_${p}"]`);
-                    if (nombreInput) {
-                        data[`vehiculo_${vIndex}_nombre_persona_${p}`] = nombreInput.value || '';
-                    }
-                }
-            });
-            
-            const paradasData = [];
-            document.querySelectorAll('#operacion-contenedor .parada-group').forEach(grupo => {
-                const idx = grupo.dataset.index;
-                const inicio = grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '';
-                const fin = grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '';
-                const motivo = grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '';
-                const otro_motivo = grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || '';
-                paradasData.push({ inicio, fin, motivo, otro_motivo });
-            });
-            
-            data._numVehiculos = vehiculosData.length;
-            data._paradasDetalle = paradasData;
-            // ✅ Guardar productos escaneados por vehículo
-data._productosEscaneados = productosEscaneadosPorVehiculo;
-            
-            localStorage.setItem('pepsico_data', JSON.stringify(data));
-        }
+  const form = document.forms['formulario-pepsico'];
+  if (!form) return;
+  
+  const formData = new FormData(form);
+  const data = {};
+  
+  formData.forEach((value, key) => {
+    if (!(value instanceof File) && key !== 'form-name') data[key] = value;
+  });
+  
+  // ✅ CAPTURAR NOMBRES DEL PERSONAL
+  const vehiculos = document.querySelectorAll('.registro-vehiculo');
+  vehiculos.forEach((_, vIndex) => {
+    const totalPersonas = parseInt(document.querySelector(`input[name="vehiculo_${vIndex}_personas"]`)?.value) || 0;
+    for (let p = 1; p <= totalPersonas; p++) {
+      const nombreInput = document.querySelector(`input[name="vehiculo_${vIndex}_nombre_persona_${p}"]`);
+      if (nombreInput) {
+        data[`vehiculo_${vIndex}_nombre_persona_${p}`] = nombreInput.value || '';
+      }
+    }
+  });
+  
+  // ✅ GUARDAR PARADAS DE OPERACIÓN - CORREGIDO
+  const paradasData = [];
+  const paradasContainer = document.getElementById('operacion-contenedor');
+  const paradas = paradasContainer.querySelectorAll('.parada-group');
+  
+  paradas.forEach((parada, index) => {
+    // ✅ Capturar valores directamente del DOM
+    const inicioInput = parada.querySelector(`input[name="parada_inicio_operacion_${index}"]`);
+    const finInput = parada.querySelector(`input[name="parada_fin_operacion_${index}"]`);
+    const motivoSelect = parada.querySelector(`select[name="parada_motivo_operacion_${index}"]`);
+    const otroMotivoInput = parada.querySelector(`input[name="parada_otro_motivo_operacion_${index}"]`);
+    
+    const inicio = inicioInput ? inicioInput.value : '';
+    const fin = finInput ? finInput.value : '';
+    const motivo = motivoSelect ? motivoSelect.value : '';
+    const otro_motivo = otroMotivoInput ? otroMotivoInput.value : '';
+    
+    console.log(`Parada ${index}:`, { inicio, fin, motivo, otro_motivo });
+    
+    paradasData.push({
+      inicio: inicio,
+      fin: fin,
+      motivo: motivo,
+      otro_motivo: otro_motivo
+    });
+  });
+  
+  data._numVehiculos = vehiculosData.length;
+  data._paradasDetalle = paradasData;
+  data._productosEscaneados = productosEscaneadosPorVehiculo;
+  
+  console.log('💾 Guardando progreso:', data);
+  localStorage.setItem('pepsico_data', JSON.stringify(data));
+}
 
         // ============================================
         // LIMPIEZA TOTAL
@@ -2574,7 +3063,7 @@ Debe cumplir:
     vehiculosData = [];
 
     // ✅ PASO 3: Crear vehículos
-    for(let i=0; i<nVehiculos; i++) {
+    for (let i = 0; i < nVehiculos; i++) {
       const vObj = {
         inicio: data[`vehiculo_${i}_inicio`] || '',
         fin: data[`vehiculo_${i}_fin`] || '',
@@ -2604,10 +3093,10 @@ Debe cumplir:
         evidencias_plagas: data[`vehiculo_${i}_evidencias_plagas`] || '',
         estado_suelo: data[`vehiculo_${i}_estado_suelo`] || '',
         aprobado: data[`vehiculo_${i}_aprobado`] || '',
-        tipo_operacion: data[`vehiculo_${i}_tipo_operacion`] || ''  // ✅ AÑADIR ESTA LÍNEA
+        tipo_operacion: data[`vehiculo_${i}_tipo_operacion`] || ''
       };
 
-      // ✅ Cargar nombres del personal desde localStorage (NUEVO)
+      // ✅ Cargar nombres del personal desde localStorage
       for (let j = 1; ; j++) {
         const nombreKey = `vehiculo_${i}_nombre_persona_${j}`;
         if (data[nombreKey] !== undefined) {
@@ -2631,21 +3120,33 @@ Debe cumplir:
     // ✅ PASO 4: Poblar muelles DESPUÉS de crear los vehículos
     actualizarMuellesPorLugar();
 
-    // ✅ PASO 5: Restaurar valores de muelle - ID CORRECTO
+    // ✅ PASO 5: Restaurar valores de muelle
     for (let i = 0; i < nVehiculos; i++) {
-      const muelleSelect = document.getElementById(`muelle-select-${i}`);  // ✅ ID CORRECTO
+      const muelleSelect = document.getElementById(`muelle-select-${i}`);
       if (muelleSelect && vehiculosData[i].muelle) {
         muelleSelect.value = vehiculosData[i].muelle;
-        // ✅ Actualizar campo "otro" si es necesario
         manejarOtroMuelle(i);
       }
     }
 
-    // Resto del código...
-    document.getElementById('operacion-contenedor').innerHTML = '';
-    if (data._paradasDetalle) {
-      data._paradasDetalle.forEach(p => agregarCampoParada('operacion', p));
+    // ✅ RESTAURAR PARADAS DE OPERACIÓN
+    const operacionContenedor = document.getElementById('operacion-contenedor');
+    if (operacionContenedor) {
+      operacionContenedor.innerHTML = '';
+      
+      if (data._paradasDetalle && data._paradasDetalle.length > 0) {
+        data._paradasDetalle.forEach((parada, index) => {
+          agregarCampoParada('operacion', {
+            inicio: parada.inicio,
+            fin: parada.fin,
+            motivo: parada.motivo,
+            otro_motivo: parada.otro_motivo
+          });
+        });
+      }
     }
+
+    // ✅ RESTAURAR OTROS CAMPOS DEL FORMULARIO
     for (const key in data) {
       if (key.startsWith('_') || key.startsWith('vehiculo_') || key.startsWith('parada_')) continue;
       const el = form.elements[key];
@@ -2654,30 +3155,25 @@ Debe cumplir:
         if (el.id === 'coordinador') manejarOtroCoordinador();
       }
     }
+
     actualizarTotalCajas();
     
     // ✅ Cargar productos escaneados desde localStorage
     if (data._productosEscaneados) {
       productosEscaneadosPorVehiculo = data._productosEscaneados;
-      // Actualizar resúmenes visuales
       Object.keys(productosEscaneadosPorVehiculo).forEach(vIndex => {
         mostrarResumenProductos(parseInt(vIndex));
       });
     }
     
-    // ✅ Cargar base de datos de productos (TAMBIÉN aquí con await)
-    await cargarBaseDatosProductos();  // ← Añadir 'await' aquí
-    
+    await cargarBaseDatosProductos();
     generarCamposNombres();
   } else {
     agregarRegistroVehiculo();
     agregarCampoParada('operacion');
     actualizarCampos();
-    // ✅ También aquí:
     actualizarMuellesPorLugar();
-    // ✅ Cargar base de datos de productos con await
-    await cargarBaseDatosProductos();  // ← Añadir 'await' aquí
-    // ✅ Cargar productos escaneados desde localStorage
+    await cargarBaseDatosProductos();
     cargarProductosEscaneados();
   }
 
