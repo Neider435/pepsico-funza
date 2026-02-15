@@ -48,13 +48,12 @@ app.post('/api/registro', async (req, res) => {
       turno,
       total_personas,
       cajas_totales,
-      respo_diligen,  // ✅ Añadir responsable
       datos_vehiculos,
       datos_paradas_operacion
     } = req.body;
 
-    // 1. Insertar registro principal
-    // ✅ LIMPIAR PUNTOS ANTES DE GUARDAR
+    // ✅ Obtener respo_diligen y limpiar puntos
+    let respo_diligen = req.body.respo_diligen || '';
     respo_diligen = respo_diligen.replace(/\./g, '');
     const [registroResult] = await connection.query(
       `INSERT INTO registros (
