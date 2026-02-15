@@ -1,230 +1,2500 @@
-const express = require('express');
-const mysql = require('mysql2/promise');
-const cors = require('cors');
-const app = express();
-const port = process.env.PORT || 3000;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro - Pepsico Funza</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            padding: 40px;
+        }
+        
+        .logo-container {
+            position: absolute;
+            top: 50px;
+            left: 30px;
+        }
+        
+        .logo-container img {
+            width: 200px;
+            height: auto;
+        }
+        
+        form {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            width: 550px;
+            margin: auto;
+        }
+        
+        .registro-vehiculo {
+            border: 2px solid #C76E00;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 10px;
+            position: relative;
+        }
+        
+        .parada-group {
+            border: 1px dashed #ced4da;
+            padding: 10px;
+            margin-top: 15px;
+            border-radius: 5px;
+        }
+        
+        .form-group-custom {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .btn-agregar-registro,
+        .btn-agregar-parada-op {
+            background-color: #001855;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        
+        .btn-agregar-registro:hover,
+        .btn-agregar-parada-op:hover {
+            background-color: #0056b3;
+        }
+        
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 15px;
+        }
+        
+        select, input, button {
+            width: 100%;
+            padding: 8px;
+            margin-top: 8px;
+            border-radius: 8px;
+            border: 1px solid #170303;
+        }
+        
+        .time-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+        
+        .time-row > div {
+            flex-grow: 1;
+            position: relative;
+        }
+        
+        .time-display {
+            display: block;
+            margin-top: 5px;
+            font-size: 0.85em;
+            color: #155724;
+            font-weight: bold;
+        }
+        
+        .time-label {
+            font-weight: bold;
+            display: block;
+            margin-top: 5px;
+            color: #007bff;
+        }
+        
+        button[type="submit"] {
+            background-color: #001855;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        
+        .time-input-masked {
+            text-align: center;
+            font-size: 1.1em;
+            letter-spacing: 2px;
+        }
+        
+        .btn-eliminar {
+            background-color: #8B0000 !important;
+            width: auto !important;
+            padding: 5px 10px !important;
+            margin-top: 10px !important;
+            border: none !important;
+            color: white !important;
+        }
+        
+        .btn-eliminar-registro {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #8B0000 !important;
+            color: white !important;
+            border: none !important;
+            padding: 5px 10px !important;
+            cursor: pointer;
+            font-size: 0.8em;
+            width: auto;
+        }
+        
+        .btn-detalles {
+            /* position: absolute; */
+            /* top: 10px; */
+            /* right: 120px; */
+            background-color: #856115 !important;
+            color: white !important;
+            border: none !important;
+            padding: 5px 10px !important;
+            cursor: pointer;
+            font-size: 0.8em;
+            width: auto;
+            border-radius: 5px;
+        }
+        
+        .btn-eliminar:hover {
+            background-color: #c82333 !important;
+        }
+        
+        .btn-detalles:hover {
+            background-color: #0055aa !important;
+        }
+        
+        .otro-input {
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .preview-foto img {
+            max-width: 100%;
+            max-height: 200px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+        
+        .btn-borrar-todo {
+            background-color: #8B0000;
+            color: white;
+            margin-top: 20px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        /* ✅ ESTILOS PARA RESUMEN DE PRODUCTOS ESCANEADOS */
+.resumen-productos-container {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 15px;
+  border: 1px solid #dee2e6;
+}
 
-app.use(cors());
-app.use(express.json());
+.resumen-productos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #001855;
+}
 
-// ===== LOGS DE VARIABLES DE ENTORNO =====
-console.log('=== VARIABLES DE ENTORNO AL INICIAR ===');
-console.log('HOST:', process.env.MYSQLHOST || '❌ NO DEFINIDO');
-console.log('PORT:', process.env.MYSQLPORT || '❌ NO DEFINIDO');
-console.log('USER:', process.env.MYSQLUSER || '❌ NO DEFINIDO');
-console.log('PASSWORD:', process.env.MYSQLPASSWORD ? '✅ DEFINIDO (oculto)' : '❌ NO DEFINIDO');
-console.log('DATABASE:', process.env.MYSQLDATABASE || '❌ NO DEFINIDO');
-console.log('=======================================');
+.resumen-productos-title {
+  color: #C76E00;
+  font-weight: bold;
+  font-size: 1.1em;
+}
 
-// Conexión a MySQL
-const pool = mysql.createPool({
-  host: process.env.MYSQLHOST,
-  user: process.env.MYSQLUSER,
-  password: process.env.MYSQLPASSWORD,
-  database: process.env.MYSQLDATABASE,
-  port: process.env.MYSQLPORT,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});
+.total-cajas-badge {
+  background: #001855;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-weight: bold;
+  font-size: 1.2em;
+}
 
-// Endpoint para recibir datos del formulario
-app.post('/api/registro', async (req, res) => {
-  let connection;
+.productos-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  max-height: 250px;
+  overflow-y: auto;
+  display: block;
+}
+
+.productos-table th {
+  background: #001855;
+  color: white;
+  padding: 10px 8px;
+  text-align: left;
+  font-size: 0.85em;
+  position: sticky;
+  top: 0;
+}
+
+.productos-table td {
+  padding: 8px;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 0.9em;
+}
+
+.productos-table tr:hover {
+  background-color: #f1f3f5;
+}
+
+.producto-referencia {
+  font-family: 'Courier New', monospace;
+  font-size: 0.85em;
+  color: #495057;
+}
+
+.producto-cantidad {
+  font-weight: bold;
+  color: #C76E00;
+  text-align: center;
+}
+
+.no-productos {
+  text-align: center;
+  color: #6c757d;
+  padding: 20px;
+  font-style: italic;
+}
+
+.btn-limpiar-escaneo {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  font-size: 0.85em;
+  cursor: pointer;
+  margin-top: 10px;
+  display: block;
+  width: 100%;
+}
+
+.btn-limpiar-escaneo:hover {
+  background: #c82333;
+  transform: scale(1.02);
+  transition: all 0.2s;
+}
+    </style>
+
+</head>
+<body>
+    <div class="logo-container">
+        <img src="prueba.png" alt="Logo de la Empresa">
+    </div>
+    
+    <h2 style="text-align:center;">FORMULARIO - PEPSICO</h2>
+    
+    <form name="formulario-pepsico">
+        <input type="hidden" name="form-name" value="formulario-pepsico" />
+        
+        <label for="lugar">Lugar de operación:</label>
+        <select name="lugar" id="lugar" required onchange="actualizarCampos(); filtrarCoordinadores(); actualizarMuellesPorLugar();">
+            <option value="">Seleccione una opción</option>
+            <option value="Funza">Pepsico Funza</option>
+            <option value="SantoDomingo">Santo Domingo</option> 
+        </select>
+        
+        <!-- ✅ CAMPO RESPONSABLE DE DILIGENCIAR -->
+        <label for="responsable" style="margin-top: 15px;">Responsable de Diligenciar:</label>
+        <input type="text" name="respo_diligen" id="responsable" placeholder="Cédula"
+              oninput="formatearCedula(this)"
+              maxlength="14">
+
+        <label for="lider">Líder Asignado:</label>
+        <input type="text" name="lider_asignado" id="lider" placeholder="Primer Nombre y Primer Apellido">
+        
+        <label for="coordinador">Coordinador Asignado:</label>
+        <select name="coordinador" id="coordinador" required onchange="manejarOtroCoordinador()">
+          <option value="">Seleccione coordinador</option>
+          <!-- Opciones para Funza -->
+          <option value="Jeison Aranda" data-lugar="Funza">Jeison Aranda</option>
+          <option value="Julian Espitia" data-lugar="Funza">Julian Espitia</option>
+          <!-- Opciones para Santo Domingo -->
+          <option value="Olga Valdez" data-lugar="SantoDomingo">Olga Valdez</option>
+          <option value="Arnold Ospina" data-lugar="SantoDomingo">Arnold Ospina</option>
+          <option value="Jeison Aranda" data-lugar="SantoDomingo">Jeison Aranda</option>
+          <option value="Leonor Nariño" data-lugar="SantoDomingo">Leonor Nariño</option>
+          <option value="Javier Torres" data-lugar="SantoDomingo">Javier Torres</option>
+          <option value="Ingrid Lisarazo" data-lugar="SantoDomingo">Ingrid Lisarazo</option>
+          <option value="otro">Otro</option>
+        </select>
+        <input type="text" name="coordinador_otro" id="coordinador_otro" class="otro-input" placeholder="Especifique el coordinador">
+        
+        <label for="lider_pepsico">Líder De Pepsico:</label>
+        <select name="lider_pepsico" id="lider_pepsico" required onchange="manejarOtroLiderPepsico()">
+            <option value="">Seleccione un líder</option>
+            <option value="Alejandro Ariza">Alejandro Ariza</option>
+            <option value="Alejandro Monroy">Alejandro Monroy</option>
+            <option value="Carlos Ruiz">Carlos Ruiz</option>
+            <option value="Carlos Valencia">Carlos Valencia</option>
+            <option value="otro">Otro</option>
+        </select>
+        <input type="text" name="lider_pepsico_otro" id="lider_pepsico_otro" class="otro-input" placeholder="Especifique el líder de Pepsico">
+        
+        <label for="fecha">Fecha:</label>
+        <input type="date" name="fecha" id="fecha" required>
+        
+        <label for="turno">Turno Asignado:</label>
+        <select name="turno" id="turno" required>
+            <option value="">Seleccione un turno</option>
+            <option value="Manana">Mañana</option>
+            <option value="Tarde">Tarde</option>
+            <option value="Noche">Noche</option>
+        </select>
+        
+        <hr style="margin-top: 25px; border-style: dotted;">
+        
+        <!-- SECCIÓN: REGISTRO DE VEHÍCULOS -->
+        <h3 style="text-align:center; font-size:1.3em; color:#C76E00;">REGISTRO DE VEHÍCULOS</h3>
+        <div id="vehiculos-contenedor"></div>
+        <button type="button" class="btn-agregar-registro" onclick="agregarRegistroVehiculo()">
+            + Registrar Nuevo Vehículo
+        </button>
+        
+        <hr style="margin-top: 25px; border-style: dotted;">
+        
+        <!-- SECCIÓN: PARADAS DE OPERACIÓN -->
+        <h3 style="text-align:center; font-size:1.3em; color:#001855;">PARADAS DE OPERACIÓN</h3>
+        <div id="operacion-contenedor"></div>
+        <button type="button" class="btn-agregar-parada-op" onclick="agregarCampoParada('operacion')">
+            + Agregar Parada
+        </button>
+        
+        <hr style="margin-top: 25px; border-style: dotted;">
+        
+        <!-- SECCIÓN: TOTALES DE TURNO -->
+        <h3 style="text-align:center; font-size:1.1em; color:#296097;">TOTALES DE TURNO</h3>
+        
+        <label for="total_personas">Total Personas En El Turno:</label>
+        <input type="number" name="total_personas" id="total_personas" min="1" required
+            placeholder="Total de empleados en el turno">
+        <div id="nombres-contenedor" style="margin-top: 15px;"></div>
+        
+        <label for="cajas_totales">Total Cajas Movidas:</label>
+        <input type="number" name="cajas_totales" id="cajas_totales" min="0" required
+            placeholder="Cantidad total de cajas movidas" oninput="actualizarTotalCajas()">
+        
+        <input type="hidden" name="datos_vehiculos" id="datos_vehiculos" value="">
+        <input type="hidden" name="datos_paradas_operacion" id="datos_paradas_operacion" value="">
+        
+        <div style="display: flex; gap: 10px;">
+            <button type="submit" style="flex: 3;">Enviar</button>
+            <button type="button" class="btn-borrar-todo" style="flex: 1;" onclick="limpiarTodo()">🗑️ Borrar Todo</button>
+        </div>
+        
+    </form>
+
+    <script>
+        let vehiculosData = [];
+        function obtenerMuellesPorLugar(lugar) {
+  if (lugar === 'SantoDomingo') {
+    // Muelles del 1 al 10 para Santo Domingo
+    return [
+      { value: '1', label: '1' },
+      { value: '2', label: '2' },
+      { value: '3', label: '3' },
+      { value: '4', label: '4' },
+      { value: '5', label: '5' },
+      { value: '6', label: '6' },
+      { value: '7', label: '7' },
+      { value: 'otro', label: 'Otro' }
+    ];
+  } else {
+    // Muelles actuales para Pepsico Funza
+    return [
+      { value: '3', label: '3' },
+      { value: '11', label: '11' },
+      { value: '12', label: '12' },
+      { value: '13', label: '13' },
+      { value: '14', label: '14' },
+      { value: '17', label: '17' },
+      { value: '18', label: '18' },
+      { value: '19', label: '19' },
+      { value: '20', label: '20' },
+      { value: 'otro', label: 'Otro' }
+    ];
+  }
+}
+
+// ✅ FORMATEAR CÉDULA COLOMBIANA (XXX.XXX.XXX o X.XXX.XXX.XXX)
+function formatearCedula(input) {
+  // Eliminar todo excepto números
+  let valor = input.value.replace(/\D/g, '');
   
-  try {
-    // Obtener conexión para transacción
-    connection = await pool.getConnection();
-    await connection.beginTransaction();
-    
-    const {
-      fecha,
-      lugar,
-      lider_asignado,
-      coordinador,
-      coordinador_otro,
-      lider_pepsico,
-      lider_pepsico_otro,
-      turno,
-      total_personas,
-      cajas_totales,
-      datos_vehiculos,
-      datos_paradas_operacion
-    } = req.body;
+  // Limitar a 10 dígitos
+  if (valor.length > 10) {
+    valor = valor.substring(0, 10);
+  }
+  
+  // Formatear con puntos cada 3 dígitos desde la derecha
+  let partes = [];
+  while (valor.length > 0) {
+    partes.unshift(valor.substring(Math.max(0, valor.length - 3), valor.length));
+    valor = valor.substring(0, Math.max(0, valor.length - 3));
+  }
+  
+  input.value = partes.join('.');
+}
 
-    // ✅ Obtener respo_diligen y limpiar puntos
-    let respo_diligen = req.body.respo_diligen || '';
-    respo_diligen = respo_diligen.replace(/\./g, '');
-    const [registroResult] = await connection.query(
-      `INSERT INTO registros (
-        fecha, lugar, lider_asignado, coordinador, coordinador_otro,
-        lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales, respo_diligen
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        fecha, lugar, lider_asignado, coordinador, coordinador_otro,
-        lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales, respo_diligen
-      ]
-    )
-    
-    const registroId = registroResult.insertId;
-    
-    // 2. Insertar vehículos Y sus detalles de inspección
-    for (let i = 0; i < datos_vehiculos.length; i++) {
-      const vehiculo = datos_vehiculos[i];
-      
-      const nombresJSON = vehiculo.nombres_personal && Array.isArray(vehiculo.nombres_personal) && vehiculo.nombres_personal.length > 0 
-        ? JSON.stringify(vehiculo.nombres_personal) 
-        : null;
-      
-      // Insertar vehículo
-      // ✅ Depuración: Verificar qué llega al servidor
-console.log('📥 Vehículo recibido:', {
-  placa: vehiculo.placa,
-  tipo_operacion: vehiculo.tipo_operacion,
-  tipo_operacion_tipo: typeof vehiculo.tipo_operacion,
-  tiene_tipo_operacion: vehiculo.hasOwnProperty('tipo_operacion')
-});
+// ✅ NUEVA FUNCIÓN: Actualizar muelles de todos los vehículos
+function actualizarMuellesPorLugar() {
+  const lugar = document.getElementById('lugar').value;
+  const muelles = obtenerMuellesPorLugar(lugar);
+  const contenedor = document.getElementById('vehiculos-contenedor');
+  const registros = contenedor.querySelectorAll('.registro-vehiculo');
+  
+  registros.forEach((registro, index) => {
+    const muelleSelect = registro.querySelector(`#muelle-select-${index}`);
+    const otroMuelleInput = registro.querySelector(`#otro_muelle_${index}`);
+    if (muelleSelect) {
+      const valorActual = muelleSelect.value;
+      muelleSelect.innerHTML = '<option value="">Seleccione</option>';
+      muelles.forEach(muelle => {
+        const option = document.createElement('option');
+        option.value = muelle.value;
+        option.textContent = muelle.label;
+        if (muelle.value === valorActual) {
+          option.selected = true;
+        }
+        muelleSelect.appendChild(option);
+      });
+      manejarOtroMuelle(index);
+    }
+  });
+  
+  // ✅ ACTUALIZAR TIPO DE OPERACIÓN CUANDO CAMBIE EL LUGAR
+  actualizarTipoOperacionPorLugar();
+  
+  guardarProgreso();
+}
 
-const [vehiculoResult] = await connection.query(
-  `INSERT INTO vehiculos (
-    registro_id, inicio, fin, motivo, otro_motivo, muelle, otro_muelle_num,
-    placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, otro_origen, personas, cajas,
-    justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_final, 
-    foto_url, nombres_personal, tipo_operacion
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  [
-    registroId,
-    vehiculo.inicio || '',
-    vehiculo.fin || '',
-    vehiculo.motivo || '',
-    vehiculo.otro_motivo || '',
-    vehiculo.muelle || '',
-    vehiculo.otro_muelle_num || '',
-    vehiculo.placa || '',
-    vehiculo.tipo_vehi || '',
-    vehiculo.otro_tipo || '',
-    vehiculo.destino || '',
-    vehiculo.otro_destino || '',
-    vehiculo.origen || '',
-    vehiculo.otro_origen || '',
-    vehiculo.personas || '',
-    vehiculo.cajas || '',
-    vehiculo.justificacion || '',
-    vehiculo.otro_justificacion || '',
-    vehiculo.tiempo_muerto_inicio || '',
-    vehiculo.tiempo_muerto_final || '',
-    vehiculo.foto_url || '',
-    nombresJSON,
-    vehiculo.tipo_operacion || ''  // ✅ CORREGIDO: valor por defecto
-  ]
-);
-      
-      const vehiculoId = vehiculoResult.insertId;
-      
-      // ✅ INSERTAR DETALLES DE INSPECCIÓN usando los campos del mismo objeto vehiculo
-      await connection.query(
-        `INSERT INTO detalles_vehiculos (
-          vehiculo_id, interior_camion, estado_carpa, olores_extraños, objetos_extraños,
-          evidencias_plagas, estado_suelo, aprobado
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          vehiculoId,
-          vehiculo.interior_camion || null,
-          vehiculo.estado_carpa || null,
-          vehiculo.olores_extranos || null,
-          vehiculo.objetos_extranos || null,
-          vehiculo.evidencias_plagas || null,
-          vehiculo.estado_suelo || null,
-          vehiculo.aprobado || null
-        ]
-      );
-      
-      // ✅ NUEVO: Insertar productos escaneados por vehículo (AHORA DENTRO DEL BUCLE)
-      if (vehiculo.productos_escaneados && Array.isArray(vehiculo.productos_escaneados)) {
-        for (const producto of vehiculo.productos_escaneados) {
-          await connection.query(
-            `INSERT INTO num_producto (
-              vehiculo_id, registro_id, codigo_producto, referencia, nombre_producto, cantidad_cajas
-            ) VALUES (?, ?, ?, ?, ?, ?)`,
-            [
-              vehiculoId,
-              registroId,
-              producto.codigo || '',
-              producto.referencia || '',
-              producto.nombre || '',
-              producto.cantidad || 0
-            ]
-          );
+// ✅ NUEVA FUNCIÓN: Manejar campo "otro" para muelles
+function manejarOtroMuelle(vIndex) {
+  const muelleSelect = document.querySelector(`#muelle-select-${vIndex}`);
+  const otroInput = document.querySelector(`#otro_muelle_${vIndex}`);
+  
+  if (!muelleSelect || !otroInput) return;
+  
+  if (muelleSelect.value === 'otro') {
+    otroInput.style.display = 'block';
+    otroInput.required = true;
+  } else {
+    otroInput.style.display = 'none';
+    otroInput.required = false;
+    otroInput.value = '';
+  }
+  
+  guardarProgreso();
+}
+
+        
+
+        // ============================================
+        // FUNCIONES PARA NOMBRES DEL PERSONAL
+        // ============================================
+
+        // ✅ FUNCIÓN PARA GENERAR CAMPOS DE NOMBRES POR VEHÍCULO (NUEVO)
+        function generarCamposNombresVehiculo(vIndex) {
+            const totalInput = document.querySelector(`input[name="vehiculo_${vIndex}_personas"]`);
+            if (!totalInput) return;
+            
+            const total = parseInt(totalInput.value) || 0;
+            const container = document.getElementById(`nombres-personal-${vIndex}`);
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            if (total > 0) {
+                const label = document.createElement('label');
+                label.textContent = 'Nombres del Personal:';
+                label.style.display = 'block';
+                label.style.fontWeight = 'bold';
+                label.style.marginTop = '15px';
+                container.appendChild(label);
+            }
+            
+            for (let i = 1; i <= total; i++) {
+                const div = document.createElement('div');
+                div.style.marginBottom = '10px';
+                
+                const label = document.createElement('label');
+                label.textContent = `Nombre persona ${i}:`;
+                label.style.display = 'block';
+                label.style.fontWeight = 'bold';
+                label.style.marginBottom = '5px';
+                label.style.fontSize = '0.9em';
+                label.htmlFor = `vehiculo_${vIndex}_nombre_persona_${i}`;
+                
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = `vehiculo_${vIndex}_nombre_persona_${i}`;
+                input.name = `vehiculo_${vIndex}_nombre_persona_${i}`;
+                input.placeholder = `Nombre del trabajador ${i}`;
+                input.required = true;
+                input.style.width = '100%';
+                input.style.padding = '8px';
+                input.style.border = '1px solid #170303';
+                input.style.borderRadius = '8px';
+                input.style.boxSizing = 'border-box';
+                input.oninput = guardarProgreso;
+                
+                div.appendChild(label);
+                div.appendChild(input);
+                container.appendChild(div);
+            }
+            
+            guardarProgreso();
+        }
+
+        // ============================================
+        // FUNCIONES DE VALIDACIÓN DE HORAS
+        // ============================================
+
+        function horaAMinutos(horaStr) {
+            if (!horaStr || !horaStr.includes(':')) return null;
+            const [h, m] = horaStr.split(':').map(Number);
+            if (isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) return null;
+            return h * 60 + m;
+        }
+
+        function rangosSeSolapan(inicio1, fin1, inicio2, fin2) {
+            const i1 = horaAMinutos(inicio1);
+            const f1 = horaAMinutos(fin1);
+            const i2 = horaAMinutos(inicio2);
+            const f2 = horaAMinutos(fin2);
+            
+            if (i1 === null || f1 === null || i2 === null || f2 === null) return false;
+            return i1 < f2 && i2 < f1;
+        }
+
+        // ============================================
+        // VALIDACIÓN DE SOLAPAMIENTOS
+        // ============================================
+
+        function validarSolapamientoVehiculos() {
+            const agrupados = {};
+            
+            for (let idx = 0; idx < vehiculosData.length; idx++) {
+                const data = vehiculosData[idx];
+                if (!data.muelle && data.muelle !== 'otro') continue;
+                
+                const muelle = data.muelle === 'otro' ? (data.otro_muelle_num || '') : data.muelle;
+                if (!muelle || !data.inicio || !data.fin) continue;
+                
+                if (!agrupados[muelle]) agrupados[muelle] = [];
+                agrupados[muelle].push({ inicio: data.inicio, fin: data.fin, idx });
+            }
+            
+            for (const muelle in agrupados) {
+                const regs = agrupados[muelle];
+                for (let i = 0; i < regs.length; i++) {
+                    for (let j = i + 1; j < regs.length; j++) {
+                        if (rangosSeSolapan(regs[i].inicio, regs[i].fin, regs[j].inicio, regs[j].fin)) {
+                            alert(`¡Conflicto en muelle ${muelle}! Vehículos #${regs[i].idx + 1} y #${regs[j].idx + 1} se superponen en el mismo horario.`);
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        function validarSolapamientoParadas() {
+            const paradas = [];
+            const cont = document.getElementById('operacion-contenedor');
+            const grupos = cont.querySelectorAll('.parada-group');
+            
+            grupos.forEach((grupo, idx) => {
+                const inicioInput = grupo.querySelector(`input[name^="parada_inicio_operacion_"]`);
+                const finInput = grupo.querySelector(`input[name^="parada_fin_operacion_"]`);
+                if (inicioInput && finInput && inicioInput.value && finInput.value) {
+                    paradas.push({ inicio: inicioInput.value, fin: finInput.value, idx });
+                }
+            });
+            
+            for (let i = 0; i < paradas.length; i++) {
+                for (let j = i + 1; j < paradas.length; j++) {
+                    if (rangosSeSolapan(paradas[i].inicio, paradas[i].fin, paradas[j].inicio, paradas[j].fin)) {
+                        alert(`¡Las paradas de operación #${i + 1} y #${j + 1} se superponen!`);
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        // ============================================
+        // GESTIÓN DE VEHÍCULOS
+        // ============================================
+
+        function eliminarRegistroVehiculo(index) {
+            if (vehiculosData.length <= 1) {
+                alert("Debe haber al menos un vehículo.");
+                return;
+            }
+            
+            sincronizarVehiculosDesdeDOM();
+            vehiculosData.splice(index, 1);
+            reindexarVehiculos();
+            actualizarTotalCajas();
+            guardarProgreso();
+        }
+
+        function reindexarVehiculos() {
+            const contenedor = document.getElementById('vehiculos-contenedor');
+            contenedor.innerHTML = '';
+            
+            for (let i = 0; i < vehiculosData.length; i++) {
+                crearVehiculoHTML(contenedor, i, vehiculosData[i]);
+            }
+        }
+
+        function agregarRegistroVehiculo() {
+            const vIndex = vehiculosData.length;
+            vehiculosData.push({});
+            
+            const contenedor = document.getElementById('vehiculos-contenedor');
+            crearVehiculoHTML(contenedor, vIndex, {});
+            
+            actualizarTotalCajas();
+            guardarProgreso();
+        }
+        
+
+        function sincronizarVehiculosDesdeDOM() {
+  const contenedor = document.getElementById('vehiculos-contenedor');
+  const registros = contenedor.querySelectorAll('.registro-vehiculo');
+  
+  for (let i = 0; i < registros.length; i++) {
+    const reg = registros[i];
+    if (vehiculosData[i] === undefined) vehiculosData[i] = {};
+    
+    const getValue = name => {
+      const el = reg.querySelector(`[name="${name}"]`);
+      return el ? el.value || '' : '';
+    };
+    
+    // ✅ Obtener datos de nombres del personal (NUEVO)
+    const nombresPersonal = [];
+    const nombresContainer = reg.querySelector(`#nombres-personal-${i}`);
+    if (nombresContainer) {
+      const inputsNombres = nombresContainer.querySelectorAll('input[type="text"]');
+      inputsNombres.forEach((input, idx) => {
+        nombresPersonal.push(input.value || '');
+      });
+    }
+    
+    vehiculosData[i] = {
+      inicio: getValue(`vehiculo_${i}_inicio`),
+      fin: getValue(`vehiculo_${i}_fin`),
+      motivo: getValue(`vehiculo_${i}_motivo`),
+      otro_motivo: getValue(`vehiculo_${i}_otro_motivo`),
+      muelle: getValue(`vehiculo_${i}_muelle`),
+      otro_muelle_num: getValue(`vehiculo_${i}_otro_muelle_num`),
+      placa: getValue(`vehiculo_${i}_placa`),
+      tipo_vehi: getValue(`vehiculo_${i}_tipo_vehi`),
+      otro_tipo: getValue(`vehiculo_${i}_otro_tipo`),
+      destino: getValue(`vehiculo_${i}_destino`),
+      otro_destino: getValue(`vehiculo_${i}_otro_destino`),
+      origen: getValue(`vehiculo_${i}_origen`),
+      otro_origen: getValue(`vehiculo_${i}_otro_origen`),
+      personas: getValue(`vehiculo_${i}_personas`),
+      // ✅ Guardar nombres del personal (NUEVO)
+      nombres_personal: nombresPersonal,
+      cajas: getValue(`vehiculo_${i}_cajas`),
+      justificacion: getValue(`vehiculo_${i}_justificacion`),
+      otro_justificacion: getValue(`vehiculo_${i}_otro_justificacion`),
+      tiempo_muerto_inicio: getValue(`vehiculo_${i}_tiempo_muerto_inicio`),
+      tiempo_muerto_final: getValue(`vehiculo_${i}_tiempo_muerto_final`),
+      foto_url: getValue(`vehiculo_${i}_foto_url`),
+      // ✅ Nuevo campo para Santo Domingo - ASEGURAR QUE SIEMPRE TENGA UN VALOR
+      tipo_operacion: getValue(`vehiculo_${i}_tipo_operacion`) || '',
+      interior_camion: getValue(`vehiculo_${i}_interior_camion`),
+      estado_carpa: getValue(`vehiculo_${i}_estado_carpa`),
+      olores_extranos: getValue(`vehiculo_${i}_olores_extranos`),
+      objetos_extranos: getValue(`vehiculo_${i}_objetos_extranos`),
+      evidencias_plagas: getValue(`vehiculo_${i}_evidencias_plagas`),
+      estado_suelo: getValue(`vehiculo_${i}_estado_suelo`),
+      aprobado: getValue(`vehiculo_${i}_aprobado`)
+    };
+  }
+  
+  // ✅ Depuración: Verificar que tipo_operacion siempre tenga valor
+  console.log('📊 Datos de vehículos sincronizados:');
+  vehiculosData.forEach((v, i) => {
+    console.log(`Vehículo ${i}:`, {
+      placa: v.placa,
+      tipo_operacion: v.tipo_operacion,
+      tipo_operacion_tipo: typeof v.tipo_operacion
+    });
+  });
+}
+
+
+        // ============================================
+        // MANEJO DE CAMPOS "OTRO"
+        // ============================================
+
+        function manejarOtroLiderPepsico() {
+            const otroInput = document.getElementById('lider_pepsico_otro');
+            if (document.getElementById('lider_pepsico').value === 'otro') {
+                otroInput.style.display = 'block';
+                otroInput.required = true;
+            } else {
+                otroInput.style.display = 'none';
+                otroInput.required = false;
+                otroInput.value = '';
+            }
+            guardarProgreso();
+        }
+
+        function manejarOtroCampo(select) {
+            const otro = select.nextElementSibling;
+            if (!otro || !otro.classList.contains('otro-input')) return;
+            
+            if (select.value === 'otro') {
+                otro.style.display = 'block';
+                otro.required = true;
+            } else {
+                otro.style.display = 'none';
+                otro.required = false;
+                otro.value = '';
+            }
+            guardarProgreso();
+        }
+
+        function manejarOtroCoordinador() {
+            const otroInput = document.getElementById('coordinador_otro');
+            if (document.getElementById('coordinador').value === 'otro') {
+                otroInput.style.display = 'block';
+                otroInput.required = true;
+            } else {
+                otroInput.style.display = 'none';
+                otroInput.required = false;
+                otroInput.value = '';
+            }
+            guardarProgreso();
+        }
+
+        // ============================================
+        // FUNCIONES DE VISUALIZACIÓN CONDICIONAL
+        // ============================================
+
+        function alternarDestinoRemitente(selectMotivo, vIndex) {
+            const motivo = selectMotivo.value;
+            const destinoGroup = document.getElementById(`destino-group-${vIndex}`);
+            const remitenteGroup = document.getElementById(`remitente-group-${vIndex}`);
+            
+            if (destinoGroup) destinoGroup.style.display = motivo === 'cargue' ? 'block' : 'none';
+            if (remitenteGroup) remitenteGroup.style.display = motivo === 'descargue' ? 'block' : 'none';
+            
+            // ✅ ELIMINAR la lógica del tipo de operación de aquí
+            // (se manejará solo por el lugar, no por el motivo)
+            
+            const destinoSelect = document.getElementById(`destino-select-${vIndex}`);
+            const remitenteInput = document.getElementById(`remitente-input-${vIndex}`);
+            if (motivo === 'cargue' && destinoSelect) {
+                destinoSelect.removeAttribute('required'); // Destino opcional
+            } else if (remitenteInput) {
+                remitenteInput.required = motivo === 'descargue';
+            }
+        }
+
+        function mostrarTiempoMuerto(select, vIndex) {
+            const div = document.getElementById(`tiempo-muerto-${vIndex}`);
+            if (select.value !== "") {
+                div.style.display = 'flex';
+            } else {
+                div.style.display = 'none';
+                const inicio = document.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_inicio"]`);
+                const fin = document.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_final"]`);
+                if (inicio) inicio.value = '';
+                if (fin) fin.value = '';
+            }
+            guardarProgreso();
+        }
+
+        //FUNCIÓN: Mostrar/Ocultar Tipo de Operación basado en lugar
+function actualizarTipoOperacionPorLugar() {
+  const lugar = document.getElementById('lugar').value;
+  const contenedor = document.getElementById('vehiculos-contenedor');
+  const registros = contenedor.querySelectorAll('.registro-vehiculo');
+  
+  registros.forEach((registro, index) => {
+    const tipoOperacionGroup = document.getElementById(`tipo-operacion-group-${index}`);
+    if (tipoOperacionGroup) {
+      if (lugar === 'SantoDomingo') {
+        tipoOperacionGroup.style.display = 'block';
+      } else {
+        tipoOperacionGroup.style.display = 'none';
+        // Limpiar valor cuando se oculta
+        const tipoOperacionSelect = document.getElementById(`tipo-operacion-${index}`);
+        if (tipoOperacionSelect) {
+          tipoOperacionSelect.value = '';
         }
       }
-      
-    } // <-- CIERRE DEL BUCLE FOR
-    
-    // 3. Insertar paradas de operación
-    for (const parada of datos_paradas_operacion) {
-      await connection.query(
-        `INSERT INTO paradas_operacion (
-          registro_id, inicio, fin, motivo, otro_motivo
-        ) VALUES (?, ?, ?, ?, ?)`,
-        [
-          registroId,
-          parada.inicio,
-          parada.fin,
-          parada.motivo,
-          parada.otro_motivo
-        ]
-      );
     }
-    
-    // Confirmar transacción
-    await connection.commit();
-    connection.release();
+  });
+  
+  guardarProgreso();
+}
+        // ============================================
+        // CREACIÓN DE HTML PARA VEHÍCULOS
+        // ============================================
 
-    res.json({
-      success: true,
-      message: 'Registro guardado correctamente con detalles',
-      id: registroId
-    });
-  } catch (error) {
-    // Revertir transacción en caso de error
-    if (connection) {
-      await connection.rollback();
-      connection.release();
+        function crearVehiculoHTML(contenedor, vIndex, datos = {}) {
+            const inicioId = `cargue-inicio-${vIndex}`;
+            const finId = `cargue-fin-${vIndex}`;
+            const fotoInputId = `foto_vehiculo_${vIndex}`;
+            const previewFotoId = `preview_foto_${vIndex}`;
+            const motivoSelectId = `motivo-cargue-descargue-${vIndex}`;
+            
+            const registro = document.createElement('div');
+            registro.className = 'registro-vehiculo';
+            registro.dataset.index = vIndex;
+            
+            
+            const html = `
+                <button type="button" class="btn-eliminar-registro" onclick="eliminarRegistroVehiculo(${vIndex})">
+                    Eliminar Vehículo #${vIndex + 1}
+                </button>
+                
+                <hr style="margin-top:25px; border-style:dashed;">
+                
+                <h4 style="text-align:center; color:#C76E00;">VEHÍCULO #${vIndex + 1}</h4>
+                <h5 style="text-align:center; color:#C76E00;">PARADA DE CARGUE/DESCARGUE</h5>
+                
+                <div class="parada-group">
+                    <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #1 (Cargue/Descargue)</p>
+                    
+                    <div class="time-row">
+                        <div>
+                            <label class="time-label">Hora Inicio (HH:MM):</label>
+                            <input type="tel" name="vehiculo_${vIndex}_inicio" class="time-input-masked" required
+                                placeholder="HH:MM" maxlength="5" value="${datos.inicio || ''}"
+                                onblur="applyTimeMask(this, '${inicioId}');">
+                            <span id="${inicioId}" class="time-display"></span>
+                        </div>
+                        <div>
+                            <label class="time-label">Hora Final (HH:MM):</label>
+                            <input type="tel" name="vehiculo_${vIndex}_fin" class="time-input-masked" required
+                                placeholder="HH:MM" maxlength="5" value="${datos.fin || ''}"
+                                onblur="applyTimeMask(this, '${finId}');">
+                            <span id="${finId}" class="time-display"></span>
+                        </div>
+                    </div>
+                    
+                    <label style="margin-top:5px;">Motivo:</label>
+                    <select id="${motivoSelectId}" name="vehiculo_${vIndex}_motivo" required>
+                        <option value="">Seleccione</option>
+                        <option value="cargue" ${datos.motivo === 'cargue' ? 'selected' : ''}>Cargue</option>
+                        <option value="descargue" ${datos.motivo === 'descargue' ? 'selected' : ''}>Descargue</option>
+                        <option value="otro" ${datos.motivo === 'otro' ? 'selected' : ''}>Otro</option>
+                    </select>
+                    <input type="text" name="vehiculo_${vIndex}_otro_motivo" placeholder="Especifique otro motivo" class="otro-input" value="${datos.otro_motivo || ''}">
+
+                    <!-- ✅ TIPO DE OPERACIÓN: mostrar/ocultar basado en lugar (Santo Domingo) -->
+                    <div class="form-group-custom" id="tipo-operacion-group-${vIndex}" style="display:none;">
+                      <label style="margin-top:0;">Tipo de Operación:</label>
+                      <select id="tipo-operacion-${vIndex}" name="vehiculo_${vIndex}_tipo_operacion">
+                        <option value="">Seleccione tipo</option>
+                        <option value="3PD" ${datos.tipo_operacion === '3PD' ? 'selected' : ''}>3PD</option>
+                        <option value="MQ" ${datos.tipo_operacion === 'MQ' ? 'selected' : ''}>MQ</option>
+                      </select>
+                    </div>
+                </div>
+                
+                <hr style="margin-top:25px; border-style:dashed;">
+                
+                <label>Muelle:</label>
+                <select name="vehiculo_${vIndex}_muelle" id="muelle-select-${vIndex}" required onchange="manejarOtroMuelle(${vIndex})">
+                    <option value="">Seleccione</option>
+                    <!-- Los muelles se generarán dinámicamente -->
+                </select>
+                <input type="number" name="vehiculo_${vIndex}_otro_muelle_num" id="otro_muelle_${vIndex}" class="otro-input" placeholder="N° muelle" min="1" max="999" value="${datos.otro_muelle_num || ''}">
+                
+                <label>Placa:</label>
+                <input type="text" name="vehiculo_${vIndex}_placa" required placeholder="ABC123, 123ABC o A12345" maxlength="6"
+                    value="${datos.placa || ''}"
+                    oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0,6); guardarProgreso();">
+                
+                <label>Tipo De Vehiculo:</label>
+                <select name="vehiculo_${vIndex}_tipo_vehi" required id="tipo_vehi_${vIndex}">
+                    <option value="">Seleccione</option>
+                    <option value="Van extralargo" ${datos.tipo_vehi === 'Van extralargo' ? 'selected' : ''}>Van extralargo</option>
+                    <option value="Camion sencillo furgonado" ${datos.tipo_vehi === 'Camion sencillo furgonado' ? 'selected' : ''}>Camión sencillo furgonado</option>
+                    <option value="Camabaja furgonado" ${datos.tipo_vehi === 'Camabaja furgonado' ? 'selected' : ''}>Camabaja furgonado</option>
+                    <option value="Tractomula furgonado" ${datos.tipo_vehi === 'Tractomula furgonado' ? 'selected' : ''}>Tractomula furgonado</option>
+                    <option value="Exportacion 35" ${datos.tipo_vehi === 'Exportacion 35' ? 'selected' : ''}>Exportacion 35</option>
+                    <option value="Exportacion 40" ${datos.tipo_vehi === 'Exportacion 40' ? 'selected' : ''}>Exportacion 40</option>
+                    <option value="Cama baja con topes" ${datos.tipo_vehi === 'Cama baja con topes' ? 'selected' : ''}>Cama baja con topes</option>
+                    <option value="Camion sencillo carpado" ${datos.tipo_vehi === 'Camion sencillo carpado' ? 'selected' : ''}>Camión Sencillo Carpado</option>
+                    <option value="Camabaja estandar" ${datos.tipo_vehi === 'Camabaja estandar' ? 'selected' : ''}>Camabaja estandar</option>
+                    <option value="otro" ${datos.tipo_vehi === 'otro' ? 'selected' : ''}>Otro</option>
+                </select>
+                <input type="text" name="vehiculo_${vIndex}_otro_tipo" id="otro_tipo_${vIndex}" class="otro-input" placeholder="Especifique tipo" value="${datos.otro_tipo || ''}">
+                
+                <div class="form-group-custom" id="destino-group-${vIndex}" style="${(datos.motivo === 'cargue') ? 'display:block;' : 'display:none;'}">
+                    <label style="margin-top:0;">Destino:</label>
+                    <select id="destino-select-${vIndex}" name="vehiculo_${vIndex}_destino">
+<option value="">Seleccione Destino</option>
+<option value="BARRANQUILLA" ${datos.destino === 'BARRANQUILLA' ? 'selected' : ''}>BARRANQUILLA</option>
+<option value="CALI" ${datos.destino === 'CALI' ? 'selected' : ''}>CALI</option>
+<option value="BUCARAMANGA" ${datos.destino === 'BUCARAMANGA' ? 'selected' : ''}>BUCARAMANGA</option>
+<option value="MEDELLIN" ${datos.destino === 'MEDELLIN' ? 'selected' : ''}>MEDELLIN</option>
+<option value="MONTERIA" ${datos.destino === 'MONTERIA' ? 'selected' : ''}>MONTERIA</option>
+<option value="GUARNE" ${datos.destino === 'GUARNE' ? 'selected' : ''}>GUARNE</option>
+<option value="PEREIRA" ${datos.destino === 'PEREIRA' ? 'selected' : ''}>PEREIRA</option>
+<option value="PERU" ${datos.destino === 'PERU' ? 'selected' : ''}>PERU</option>
+<option value="ECUADOR" ${datos.destino === 'ECUADOR' ? 'selected' : ''}>ECUADOR</option>
+<option value="FUNZA" ${datos.destino === 'FUNZA' ? 'selected' : ''}>FUNZA</option>
+<option value="BOLIVIA" ${datos.destino === 'BOLIVIA' ? 'selected' : ''}>BOLIVIA</option>
+<option value="SANTO DOMINGO" ${datos.destino === 'SANTO DOMINGO' ? 'selected' : ''}>SANTO DOMINGO</option>
+<option value="LOCALES" ${datos.destino === 'LOCALES' ? 'selected' : ''}>LOCALES</option>
+<option value="INNOVA" ${datos.destino === 'INNOVA' ? 'selected' : ''}>INNOVA</option>
+<option value="CUCUTA" ${datos.destino === 'CUCUTA' ? 'selected' : ''}>CUCUTA</option>
+<option value="LA ESTANCIA" ${datos.destino === 'LA ESTANCIA' ? 'selected' : ''}>LA ESTANCIA</option>
+<option value="CIUDAD BOLIVAR" ${datos.destino === 'CIUDAD BOLIVAR' ? 'selected' : ''}>CIUDAD BOLIVAR</option>
+<option value="VILLAVICENCIO" ${datos.destino === 'VILLAVICENCIO' ? 'selected' : ''}>VILLAVICENCIO</option>
+<option value="ACACIAS" ${datos.destino === 'ACACIAS' ? 'selected' : ''}>ACACIAS</option>
+<option value="otro" ${datos.destino === 'otro' ? 'selected' : ''}>Otro</option>
+</select>
+                    <input type="text" name="vehiculo_${vIndex}_otro_destino" id="otro_destino_${vIndex}" class="otro-input" placeholder="Especifique otro destino" value="${datos.otro_destino || ''}">
+                </div>
+                
+                <div class="form-group-custom" id="remitente-group-${vIndex}" style="${(datos.motivo === 'descargue') ? 'display:block;' : 'display:none;'}">
+<label style="margin-top:0;">Origen / Remitente:</label>
+<select id="remitente-select-${vIndex}" name="vehiculo_${vIndex}_origen">
+<option value="">Seleccione Origen</option>
+<option value="BARRANQUILLA" ${datos.origen === 'BARRANQUILLA' ? 'selected' : ''}>BARRANQUILLA</option>
+<option value="CALI" ${datos.origen === 'CALI' ? 'selected' : ''}>CALI</option>
+<option value="BUCARAMANGA" ${datos.origen === 'BUCARAMANGA' ? 'selected' : ''}>BUCARAMANGA</option>
+<option value="MEDELLIN" ${datos.origen === 'MEDELLIN' ? 'selected' : ''}>MEDELLIN</option>
+<option value="MONTERIA" ${datos.origen === 'MONTERIA' ? 'selected' : ''}>MONTERIA</option>
+<option value="GUARNE" ${datos.origen === 'GUARNE' ? 'selected' : ''}>GUARNE</option>
+<option value="PEREIRA" ${datos.origen === 'PEREIRA' ? 'selected' : ''}>PEREIRA</option>
+<option value="PERU" ${datos.origen === 'PERU' ? 'selected' : ''}>PERU</option>
+<option value="ECUADOR" ${datos.origen === 'ECUADOR' ? 'selected' : ''}>ECUADOR</option>
+<option value="FUNZA" ${datos.origen === 'FUNZA' ? 'selected' : ''}>FUNZA</option>
+<option value="BOLIVIA" ${datos.origen === 'BOLIVIA' ? 'selected' : ''}>BOLIVIA</option>
+<option value="SANTO DOMINGO" ${datos.origen === 'SANTO DOMINGO' ? 'selected' : ''}>SANTO DOMINGO</option>
+<option value="LOCALES" ${datos.origen === 'LOCALES' ? 'selected' : ''}>LOCALES</option>
+<option value="INNOVA" ${datos.origen === 'INNOVA' ? 'selected' : ''}>INNOVA</option>
+<option value="CUCUTA" ${datos.origen === 'CUCUTA' ? 'selected' : ''}>CUCUTA</option>
+<option value="LA ESTANCIA" ${datos.origen === 'LA ESTANCIA' ? 'selected' : ''}>LA ESTANCIA</option>
+<option value="CIUDAD BOLIVAR" ${datos.origen === 'CIUDAD BOLIVAR' ? 'selected' : ''}>CIUDAD BOLIVAR</option>
+<option value="VILLAVICENCIO" ${datos.origen === 'VILLAVICENCIO' ? 'selected' : ''}>VILLAVICENCIO</option>
+<option value="ACACIAS" ${datos.origen === 'ACACIAS' ? 'selected' : ''}>ACACIAS</option>
+<option value="otro" ${datos.origen === 'otro' ? 'selected' : ''}>Otro</option>
+</select>
+<input type="text" name="vehiculo_${vIndex}_otro_origen" id="otro_origen_${vIndex}" class="otro-input" placeholder="Especifique otro origen" value="${datos.otro_origen || ''}">
+</div>
+                
+                <label>Total De Personas:</label>
+                <input type="number" name="vehiculo_${vIndex}_personas" min="1" required value="${datos.personas || ''}" oninput="generarCamposNombresVehiculo(${vIndex}); guardarProgreso()">
+                
+                <!-- ✅ Contenedor para nombres del personal (NUEVO) -->
+                <div id="nombres-personal-${vIndex}" style="margin-top: 15px;"></div>
+                
+               <!-- ✅ CAMPO DE CAJAS MOVIDAS (SOLO LECTURA - SE ACTUALIZA AUTOMÁTICAMENTE) -->
+<label>Cajas Movidas:</label>
+<input type="number" name="vehiculo_${vIndex}_cajas" class="cajas-input-js" min="0" readonly
+value="${datos.cajas || '0'}"
+style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
+<!-- ✅ ÁREA DE PICKING CON BOTÓN -->
+<div style="background: #e7f3ff; padding: 15px; border-radius: 8px; margin-top: 15px; border: 2px solid #001855;">
+  <h5 style="margin-top: 0; color: #001855; font-size: 0.95em;">📦 Picking de Productos</h5>
+  
+  <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
+  <div style="display: flex; gap: 10px; align-items: center;">
+    <input type="text" id="codigo-picking-${vIndex}" placeholder="EAN o código especial"
+       style="flex: 3; padding: 10px 12px; border: 2px solid #001855; border-radius: 5px; font-size: 1.1em; font-family: Arial, sans-serif;"
+       onkeypress="if(event.key === 'Enter') agregarProductoPicking(${vIndex})"
+       oninput="validarCodigoPicking(this)">
+           
+    <button type="button" onclick="agregarProductoPicking(${vIndex})"
+            style="flex: 1; background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 100px; border-radius: 5px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 0.95em;">
+      ➕ Agregar
+    </button>
+  </div>
+  
+    <!-- ✅ Botón de borrar debajo del campo EAN -->
+    <button type="button" onclick="document.getElementById('codigo-picking-${vIndex}').value = ''; document.getElementById('codigo-picking-${vIndex}').focus();"
+            style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 0.85em; width: 100px; transform: translateX(0px);">
+    🗑️ Borrar
+    </button>
+</div>
+  
+  <div id="feedback-picking-${vIndex}" style="min-height: 30px; margin-top: 8px;"></div>
+</div>
+
+<!-- ✅ RESUMEN DE PRODUCTOS ESCANEADOS -->
+<div id="resumen-productos-${vIndex}" style="margin-top: 20px; margin-bottom: 15px;"></div>
+                
+                <label>Justificación del retraso o incidencia:</label>
+                <select name="vehiculo_${vIndex}_justificacion" onchange="mostrarTiempoMuerto(this, ${vIndex})">
+                    <option value="">Seleccione motivo</option>
+                    <option value="faltante_producto" ${datos.justificacion === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
+                    <option value="liberacion_calidad" ${datos.justificacion === 'liberacion_calidad' ? 'selected' : ''}>Liberacion de calidad</option>
+                    <option value="Daños" ${datos.justificacion === 'Daños' ? 'selected' : ''}>Daños(electricos, muelle, montacargas, etc.)</option>
+                    <option value="otro" ${datos.justificacion === 'otro' ? 'selected' : ''}>Otro</option>
+                </select>
+                <input type="text" name="vehiculo_${vIndex}_otro_justificacion" id="otro_justificacion_${vIndex}" class="otro-input" placeholder="Especifique la incidencia" value="${datos.otro_justificacion || ''}">
+                
+                <div class="time-row" id="tiempo-muerto-${vIndex}" style="display:${datos.justificacion ? 'flex' : 'none'};">
+                    <div>
+                        <label class="time-label">Tiempo Muerto Inicio:</label>
+                        <input type="tel" name="vehiculo_${vIndex}_tiempo_muerto_inicio" class="time-input-masked"
+                            placeholder="HH:MM" maxlength="5" value="${datos.tiempo_muerto_inicio || ''}"
+                            onblur="applyTimeMask(this, 'muerto-inicio-${vIndex}')">
+                        <span id="muerto-inicio-${vIndex}" class="time-display"></span>
+                    </div>
+                    <div>
+                        <label class="time-label">Tiempo Muerto Final:</label>
+                        <input type="tel" name="vehiculo_${vIndex}_tiempo_muerto_final" class="time-input-masked"
+                            placeholder="HH:MM" maxlength="5" value="${datos.tiempo_muerto_final || ''}"
+                            onblur="applyTimeMask(this, 'muerto-final-${vIndex}')">
+                        <span id="muerto-final-${vIndex}" class="time-display"></span>
+                    </div>
+                </div>
+                
+                <label>Foto De vehiculo:</label>
+                <input type="file" name="vehiculo_${vIndex}_foto" id="${fotoInputId}" accept="image/*" capture="environment">
+                <div class="preview-foto" id="${previewFotoId}"></div>
+                <input type="hidden" name="vehiculo_${vIndex}_foto_url" id="foto_url_${vIndex}" value="${datos.foto_url || ''}">
+                
+                <p style="font-size:0.85em; color:#6c757d; margin-top:5px;">
+                    📸 <strong>La foto se sube automáticamente.</strong> No necesita hacer nada más.
+                </p>
+
+                <!-- ✅ SECCIÓN DE INSPECCIÓN DE VEHÍCULO -->
+            <hr style="margin-top:25px; border-style:dashed;">
+            <h5 style="text-align:center; color:#C76E00;">INSPECCIÓN DE VEHÍCULO</h5>
+            <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-top:15px;">
+            
+            <!-- INTERIOR CAMIÓN -->
+            <div class="form-group-custom">
+                <label style="margin-top:0;">INTERIOR CAMIÓN:</label>
+                <select name="vehiculo_${vIndex}_interior_camion" required>
+                <option value="">Seleccione</option>
+                <option value="BUENO" ${datos.interior_camion === 'BUENO' ? 'selected' : ''}>BUENO</option>
+                <option value="MALO" ${datos.interior_camion === 'MALO' ? 'selected' : ''}>MALO</option>
+                </select>
+            </div>
+
+            <!-- ESTADO DE LA CARPA -->
+            <div class="form-group-custom">
+                <label style="margin-top:0;">ESTADO DE LA CARPA:</label>
+                <select name="vehiculo_${vIndex}_estado_carpa" required>
+                <option value="">Seleccione</option>
+                <option value="BUENO" ${datos.estado_carpa === 'BUENO' ? 'selected' : ''}>BUENO</option>
+                <option value="MALO" ${datos.estado_carpa === 'MALO' ? 'selected' : ''}>MALO</option>
+                <option value="N/A" ${datos.estado_carpa === 'N/A' ? 'selected' : ''}>N/A</option>
+                </select>
+            </div>
+
+            <!-- OLORES EXTRAÑOS -->
+            <div class="form-group-custom">
+                <label style="margin-top:0;">OLORES EXTRAÑOS:</label>
+                <select name="vehiculo_${vIndex}_olores_extranos" required>
+                <option value="">Seleccione</option>
+                <option value="SI" ${datos.olores_extranos === 'SI' ? 'selected' : ''}>SI</option>
+                <option value="NO" ${datos.olores_extranos === 'NO' ? 'selected' : ''}>NO</option>
+                </select>
+            </div>
+
+            <!-- OBJETOS EXTRAÑOS -->
+            <div class="form-group-custom">
+                <label style="margin-top:0;">OBJETOS EXTRAÑOS:</label>
+                <select name="vehiculo_${vIndex}_objetos_extranos" required>
+                <option value="">Seleccione</option>
+                <option value="SI" ${datos.objetos_extranos === 'SI' ? 'selected' : ''}>SI</option>
+                <option value="NO" ${datos.objetos_extranos === 'NO' ? 'selected' : ''}>NO</option>
+                </select>
+            </div>
+
+            <!-- EVIDENCIAS DE PLAGAS -->
+            <div class="form-group-custom">
+                <label style="margin-top:0;">EVIDENCIAS DE PLAGAS:</label>
+                <select name="vehiculo_${vIndex}_evidencias_plagas" required>
+                <option value="">Seleccione</option>
+                <option value="SI" ${datos.evidencias_plagas === 'SI' ? 'selected' : ''}>SI</option>
+                <option value="NO" ${datos.evidencias_plagas === 'NO' ? 'selected' : ''}>NO</option>
+                </select>
+            </div>
+
+        <!-- ESTADO DEL SUELO -->
+        <div class="form-group-custom">
+            <label style="margin-top:0;">ESTADO DEL SUELO:</label>
+            <select name="vehiculo_${vIndex}_estado_suelo" required>
+            <option value="">Seleccione</option>
+            <option value="BUENO" ${datos.estado_suelo === 'BUENO' ? 'selected' : ''}>BUENO</option>
+            <option value="MALO" ${datos.estado_suelo === 'MALO' ? 'selected' : ''}>MALO</option>
+            </select>
+        </div>
+
+        <!-- APROBADO -->
+        <div class="form-group-custom">
+            <label style="margin-top:0;">APROBADO:</label>
+            <select name="vehiculo_${vIndex}_aprobado" required>
+            <option value="">Seleccione</option>
+            <option value="SI" ${datos.aprobado === 'SI' ? 'selected' : ''}>SI</option>
+            <option value="NO" ${datos.aprobado === 'NO' ? 'selected' : ''}>NO</option>
+            </select>
+        </div>
+        </div>
+            `;
+            
+            registro.innerHTML = html;
+            contenedor.appendChild(registro);
+            
+            // ✅ MOSTRAR/OCULTAR "Tipo de Operación" basado en lugar (Santo Domingo)
+            const lugar = document.getElementById('lugar').value;
+  const tipoOperacionGroup = document.getElementById(`tipo-operacion-group-${vIndex}`);
+  if (tipoOperacionGroup) {
+    if (lugar === 'SantoDomingo') {
+      tipoOperacionGroup.style.display = 'block';
+    } else {
+      tipoOperacionGroup.style.display = 'none';
     }
-    
-    console.error('Error al guardar:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
   }
-});
+            
+            const origenSelect = document.getElementById(`remitente-select-${vIndex}`);
+if (origenSelect) {
+  origenSelect.addEventListener('change', () => manejarOtroOrigen(vIndex));
+  // Llamar inmediatamente para mostrar/ocultar "otro" si ya está seleccionado
+  manejarOtroOrigen(vIndex);
+}
+            function manejarOtroOrigen(vIndex) {
+  const origenSelect = document.querySelector(`#remitente-select-${vIndex}`);
+  const otroInput = document.querySelector(`#otro_origen_${vIndex}`);
+  
+  if (!origenSelect || !otroInput) return;
+  
+  if (origenSelect.value === 'otro') {
+    otroInput.style.display = 'block';
+    otroInput.required = true;
+  } else {
+    otroInput.style.display = 'none';
+    otroInput.required = false;
+    otroInput.value = '';
+  }
+  
+  guardarProgreso();
+}
+            
+            const motivoSelect = document.getElementById(motivoSelectId);
+            motivoSelect.addEventListener('change', () => {
+                alternarDestinoRemitente(motivoSelect, vIndex);
+                manejarOtroCampo(motivoSelect);
+                guardarProgreso();
+            });
+            
+            const selects = registro.querySelectorAll('select');
+            selects.forEach(sel => {
+                const otro = sel.nextElementSibling;
+                if (otro && otro.classList.contains('otro-input')) {
+                    if (sel.value === 'otro') otro.style.display = 'block';
+                    sel.addEventListener('change', () => manejarOtroCampo(sel));
+                }
+            });
+            
+            alternarDestinoRemitente(motivoSelect, vIndex);
+            
+            const justificacionSelect = registro.querySelector(`select[name="vehiculo_${vIndex}_justificacion"]`);
+            if (justificacionSelect) {
+                justificacionSelect.addEventListener('change', () => mostrarTiempoMuerto(justificacionSelect, vIndex));
+            }
+            
+            // ✅ Cargar nombres del personal si existen (NUEVO)
+            if (datos.nombres_personal && datos.nombres_personal.length > 0) {
+                const nombresContainer = document.getElementById(`nombres-personal-${vIndex}`);
+                if (nombresContainer) {
+                    datos.nombres_personal.forEach((nombre, idx) => {
+                        const div = document.createElement('div');
+                        div.style.marginBottom = '10px';
+                        
+                        const label = document.createElement('label');
+                        label.textContent = `Nombre persona ${idx + 1}:`;
+                        label.style.display = 'block';
+                        label.style.fontWeight = 'bold';
+                        label.style.marginBottom = '5px';
+                        label.style.fontSize = '0.9em';
+                        label.htmlFor = `vehiculo_${vIndex}_nombre_persona_${idx + 1}`;
+                        
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.id = `vehiculo_${vIndex}_nombre_persona_${idx + 1}`;
+                        input.name = `vehiculo_${vIndex}_nombre_persona_${idx + 1}`;
+                        input.placeholder = `Nombre del trabajador ${idx + 1}`;
+                        input.value = nombre;
+                        input.required = true;
+                        input.style.width = '100%';
+                        input.style.padding = '8px';
+                        input.style.border = '1px solid #170303';
+                        input.style.borderRadius = '8px';
+                        input.style.boxSizing = 'border-box';
+                        input.oninput = guardarProgreso;
+                        
+                        div.appendChild(label);
+                        div.appendChild(input);
+                        nombresContainer.appendChild(div);
+                    });
+                }
+            }
+            
+            // ✅ Generar campos si hay valor en total personas (NUEVO)
+            // ✅ Generar campos si hay valor en total personas (CORREGIDO)
+            const totalPersonas = datos.personas;
+            if (totalPersonas && parseInt(totalPersonas) > 0 && (!datos.nombres_personal || datos.nombres_personal.length === 0)) {
+                generarCamposNombresVehiculo(vIndex);
+            }
+            
+            document.getElementById(fotoInputId).addEventListener('change', function() {
+                let fechaInput = document.getElementById('fecha').value;
+                if (!fechaInput) fechaInput = new Date().toISOString().split('T')[0];
+                
+                const [yyyy, mm, dd] = fechaInput.split('-');
+                const fechaFormateada = `${dd}.${mm}.${yyyy}`;
+                const tipoVehiculo = (datos.tipo_vehi || 'vehiculo').replace(/ /g, '_');
+                const nombrePersonalizado = `${fechaFormateada}.${tipoVehiculo}.vehiculo_${vIndex}`;
+                
+                setupFotoPreview(fotoInputId, previewFotoId, nombrePersonalizado);
+            });
+        }
 
-// Health check mejorado
-app.get('/health', async (req, res) => {
-  try {
-    const connection = await pool.getConnection();
-    connection.release();
+        // ============================================
+        // GESTIÓN DE PARADAS DE OPERACIÓN
+        // ============================================
+
+        function agregarCampoParada(tipo, datos = {}) {
+            const contenedor = document.getElementById('operacion-contenedor');
+            const index = contenedor.children.length;
+            
+            const div = document.createElement('div');
+            div.className = 'parada-group';
+            div.dataset.index = index;
+            
+            const botonEliminar = document.createElement('button');
+            botonEliminar.type = 'button';
+            botonEliminar.className = 'btn-eliminar';
+            botonEliminar.textContent = 'Eliminar';
+            botonEliminar.onclick = function() {
+                div.remove();
+                const paradas = contenedor.getElementsByClassName('parada-group');
+                for (let i = 0; i < paradas.length; i++) {
+                    const span = paradas[i].querySelector('.numero-parada');
+                    if (span) span.textContent = i + 1;
+                }
+                guardarProgreso();
+            };
+            
+            const dInicio = `operacion-inicio-${index}`;
+            const dFin = `operacion-fin-${index}`;
+            
+            div.innerHTML = `
+                <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #<span class="numero-parada">${index + 1}</span> (Operación)</p>
+                
+                <div class="time-row">
+                    <div>
+                        <label class="time-label">Hora Inicio (HH:MM):</label>
+                        <input type="tel" name="parada_inicio_operacion_${index}" class="time-input-masked"
+                            placeholder="HH:MM" maxlength="5" value="${datos.inicio || ''}"
+                            onblur="applyTimeMask(this, '${dInicio}')">
+                        <span id="${dInicio}" class="time-display"></span>
+                    </div>
+                    <div>
+                        <label class="time-label">Hora Final (HH:MM):</label>
+                        <input type="tel" name="parada_fin_operacion_${index}" class="time-input-masked"
+                            placeholder="HH:MM" maxlength="5" value="${datos.fin || ''}"
+                            onblur="applyTimeMask(this, '${dFin}')">
+                        <span id="${dFin}" class="time-display"></span>
+                    </div>
+                </div>
+                
+                <label style="margin-top:5px;">Motivo:</label>
+                <select name="parada_motivo_operacion_${index}">
+                    <option value="">Seleccione</option>
+                    <option value="pausas_activas" ${datos.motivo === 'pausas_activas' ? 'selected' : ''}>Pausas Activas y/o Charla</option>
+                    <option value="liberacion_calidad" ${datos.motivo === 'liberacion_calidad' ? 'selected' : ''}>Liberacion De Calidad</option>
+                    <option value="desayuno_almuerzo_cena" ${datos.motivo === 'desayuno_almuerzo_cena' ? 'selected' : ''}>Desayuno/Almuerzo/Cena</option>
+                    <option value="aseo" ${datos.motivo === 'aseo' ? 'selected' : ''}>Aseo</option>
+                    <option value="faltante_insumos" ${datos.motivo === 'faltante_insumos' ? 'selected' : ''}>Faltante (Canastillas, vinipel, estibas, etc)</option>
+                    <option value="danos_equipo" ${datos.motivo === 'danos_equipo' ? 'selected' : ''}>Daños (Electricos, montacargas, etc)</option>
+                    <option value="otro" ${datos.motivo === 'otro' ? 'selected' : ''}>Otro</option>
+                </select>
+                <input type="text" name="parada_otro_motivo_operacion_${index}" placeholder="Especifique" class="otro-input" value="${datos.otro_motivo || ''}">
+            `;
+            
+            div.appendChild(botonEliminar);
+            contenedor.appendChild(div);
+            
+            const motivoSelect = div.querySelector(`select[name="parada_motivo_operacion_${index}"]`);
+            if (motivoSelect) {
+                motivoSelect.addEventListener('change', () => manejarOtroCampo(motivoSelect));
+                if (motivoSelect.value === 'otro') {
+                    const otroInput = div.querySelector('.otro-input');
+                    if (otroInput) otroInput.style.display = 'block';
+                }
+            }
+        }
+
+        // ============================================
+        // MANEJO DE FOTOS
+        // ============================================
+
+        function setupFotoPreview(inputId, previewId, nombrePersonalizado) {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            
+            if (!input || !preview) return;
+            
+            const file = input.files[0];
+            if (!file || !file.type.match('image.*') || file.size > 5 * 1024 * 1024) {
+                input.value = '';
+                preview.innerHTML = '';
+                if (file && !file.type.match('image.*')) alert('Solo imágenes (JPG/PNG).');
+                if (file && file.size > 5 * 1024 * 1024) alert('Máx. 5 MB.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = e => preview.innerHTML = `<img src="${e.target.result}" alt="Vista previa">`;
+            reader.readAsDataURL(file);
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('key', 'e1d938a9ff4815f178c880552cd33a34');
+            formData.append('name', nombrePersonalizado);
+            
+            fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const vIdx = nombrePersonalizado.split('.').pop().replace('vehiculo_', '');
+                        const urlInput = document.getElementById(`foto_url_${vIdx}`);
+                        if (urlInput) urlInput.value = data.data.url;
+                        alert(`✅ Foto subida: ${nombrePersonalizado}`);
+                        guardarProgreso();
+                    } else {
+                        throw new Error(data.error.message || 'Error al subir la foto');
+                    }
+                })
+                .catch(error => {
+                    alert("❌ No se pudo subir la foto.");
+                    console.error(error);
+                });
+        }
+
+        // ============================================
+// FILTRAR COORDINADORES POR LUGAR
+// ============================================
+function filtrarCoordinadores() {
+  const lugar = document.getElementById('lugar').value;
+  const coordinadorSelect = document.getElementById('coordinador');
+  const opciones = coordinadorSelect.querySelectorAll('option');
+  
+  // Mostrar/Ocultar opciones según el lugar
+  opciones.forEach(opcion => {
+    const dataLugar = opcion.getAttribute('data-lugar');
     
-    res.json({
-      status: 'ok',
-      message: 'API y base de datos funcionando correctamente',
-      env: {
-        host: process.env.MYSQLHOST ? '✅ Definido' : '❌ NO DEFINIDO',
-        port: process.env.MYSQLPORT || '3306 (default)',
-        user: process.env.MYSQLUSER || '❌ NO DEFINIDO',
-        database: process.env.MYSQLDATABASE || '❌ NO DEFINIDO'
+    if (dataLugar) {
+      if (lugar === '') {
+        opcion.style.display = 'none'; // Ocultar todas si no hay lugar seleccionado
+      } else if (dataLugar === lugar || lugar === '') {
+        opcion.style.display = 'block';
+      } else {
+        opcion.style.display = 'none';
       }
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'Base de datos NO accesible',
-      error: error.message
-    });
+    } else if (opcion.value === 'otro' || opcion.value === '') {
+      opcion.style.display = 'block'; // Siempre mostrar "Seleccione" y "Otro"
+    }
+  });
+  
+  // Resetear selección si el coordinador actual no corresponde al lugar
+  const coordinadorSeleccionado = coordinadorSelect.value;
+  const opcionSeleccionada = Array.from(opciones).find(opt => 
+    opt.value === coordinadorSeleccionado && opt.style.display !== 'none'
+  );
+  
+  if (!opcionSeleccionada) {
+    coordinadorSelect.value = ''; // Limpiar si no es válido
   }
-});
+  
+  manejarOtroCoordinador(); // Actualizar campo "otro"
+  guardarProgreso();
+}
 
-app.listen(port, () => {
-  console.log(`Servidor corriendo en puerto ${port}`);
+// Modificar actualizarCampos para incluir filtrado
+function actualizarCampos() {
+  const lugar = document.getElementById("lugar").value;
+  const turno = document.getElementById("turno");
+  const liderPepsico = document.getElementById("lider_pepsico");
+  const fechaInput = document.getElementById("fecha");
+  const coordSelect = document.getElementById("coordinador");
+  
+  if (lugar === "Funza") {
+    if (!coordSelect.value || coordSelect.value === '') {
+      coordSelect.value = "Julian Espitia";
+      manejarOtroCoordinador();
+    }
+    const h = new Date().getHours();
+    if (!turno.value) {
+      turno.value = (h >= 6 && h < 14) ? "Manana" : (h >= 14 && h < 22) ? "Tarde" : "Noche";
+    }
+    if (!liderPepsico.value) {
+      liderPepsico.value = "Alejandro Monroy";
+      manejarOtroLiderPepsico();
+    }
+  } else if (lugar === "SantoDomingo") {
+    // No establecer valores por defecto para Santo Domingo
+    if (!turno.value) {
+      const h = new Date().getHours();
+      turno.value = (h >= 6 && h < 14) ? "Manana" : (h >= 14 && h < 22) ? "Tarde" : "Noche";
+    }
+  }
+  
+  if (!fechaInput.value) {
+    fechaInput.value = new Date().toISOString().split('T')[0];
+  }
+  
+  actualizarTotalCajas();
+  guardarProgreso();
+  actualizarMuellesPorLugar();
+}
+
+        // ============================================
+        // MÁSCARA DE TIEMPO
+        // ============================================
+
+        function applyTimeMask(input, displayId) {
+            let value = input.value.replace(/[^0-9]/g, '');
+            
+            if (value.length === 1 && value > '2') value = '0' + value;
+            if (value.length === 2 && value > '23') value = '23';
+            if (value.length === 3 && value[2] > '5') value = value.substring(0,2) + '5';
+            
+            if (value.length >= 4) {
+                value = value.substring(0,4).padStart(4,'0');
+                let m = value.substring(2,4);
+                if (m > '59') m = '59';
+                value = value.substring(0,2) + m;
+            }
+            
+            let formatted = value.length >= 2 ? value.substring(0,2) + ':' + (value.length > 2 ? value.substring(2,4) : '00') : '';
+            input.value = formatted;
+            
+            const parent = input.closest('.time-row');
+            if(parent) {
+                const inputs = parent.querySelectorAll('input');
+                if(inputs.length === 2) {
+                    const hInicio = inputs[0].value;
+                    const hFin = inputs[1].value;
+                    if(hInicio.length === 5 && hFin.length === 5) {
+                        if(horaAMinutos(hFin) < horaAMinutos(hInicio)) {
+                            alert("❌ Error de Seguridad: La Hora Final no puede ser menor que la Hora Inicio.");
+                            input.value = "";
+                            const display = document.getElementById(displayId);
+                            if(display) display.innerHTML = "";
+                            return;
+                        }
+                    }
+                }
+            }
+            
+            convertirHoraMilitar(input, displayId);
+            guardarProgreso();
+        }
+
+        function convertirHoraMilitar(input, displayId) {
+            const value = input.value;
+            const display = document.getElementById(displayId);
+            
+            if (!display) return;
+            
+            if (value.length === 5 && value.includes(':')) {
+                const [h, m] = value.split(':').map(Number);
+                if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+                    const ampm = h >= 12 ? 'P.M.' : 'A.M.';
+                    const h12 = (h % 12) || 12;
+                    display.style.color = '#155724';
+                    display.innerHTML = `Hora Normal: ${String(h12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
+                    return;
+                }
+            }
+            
+            display.style.color = value.length > 0 && value.length < 5 ? '#dc3545' : '#155724';
+            display.innerHTML = value.length > 0 && value.length < 5 ? '❌ Formato incompleto. HH:MM' : '';
+        }
+
+        // ============================================
+        // ACTUALIZACIÓN DE TOTALES
+        // ============================================
+
+        function actualizarTotalCajas() {
+            const camposCajas = document.querySelectorAll('.cajas-input-js');
+            const totalCajasInput = document.getElementById('cajas_totales');
+            let total = 0;
+            
+            camposCajas.forEach(input => {
+                const valor = parseInt(input.value, 10);
+                if (!isNaN(valor)) total += valor;
+            });
+            
+            if(totalCajasInput) totalCajasInput.value = total;
+        }
+        // ============================================
+// ✅ SISTEMA DE PICKING POR RADIOFRECUENCIA
+// ============================================
+
+// Estructura para almacenar productos escaneados por vehículo
+let productosEscaneadosPorVehiculo = {};
+
+// Cargar base de datos de productos desde JSON
+async function cargarBaseDatosProductos() {
+  try {
+    console.log('⏳ Cargando base de datos de productos...');
+    
+    const response = await fetch('productos.json');
+    const data = await response.json();
+    
+    window.baseDatosProductos = data;
+    console.log('✅ Base de datos de productos cargada:', Object.keys(data).length, 'productos');
+  } catch (error) {
+    console.warn('⚠️ No se pudo cargar productos.json, usando base de datos fallback');
+    window.baseDatosProductos = {
+      "300033638": { nombre: "DORITOS MQUES 4X1 BX10X38G+GTX2GACHKSCHO", referencia: "300033638" },
+      "300034010": { nombre: "CHOKIS CHISPAS 40GX1X80 ENF", referencia: "300034010" },
+      "300054027": { nombre: "MMOTO NK PASAS CH 30GX12X12 SP DISPX12", referencia: "300054027" },
+      "300054040": { nombre: "CHOKIS CHISPAS 57GX9X7 DISPX7 TROQ", referencia: "300054040" },
+      "300054062": { nombre: "MARGARITA REC CLAS ALITAS BBQ 250GX9X1", referencia: "300054062" },
+      "300037949": { nombre: "CHEESE TRIS QUESO 50GX72X1 CP", referencia: "300037949" },
+      "300065646": { nombre: "MARGARITA POLLO 105GX18X1 PROMO H2225", referencia: "300065646" }
+    };
+    console.log('✅ Base de datos fallback cargada');
+  }
+}
+
+// Inicializar almacenamiento de productos para un vehículo
+function inicializarProductosEscaneados(vIndex) {
+  if (!productosEscaneadosPorVehiculo[vIndex]) {
+    productosEscaneadosPorVehiculo[vIndex] = {
+      totalCajas: 0,
+      productos: {} // { codigo: { nombre, referencia, cantidad } }
+    };
+  }
+}
+
+
+
+// Mostrar feedback visual al escanear
+// Mostrar resumen de productos escaneados
+function mostrarResumenProductos(vIndex) {
+  const container = document.getElementById(`resumen-productos-${vIndex}`);
+  if (!container) return;
+  
+  inicializarProductosEscaneados(vIndex);
+  const productos = productosEscaneadosPorVehiculo[vIndex].productos;
+  const totalCajas = productosEscaneadosPorVehiculo[vIndex].totalCajas;
+  
+  if (totalCajas === 0) {
+    container.innerHTML = `
+      <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; text-align: center; border: 1px dashed #dee2e6;">
+        <p style="color: #6c757d; margin: 0; font-size: 1.1em;">📦 No hay productos en el picking aún</p>
+        <small style="color: #6c757d;">Comienza a agregar productos usando el campo de arriba</small>
+      </div>
+    `;
+    return;
+  }
+  
+  let html = `
+    <div style="background: #f8f9fa; border-radius: 8px; padding: 15px; border: 2px solid #001855;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h5 style="margin: 0; color: #001855;">📊 Resumen de Picking</h5>
+        <div style="background: #001855; color: white; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 1.1em;">
+          ${totalCajas} cajas
+        </div>
+      </div>
+      
+      <div style="max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 5px;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #001855; color: white;">
+              <th style="padding: 10px 8px; text-align: left; font-size: 0.85em;">Referencia</th>
+              <th style="padding: 10px 8px; text-align: left; font-size: 0.85em;">Producto</th>
+              <th style="padding: 10px 8px; text-align: center; font-size: 0.85em;">Cajas</th>
+              <th style="padding: 10px 8px; text-align: center; font-size: 0.85em;">Borrar</th>
+              <th style="padding: 10px 8px; text-align: center; font-size: 0.85em;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+  `;
+  
+  // Ordenar productos por cantidad descendente
+  const productosOrdenados = Object.entries(productos).sort((a, b) => b[1].cantidad - a[1].cantidad);
+  
+  productosOrdenados.forEach(([codigo, prod]) => {
+    html += `
+      <tr style="border-bottom: 1px solid #e9ecef;">
+        <td style="padding: 8px; font-family: 'Courier New', monospace; font-size: 0.85em; color: #495057;">${prod.referencia}</td>
+        <td style="padding: 8px; font-size: 0.9em;">${prod.nombre}</td>
+        <td style="padding: 8px; text-align: center; font-weight: bold; color: #C76E00;">${prod.cantidad}</td>
+        <td style="padding: 8px; text-align: center;">
+          <!-- ✅ Input para cantidad a borrar -->
+          <input type="number" id="borrar-cantidad-${vIndex}-${codigo}" 
+                 min="1" max="${prod.cantidad}" value="1"
+                 style="width: 60px; padding: 4px; text-align: center; border: 2px solid #001855; border-radius: 4px; font-weight: bold;"
+                 onblur="validarCantidadBorrar(${vIndex}, '${codigo}')">
+        </td>
+        <td style="padding: 8px; text-align: center;">
+          <!-- ✅ Botón para borrar cantidad específica -->
+          <button type="button" onclick="borrarCantidadPicking(${vIndex}, '${codigo}', parseInt(document.getElementById('borrar-cantidad-${vIndex}-${codigo}').value))"
+                  style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85em; white-space: nowrap;"
+                  title="Borrar cantidad especificada">
+            🗑️ Borrar
+          </button>
+          
+          <!-- ✅ Botón para borrar todo -->
+          <button type="button" onclick="borrarCantidadPicking(${vIndex}, '${codigo}', ${prod.cantidad})"
+                  style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.75em; margin-top: 4px; display: block; width: 100%;"
+                  title="Borrar todo">
+            Todo
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+  
+  html += `
+          </tbody>
+        </table>
+      </div>
+      
+      <button type="button" onclick="limpiarEscaneoVehiculo(${vIndex})" 
+              style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 5px; font-weight: bold; margin-top: 12px; width: 100%; cursor: pointer;">
+        🗑️ Limpiar Todo el Picking
+      </button>
+    </div>
+  `;
+  
+  container.innerHTML = html;
+}
+
+// ✅ FUNCIÓN CORREGIDA: Validar cantidad a borrar
+function validarCantidadBorrar(vIndex, codigo) {
+  const input = document.getElementById(`borrar-cantidad-${vIndex}-${codigo}`);
+  if (!input) return;
+  
+  const valorRaw = input.value.trim();
+  
+  // Permitir campo vacío temporalmente
+  if (valorRaw === '') {
+    return;
+  }
+  
+  const valor = parseInt(valorRaw);
+  const max = parseInt(input.max) || 1;
+  
+  // Validar solo si hay un valor numérico
+  if (!isNaN(valor)) {
+    if (valor < 1) {
+      input.value = 1;
+    } else if (valor > max) {
+      input.value = max;
+    }
+  } else {
+    // Si no es un número válido, restaurar al último valor válido
+    input.value = 1;
+  }
+}
+
+// Eliminar producto específico del picking
+
+function eliminarProductoPicking(vIndex, codigo) {
+  // ✅ Verificar que exista el vehículo y el producto
+  if (!productosEscaneadosPorVehiculo[vIndex] || !productosEscaneadosPorVehiculo[vIndex].productos[codigo]) {
+    console.warn('Producto no encontrado para eliminar');
+    return;
+  }
+  
+  const producto = productosEscaneadosPorVehiculo[vIndex].productos[codigo];
+  
+  // ✅ PEDIR CONFIRMACIÓN AL USUARIO (VERIFICACIÓN)
+  const confirmar = confirm(`⚠️ ¿Estás seguro de eliminar TODAS las ${producto.cantidad} cajas de:\n\n${producto.nombre}?\n\nEsta acción no se puede deshacer.`);
+  
+  if (!confirmar) {
+    console.log('Eliminación cancelada por el usuario');
+    return;
+  }
+  
+  // ✅ Eliminar producto
+  const cantidadEliminada = producto.cantidad;
+  delete productosEscaneadosPorVehiculo[vIndex].productos[codigo];
+  
+  // ✅ Actualizar total de cajas
+  productosEscaneadosPorVehiculo[vIndex].totalCajas -= cantidadEliminada;
+  
+  // ✅ Actualizar campo de cajas movidas
+  const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
+  if (cajasInput) {
+    cajasInput.value = productosEscaneadosPorVehiculo[vIndex].totalCajas;
+  }
+  
+  // ✅ Actualizar total general
+  actualizarTotalCajas();
+  
+  // ✅ Guardar progreso
+  guardarProgreso();
+  
+  // ✅ Mostrar feedback
+  mostrarFeedbackPicking(`✅ ${producto.nombre.substring(0, 30)}${producto.nombre.length > 30 ? '...' : ''} eliminado`, vIndex, 'success');
+  
+  // ✅ Actualizar resumen
+  mostrarResumenProductos(vIndex);
+  
+  console.log(`📦 Producto eliminado V${vIndex}: ${codigo}`);
+}
+
+// ✅ FUNCIÓN FALTANTE: Limpiar todo el picking de un vehículo
+
+function limpiarEscaneoVehiculo(vIndex) {
+  // ✅ PEDIR CONFIRMACIÓN AL USUARIO (VERIFICACIÓN)
+  const confirmar = confirm(`⚠️ ¿Estás seguro de LIMPIAR TODO el picking del vehículo ${vIndex + 1}?\n\nSe eliminarán TODOS los productos escaneados.\n\nEsta acción no se puede deshacer.`);
+  
+  if (!confirmar) {
+    console.log('Limpieza de picking cancelada por el usuario');
+    return;
+  }
+  
+  // ✅ Limpiar productos escaneados
+  productosEscaneadosPorVehiculo[vIndex] = {
+    productos: {},
+    totalCajas: 0
+  };
+  
+  // ✅ Limpiar campo de cajas
+  const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
+  if (cajasInput) {
+    cajasInput.value = '';
+  }
+  
+  // ✅ Actualizar total general
+  actualizarTotalCajas();
+  
+  // ✅ Guardar progreso
+  guardarProgreso();
+  
+  // ✅ Mostrar feedback
+  mostrarFeedbackPicking('✅ Picking limpiado completamente', vIndex, 'success');
+  
+  // ✅ Actualizar resumen
+  mostrarResumenProductos(vIndex);
+  
+  console.log(`🧹 Picking limpiado para vehículo V${vIndex}`);
+}
+
+// Guardar productos escaneados en localStorage
+function guardarProductosEscaneados() {
+  localStorage.setItem('productos_escaneados_rf', JSON.stringify(productosEscaneadosPorVehiculo));
+}
+
+// Cargar productos escaneados desde localStorage
+function cargarProductosEscaneados() {
+  const saved = localStorage.getItem('productos_escaneados_rf');
+  if (saved) {
+    try {
+      productosEscaneadosPorVehiculo = JSON.parse(saved);
+      console.log('✅ Productos escaneados cargados desde localStorage');
+      
+      // Actualizar resúmenes de todos los vehículos existentes
+      Object.keys(productosEscaneadosPorVehiculo).forEach(vIndex => {
+        mostrarResumenProductos(parseInt(vIndex));
+      });
+    } catch (e) {
+      console.error('❌ Error al cargar productos escaneados:', e);
+      productosEscaneadosPorVehiculo = {};
+    }
+  }
+}
+
+function borrarCantidadPicking(vIndex, codigo, cantidadABorrar) {
+  // ✅ Verificar que exista el vehículo y el producto
+  if (!productosEscaneadosPorVehiculo[vIndex] || !productosEscaneadosPorVehiculo[vIndex].productos[codigo]) {
+    console.warn('Producto no encontrado para borrar');
+    return;
+  }
+  
+  const producto = productosEscaneadosPorVehiculo[vIndex].productos[codigo];
+  const cantidadActual = producto.cantidad;
+  
+  // ✅ Obtener valor del input (con fallback a 1 si es inválido)
+  if (isNaN(cantidadABorrar) || cantidadABorrar === null || cantidadABorrar === undefined || cantidadABorrar === '') {
+    cantidadABorrar = 1;
+  }
+  
+  // ✅ Verificar que no se borre más de lo que hay
+  if (cantidadABorrar > cantidadActual) {
+    alert(`⚠️ No puedes borrar ${cantidadABorrar} unidades. Solo hay ${cantidadActual} disponibles.`);
+    return;
+  }
+  
+  // ✅ Verificar que la cantidad sea mayor a 0
+  if (cantidadABorrar <= 0) {
+    alert(`⚠️ La cantidad a borrar debe ser mayor a 0.`);
+    return;
+  }
+  
+  // ✅ PEDIR CONFIRMACIÓN AL USUARIO (VERIFICACIÓN)
+  const productoNombre = producto.nombre.substring(0, 40) + (producto.nombre.length > 40 ? '...' : '');
+  const mensaje = cantidadABorrar === cantidadActual 
+    ? `⚠️ ¿Estás seguro de eliminar TODAS las ${cantidadActual} cajas de:\n\n${productoNombre}?\n\nEsta acción no se puede deshacer.`
+    : `⚠️ ¿Estás seguro de eliminar ${cantidadABorrar} caja${cantidadABorrar > 1 ? 's' : ''} de:\n\n${productoNombre}?\n\nQuedarán ${cantidadActual - cantidadABorrar} caja${(cantidadActual - cantidadABorrar) > 1 ? 's' : ''}.`;
+  
+  const confirmar = confirm(mensaje);
+  
+  if (!confirmar) {
+    console.log('Acción de borrado cancelada por el usuario');
+    return;
+  }
+  
+  // ✅ Calcular nueva cantidad
+  const nuevaCantidad = cantidadActual - cantidadABorrar;
+  
+  // ✅ Actualizar cantidad del producto
+  if (nuevaCantidad > 0) {
+    productosEscaneadosPorVehiculo[vIndex].productos[codigo].cantidad = nuevaCantidad;
+  } else {
+    // ✅ Si queda 0, eliminar el producto completamente
+    delete productosEscaneadosPorVehiculo[vIndex].productos[codigo];
+  }
+  
+  // ✅ Actualizar total de cajas
+  productosEscaneadosPorVehiculo[vIndex].totalCajas -= cantidadABorrar;
+  
+  // ✅ Actualizar campo de cajas movidas
+  const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
+  if (cajasInput) {
+    cajasInput.value = productosEscaneadosPorVehiculo[vIndex].totalCajas;
+  }
+  
+  // ✅ Actualizar total general
+  actualizarTotalCajas();
+  
+  // ✅ Guardar progreso
+  guardarProgreso();
+  
+  // ✅ Mostrar feedback
+  const accion = cantidadABorrar === cantidadActual ? 'eliminado completamente' : `reducido en ${cantidadABorrar} unidades`;
+  mostrarFeedbackPicking(`✅ ${producto.nombre.substring(0, 30)}${producto.nombre.length > 30 ? '...' : ''} ${accion}`, vIndex, 'success');
+  
+  // ✅ Actualizar resumen
+  mostrarResumenProductos(vIndex);
+  
+  console.log(`📦 Producto actualizado V${vIndex}: ${codigo} - Nueva cantidad: ${nuevaCantidad}`);
+  
+  // ✅ Enfocar el campo EAN para continuar escaneando
+  setTimeout(() => {
+    const codigoInput = document.getElementById(`codigo-picking-${vIndex}`);
+    if (codigoInput) {
+      codigoInput.focus();
+    }
+  }, 50);
+}
+
+// ============================================
+// ✅ NUEVO: Sistema de Picking con Botón
+// ============================================
+
+// Agregar producto al picking con botón
+function agregarProductoPicking(vIndex) {
+  const codigoInput = document.getElementById(`codigo-picking-${vIndex}`);
+  let codigo = codigoInput.value.trim().toUpperCase();
+  
+  // ✅ ELIMINAR TODOS LOS SALTOS DE LÍNEA (no solo espacios)
+  codigo = codigo.replace(/[\r\n]+/g, '').trim();
+  
+  if (!codigo || codigo.length < 5) {
+    mostrarFeedbackPicking('⚠️ Por favor ingresa un código válido', vIndex, 'warning');
+    // ✅ Mantener foco incluso en advertencia
+    setTimeout(() => codigoInput.focus(), 50);
+    return;
+  }
+  
+  // Buscar producto en base de datos
+  const producto = window.baseDatosProductos[codigo] || 
+                   window.baseDatosProductos[codigo.replace(/\s/g, '')] ||
+                   window.baseDatosProductos[codigo.substring(0, 8)] ||
+                   window.baseDatosProductos[codigo.substring(0, 10)];
+  
+  if (producto) {
+    // Inicializar si no existe
+    inicializarProductosEscaneados(vIndex);
+    
+    // Agregar o incrementar producto
+    if (!productosEscaneadosPorVehiculo[vIndex].productos[codigo]) {
+      productosEscaneadosPorVehiculo[vIndex].productos[codigo] = {
+        nombre: producto.nombre || codigo,
+        referencia: producto.referencia || codigo,
+        cantidad: 0
+      };
+    }
+    
+    // Incrementar cantidad
+    productosEscaneadosPorVehiculo[vIndex].productos[codigo].cantidad++;
+    productosEscaneadosPorVehiculo[vIndex].totalCajas++;
+    
+    // Actualizar campo de cajas movidas
+    const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
+    if (cajasInput) {
+      cajasInput.value = productosEscaneadosPorVehiculo[vIndex].totalCajas;
+    }
+    
+    // Actualizar total general
+    actualizarTotalCajas();
+    
+    // Guardar progreso
+    guardarProgreso();
+    
+    // Mostrar feedback exitoso
+    mostrarFeedbackPicking(`✅ ${producto.nombre.substring(0, 40)}${producto.nombre.length > 40 ? '...' : ''}`, vIndex, 'success');
+    
+    // ✅ Limpiar y enfocar con delay para asegurar el foco
+    codigoInput.value = '';
+    setTimeout(() => {
+      codigoInput.focus();
+      codigoInput.select(); // ✅ Seleccionar todo el texto (por si hay algo)
+    }, 50);
+    
+    // Actualizar resumen
+    mostrarResumenProductos(vIndex);
+    
+    console.log(`📦 Producto agregado V${vIndex}: ${producto.nombre} - Total cajas: ${productosEscaneadosPorVehiculo[vIndex].totalCajas}`);
+  } else {
+    // Producto no encontrado - Borrar campo automáticamente
+    mostrarFeedbackPicking(`❌ Código no encontrado: ${codigo}`, vIndex, 'error');
+    codigoInput.value = '';
+    // ✅ Enfocar con delay incluso en error
+    setTimeout(() => {
+      codigoInput.focus();
+      codigoInput.select();
+    }, 50);
+  }
+}
+
+// ✅ VALIDACIÓN HÍBRIDA: números (máx 9) o alfanumérico (máx 20)
+function validarCodigoPicking(input) {
+  const valorOriginal = input.value.trim().toUpperCase();
+  
+  // ✅ Permitir letras, números y guiones bajos (para códigos como CORRUGADO)
+  let valorLimpio = valorOriginal.replace(/[^A-Z0-9_]/g, '');
+  
+  // ✅ Detectar si es puramente numérico
+  const esNumerico = /^\d+$/.test(valorLimpio);
+  
+  // ✅ Aplicar límites según el tipo
+  if (esNumerico && valorLimpio.length > 9) {
+    valorLimpio = valorLimpio.substring(0, 9);
+  } else if (valorLimpio.length > 20) {
+    valorLimpio = valorLimpio.substring(0, 20);
+  }
+  
+  input.value = valorLimpio;
+}
+
+// Mostrar feedback de picking
+function mostrarFeedbackPicking(mensaje, vIndex, tipo = 'info') {
+  const container = document.getElementById(`feedback-picking-${vIndex}`);
+  if (!container) return;
+  
+  let colorBg, colorText;
+  switch(tipo) {
+    case 'success':
+      colorBg = '#d4edda';
+      colorText = '#155724';
+      break;
+    case 'error':
+      colorBg = '#f8d7da';
+      colorText = '#721c24';
+      break;
+    case 'warning':
+      colorBg = '#fff3cd';
+      colorText = '#856404';
+      break;
+    default:
+      colorBg = '#d1ecf1';
+      colorText = '#0c5460';
+  }
+  
+  container.innerHTML = `
+    <div style="background: ${colorBg}; color: ${colorText}; padding: 8px 12px; border-radius: 5px; font-size: 0.9em; border-left: 4px solid ${colorText};">
+      ${mensaje}
+    </div>
+  `;
+  
+  // Eliminar feedback después de 3 segundos
+  setTimeout(() => {
+    if (container) container.innerHTML = '';
+  }, 3000);
+}
+
+        function convertirATextoMayusculas() {
+            const textInputs = document.querySelectorAll('input[type="text"], textarea');
+            textInputs.forEach(input => {
+                if (input.value.trim() !== '') input.value = input.value.toUpperCase();
+            });
+        }
+
+        // ============================================
+        // GUARDADO DE PROGRESO
+        // ============================================
+
+        function guardarProgreso() {
+            const form = document.forms['formulario-pepsico'];
+            if(!form) return;
+            
+            const formData = new FormData(form);
+            const data = {};
+            
+            formData.forEach((value, key) => {
+                if (!(value instanceof File) && key !== 'form-name') data[key] = value;
+            });
+            
+            // ✅ CAPTURAR TODOS LOS CAMPOS DE NOMBRES DEL PERSONAL DINÁMICAMENTE (NUEVO)
+            const vehiculos = document.querySelectorAll('.registro-vehiculo');
+            vehiculos.forEach((_, vIndex) => {
+                const totalPersonas = parseInt(document.querySelector(`input[name="vehiculo_${vIndex}_personas"]`)?.value) || 0;
+                for (let p = 1; p <= totalPersonas; p++) {
+                    const nombreInput = document.querySelector(`input[name="vehiculo_${vIndex}_nombre_persona_${p}"]`);
+                    if (nombreInput) {
+                        data[`vehiculo_${vIndex}_nombre_persona_${p}`] = nombreInput.value || '';
+                    }
+                }
+            });
+            
+            const paradasData = [];
+            document.querySelectorAll('#operacion-contenedor .parada-group').forEach(grupo => {
+                const idx = grupo.dataset.index;
+                const inicio = grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '';
+                const fin = grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '';
+                const motivo = grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '';
+                const otro_motivo = grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || '';
+                paradasData.push({ inicio, fin, motivo, otro_motivo });
+            });
+            
+            data._numVehiculos = vehiculosData.length;
+            data._paradasDetalle = paradasData;
+            // ✅ Guardar productos escaneados por vehículo
+data._productosEscaneados = productosEscaneadosPorVehiculo;
+            
+            localStorage.setItem('pepsico_data', JSON.stringify(data));
+        }
+
+        // ============================================
+        // LIMPIEZA TOTAL
+        // ============================================
+        function limpiarTodo() {
+          if (confirm("⚠️ ¿Estás seguro de que quieres borrar TODOS los datos?\n\nEsto incluye:\n- Datos del formulario principal\n- Registros de vehículos\n- Inspecciones de vehículos (detalles.html)\n- Paradas de operación")) {
+            
+            // 1. Eliminar datos principales
+            localStorage.removeItem('pepsico_data');
+
+            
+            // 3. Eliminar otros datos residuales del formulario
+            const clavesResiduales = [
+              'fecha', 'lugar', 'lider', 'coordinador', 'coordinador_otro',
+              'lider_pepsico', 'lider_pepsico_otro', 'turno', 'total_personas',
+              'cajas_totales', 'nombres_personal', 'vehiculosData', 'paradasData'
+            ];
+            
+            clavesResiduales.forEach(clave => localStorage.removeItem(clave));
+            
+            // 4. Recargar la página para limpiar completamente el estado
+            location.reload();
+            
+            // 5. Confirmación visual (opcional)
+            setTimeout(() => {
+              alert('✅ Todos los datos han sido eliminados correctamente.\nLos detalles de inspección también fueron borrados.');
+            }, 100);
+          }
+        }
+        
+        // ============================================
+        // VALIDACIÓN DE PLACAS
+        // ============================================
+
+        function validarPlacas() {
+            const regexPlaca = /^([A-Z]{3}[0-9]{3}|[0-9]{3}[A-Z]{3}|[A-Z]{1}[0-9]{5})$/;
+            const contenedor = document.getElementById('vehiculos-contenedor');
+            const registros = contenedor.querySelectorAll('.registro-vehiculo');
+            
+            for (let i = 0; i < registros.length; i++) {
+                const placaInput = registros[i].querySelector(`input[name="vehiculo_${i}_placa"]`);
+                if (placaInput) {
+                    const valor = placaInput.value.toUpperCase().trim();
+                    if (!regexPlaca.test(valor)) {
+                        alert(`❌ Placa del Vehículo #${i+1} no válida.
+Debe cumplir:
+- 3 letras y 3 números (ABC123)
+- 3 números y 3 letras (123ABC)
+- 1 letra y 5 números (A12345)`);
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        // ============================================
+        // ENVÍO DEL FORMULARIO
+        // ===========================================
+        function enviarFormulario(event) {
+        event.preventDefault();
+        sincronizarVehiculosDesdeDOM();
+            
+        console.log('📊 Vehículos con nombres del personal:');
+          vehiculosData.forEach((vehiculo, index) => {
+            console.log(`Vehículo ${index}:`, {
+              placa: vehiculo.placa,
+              personas: vehiculo.personas,
+              nombres: vehiculo.nombres_personal
+            });
+          });
+        
+        // Validaciones existentes
+        const camposObligatorios = [
+            { id: 'lugar', nombre: 'Lugar de operación' },
+            { id: 'lider_pepsico', nombre: 'Líder De Pepsico' },
+            { id: 'fecha', nombre: 'Fecha' },
+            { id: 'turno', nombre: 'Turno' },
+            { id: 'total_personas', nombre: 'Total Personas En El Turno' },
+            { id: 'cajas_totales', nombre: 'Total Cajas Movidas' }
+        ];
+        
+        for (const campo of camposObligatorios) {
+            const el = document.getElementById(campo.id);
+            if (el && !el.value.trim()) {
+            alert(`❌ Por favor, complete el campo: "${campo.nombre}".`);
+            return;
+            }
+        }
+    
+        
+        // Validar nombres por vehículo
+        for (let i = 0; i < vehiculosData.length; i++) {
+            const vehiculo = vehiculosData[i];
+            const totalPersonasVeh = parseInt(vehiculo.personas) || 0;
+            if (totalPersonasVeh > 0) {
+            const nombresContainer = document.querySelector(`#nombres-personal-${i}`);
+            if (nombresContainer) {
+                const inputsNombres = nombresContainer.querySelectorAll('input[type="text"]');
+                for (let j = 0; j < inputsNombres.length; j++) {
+                if (!inputsNombres[j].value.trim()) {
+                    alert(`❌ Por favor, ingrese el nombre del trabajador ${j + 1} del Vehículo #${i + 1}.`);
+                    inputsNombres[j].focus();
+                    return;
+                }
+                }
+            }
+            }
+        }
+        
+        if (!validarPlacas()) return;
+        if (!validarSolapamientoVehiculos() || !validarSolapamientoParadas()) return;
+        
+        // ✅ Sincronizar productos escaneados con vehiculosData
+sincronizarVehiculosDesdeDOM();
+for (let i = 0; i < vehiculosData.length; i++) {
+  if (productosEscaneadosPorVehiculo[i]) {
+    // Convertir a array para enviar
+    const productosArray = Object.entries(productosEscaneadosPorVehiculo[i].productos).map(([codigo, prod]) => ({
+      codigo: codigo,
+      referencia: prod.referencia,
+      nombre: prod.nombre,
+      cantidad: prod.cantidad
+    }));
+    
+    vehiculosData[i].productos_escaneados = productosArray;
+    vehiculosData[i].total_cajas_escaneadas = productosEscaneadosPorVehiculo[i].totalCajas;
+  }
+}
+        // Preparar datos para enviar
+        // Preparar datos para enviar
+        // Preparar datos para enviar
+        const formData = {
+          fecha: document.getElementById('fecha').value,
+          lugar: document.getElementById('lugar').value,
+          lider_asignado: document.getElementById('lider').value.toUpperCase(),
+          coordinador: document.getElementById('coordinador').value,
+          coordinador_otro: document.getElementById('coordinador_otro').value,
+          lider_pepsico: document.getElementById('lider_pepsico').value,
+          lider_pepsico_otro: document.getElementById('lider_pepsico_otro').value,
+          turno: document.getElementById('turno').value,
+          total_personas: document.getElementById('total_personas').value,
+          cajas_totales: document.getElementById('cajas_totales').value,
+          respo_diligen: document.getElementById('responsable').value.replace(/\./g, ''),
+          datos_vehiculos: vehiculosData.map((v, i) => {
+            // ✅ Verificar que tipo_operacion tenga valor
+            if (v.tipo_operacion === undefined) {
+              console.warn(`⚠️ Vehículo ${i}: tipo_operacion es undefined, corrigiendo a ""`);
+              v.tipo_operacion = '';
+            }
+            return v;
+          }),
+          
+          datos_paradas_operacion: Array.from(
+            document.querySelectorAll('#operacion-contenedor .parada-group')
+          ).map(grupo => {
+            return {
+              inicio: grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '',
+              fin: grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '',
+              motivo: grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '',
+              otro_motivo: grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || ''
+            };
+          })
+        };
+        
+        console.log('📝 Datos que se enviarán a MySQL:');
+        console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
+        
+        // ⚠️ URL DE RAILWAY
+        const RAILWAY_API_URL = 'https://pepsico-funza-production-b0f5.up.railway.app/api/registro';
+        
+        // Mostrar mensaje de carga
+        const submitBtn = document.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Enviando...';
+        
+        // Enviar a Railway (MySQL)
+        fetch(RAILWAY_API_URL, {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => {
+            if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(result => {
+            if (result.success) {
+            // ✅ Eliminar datos de localStorage
+            localStorage.removeItem('pepsico_data');
+            
+            // ✅ Redirigir a aceptacion.html
+            window.location.href = 'aceptacion.html';
+            } else {
+            throw new Error(result.error || 'Error desconocido');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Error al guardar: ' + error.message + '\n\nPor favor, inténtalo de nuevo.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        });
+        }
+
+        // ============================================
+        // GENERACIÓN DE CAMPOS DE NOMBRES TOTALES
+        // ============================================
+
+        function generarCamposNombres() {
+            const totalInput = document.getElementById('total_personas');
+            if (!totalInput) return;
+            
+            const total = parseInt(totalInput.value) || 0;
+            const container = document.getElementById('nombres-contenedor');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            for (let i = 1; i <= total; i++) {
+                const div = document.createElement('div');
+                div.style.marginBottom = '10px';
+                
+                const label = document.createElement('label');
+                label.textContent = `Nombre persona ${i}:`;
+                label.style.display = 'block';
+                label.style.fontWeight = 'bold';
+                label.style.marginBottom = '5px';
+                label.htmlFor = `nombre_persona_${i}`;
+                
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = `nombre_persona_${i}`;
+                input.name = `nombre_persona_${i}`;
+                input.placeholder = `Nombre del trabajador ${i}`;
+                input.required = true;
+                input.style.width = '100%';
+                input.style.padding = '8px';
+                input.style.border = '1px solid #170303';
+                input.style.borderRadius = '8px';
+                input.style.boxSizing = 'border-box';
+                
+                div.appendChild(label);
+                div.appendChild(input);
+                container.appendChild(div);
+            }
+            
+            guardarProgreso();
+        }
+
+        // ============================================
+        // INICIALIZACIÓN AL CARGAR LA PÁGINA
+        // ============================================
+
+        document.addEventListener('DOMContentLoaded', async function() {
+  const form = document.querySelector('form');
+  const savedData = localStorage.getItem('pepsico_data');
+
+  if (savedData) {
+    const data = JSON.parse(savedData);
+    const nVehiculos = data._numVehiculos || 1;
+
+    // ✅ PASO 1: Establecer lugar primero
+    const lugarGuardado = data.lugar || 'Funza';
+    document.getElementById('lugar').value = lugarGuardado;
+
+    // ✅ PASO 2: Limpiar contenedor ANTES de crear vehículos
+    document.getElementById('vehiculos-contenedor').innerHTML = '';
+    vehiculosData = [];
+
+    // ✅ PASO 3: Crear vehículos
+    for(let i=0; i<nVehiculos; i++) {
+      const vObj = {
+        inicio: data[`vehiculo_${i}_inicio`] || '',
+        fin: data[`vehiculo_${i}_fin`] || '',
+        motivo: data[`vehiculo_${i}_motivo`] || '',
+        otro_motivo: data[`vehiculo_${i}_otro_motivo`] || '',
+        muelle: data[`vehiculo_${i}_muelle`] || '',
+        otro_muelle_num: data[`vehiculo_${i}_otro_muelle_num`] || '',
+        placa: data[`vehiculo_${i}_placa`] || '',
+        tipo_vehi: data[`vehiculo_${i}_tipo_vehi`] || '',
+        otro_tipo: data[`vehiculo_${i}_otro_tipo`] || '',
+        destino: data[`vehiculo_${i}_destino`] || '',
+        otro_destino: data[`vehiculo_${i}_otro_destino`] || '',
+        origen: data[`vehiculo_${i}_origen`] || '',
+        otro_origen: data[`vehiculo_${i}_otro_origen`] || '',
+        personas: data[`vehiculo_${i}_personas`] || '',
+        nombres_personal: [],
+        cajas: data[`vehiculo_${i}_cajas`] || '',
+        justificacion: data[`vehiculo_${i}_justificacion`] || '',
+        otro_justificacion: data[`vehiculo_${i}_otro_justificacion`] || '',
+        tiempo_muerto_inicio: data[`vehiculo_${i}_tiempo_muerto_inicio`] || '',
+        tiempo_muerto_final: data[`vehiculo_${i}_tiempo_muerto_final`] || '',
+        foto_url: data[`vehiculo_${i}_foto_url`] || '',
+        interior_camion: data[`vehiculo_${i}_interior_camion`] || '',
+        estado_carpa: data[`vehiculo_${i}_estado_carpa`] || '',
+        olores_extranos: data[`vehiculo_${i}_olores_extranos`] || '',
+        objetos_extranos: data[`vehiculo_${i}_objetos_extranos`] || '',
+        evidencias_plagas: data[`vehiculo_${i}_evidencias_plagas`] || '',
+        estado_suelo: data[`vehiculo_${i}_estado_suelo`] || '',
+        aprobado: data[`vehiculo_${i}_aprobado`] || '',
+        tipo_operacion: data[`vehiculo_${i}_tipo_operacion`] || ''  // ✅ AÑADIR ESTA LÍNEA
+      };
+
+      // ✅ Cargar nombres del personal desde localStorage (NUEVO)
+      for (let j = 1; ; j++) {
+        const nombreKey = `vehiculo_${i}_nombre_persona_${j}`;
+        if (data[nombreKey] !== undefined) {
+          vObj.nombres_personal.push(data[nombreKey]);
+        } else {
+          break;
+        }
+      }
+      vehiculosData.push(vObj);
+      crearVehiculoHTML(document.getElementById('vehiculos-contenedor'), i, vObj);
+      
+      // ✅ Restaurar valor de tipo de operación
+      if (vObj.tipo_operacion) {
+        const tipoOperacionSelect = document.getElementById(`tipo-operacion-${i}`);
+        if (tipoOperacionSelect) {
+          tipoOperacionSelect.value = vObj.tipo_operacion;
+        }
+      }
+    }
+
+    // ✅ PASO 4: Poblar muelles DESPUÉS de crear los vehículos
+    actualizarMuellesPorLugar();
+
+    // ✅ PASO 5: Restaurar valores de muelle - ID CORRECTO
+    for (let i = 0; i < nVehiculos; i++) {
+      const muelleSelect = document.getElementById(`muelle-select-${i}`);  // ✅ ID CORRECTO
+      if (muelleSelect && vehiculosData[i].muelle) {
+        muelleSelect.value = vehiculosData[i].muelle;
+        // ✅ Actualizar campo "otro" si es necesario
+        manejarOtroMuelle(i);
+      }
+    }
+
+    // Resto del código...
+    document.getElementById('operacion-contenedor').innerHTML = '';
+    if (data._paradasDetalle) {
+      data._paradasDetalle.forEach(p => agregarCampoParada('operacion', p));
+    }
+    for (const key in data) {
+      if (key.startsWith('_') || key.startsWith('vehiculo_') || key.startsWith('parada_')) continue;
+      const el = form.elements[key];
+      if (el) {
+        el.value = data[key];
+        if (el.id === 'coordinador') manejarOtroCoordinador();
+      }
+    }
+    actualizarTotalCajas();
+    
+    // ✅ Cargar productos escaneados desde localStorage
+    if (data._productosEscaneados) {
+      productosEscaneadosPorVehiculo = data._productosEscaneados;
+      // Actualizar resúmenes visuales
+      Object.keys(productosEscaneadosPorVehiculo).forEach(vIndex => {
+        mostrarResumenProductos(parseInt(vIndex));
+      });
+    }
+    
+    // ✅ Cargar base de datos de productos (TAMBIÉN aquí con await)
+    await cargarBaseDatosProductos();  // ← Añadir 'await' aquí
+    
+    generarCamposNombres();
+  } else {
+    agregarRegistroVehiculo();
+    agregarCampoParada('operacion');
+    actualizarCampos();
+    // ✅ También aquí:
+    actualizarMuellesPorLugar();
+    // ✅ Cargar base de datos de productos con await
+    await cargarBaseDatosProductos();  // ← Añadir 'await' aquí
+    // ✅ Cargar productos escaneados desde localStorage
+    cargarProductosEscaneados();
+  }
+
+  form.addEventListener('submit', enviarFormulario);
+  form.addEventListener('input', guardarProgreso);
+  form.addEventListener('change', guardarProgreso);
+  
+  document.getElementById('lider_pepsico').addEventListener('change', function() {
+    this.dataset.manualChange = 'true';
+  });
 });
+    </script>
+</body>
