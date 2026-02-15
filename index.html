@@ -1351,23 +1351,40 @@ function abrirInspeccionVehiculo(vIndex) {
 }
 
 // ✅ CERRAR OVERLAY DE INSPECCIÓN
+// ✅ CERRAR OVERLAY DE INSPECCIÓN CON VALIDACIÓN OPCIONAL
 function cerrarInspeccionVehiculo(vIndex) {
+  // ✅ Validación opcional: verificar que todos los campos estén completos
+  const camposRequeridos = [
+    `interior_camion_${vIndex}`,
+    `estado_carpa_${vIndex}`,
+    `olores_extranos_${vIndex}`,
+    `objetos_extranos_${vIndex}`,
+    `evidencias_plagas_${vIndex}`,
+    `estado_suelo_${vIndex}`,
+    `aprobado_${vIndex}`
+  ];
+  
+  let todosCompletos = true;
+  camposRequeridos.forEach(id => {
+    const campo = document.getElementById(id);
+    if (campo && !campo.value) {
+      todosCompletos = false;
+    }
+  });
+  
+  if (!todosCompletos) {
+    if (!confirm('⚠️ Algunos campos de inspección están vacíos. ¿Desea cerrar igualmente?')) {
+      return; // Cancelar cierre si el usuario dice que no
+    }
+  }
+  
+  // Cerrar overlay
   const overlay = document.getElementById(`overlay-inspeccion-${vIndex}`);
   if (overlay) {
     overlay.style.display = 'none';
-    // Restaurar scroll del body
     document.body.style.overflow = 'auto';
   }
 }
-
-// ✅ CERRAR OVERLAY AL HACER CLIC FUERA DEL CONTENIDO
-document.addEventListener('click', function(event) {
-  if (event.target.classList.contains('overlay-inspeccion') || event.target.id.startsWith('overlay-inspeccion-')) {
-    const overlay = event.target;
-    overlay.style.display = 'none';
-    document.body.style.overflow = 'auto';
-  }
-});
 
         // ============================================
         // GESTIÓN DE PARADAS DE OPERACIÓN
