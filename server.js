@@ -54,6 +54,8 @@ app.post('/api/registro', async (req, res) => {
     } = req.body;
 
     // 1. Insertar registro principal
+    // ✅ LIMPIAR PUNTOS ANTES DE GUARDAR
+    respo_diligen = respo_diligen.replace(/\./g, '');
     const [registroResult] = await connection.query(
       `INSERT INTO registros (
         fecha, lugar, lider_asignado, coordinador, coordinador_otro,
