@@ -19,8 +19,8 @@ console.log('PORT:', process.env.MYSQLPORT || '❌ NO DEFINIDO');
 console.log('USER:', process.env.MYSQLUSER || '❌ NO DEFINIDO');
 console.log('PASSWORD:', process.env.MYSQLPASSWORD ? '✅ DEFINIDO (oculto)' : '❌ NO DEFINIDO');
 console.log('DATABASE:', process.env.MYSQLDATABASE || '❌ NO DEFINIDO');
-console.log('GMAIL_USER:', process.env.GMAIL_USER || '❌ NO DEFINIDO');
-console.log('EMAIL_TO:', process.env.EMAIL_TO || '❌ NO DEFINIDO');
+console.log('OUTLOOK_EMAIL:', process.env.OUTLOOK_EMAIL || '❌ NO DEFINIDO');
+console.log('EMAIL_DESTINO:', process.env.EMAIL_DESTINO || '❌ NO DEFINIDO');
 console.log('=======================================');
 
 // Conexión a MySQL
@@ -35,12 +35,14 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-// ✅ CONFIGURACIÓN DE NODemailer (GMAIL SMTP)
+// ✅ CONFIGURACIÓN DE NODEMAILER (OUTLOOK SMTP)
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: process.env.OUTLOOK_SMTP,
+  port: parseInt(process.env.OUTLOOK_PORT),
+  secure: false, // false para TLS (puerto 587)
   auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS
+    user: process.env.OUTLOOK_EMAIL,
+    pass: process.env.OUTLOOK_PASSWORD
   }
 });
 
@@ -89,10 +91,10 @@ function generarPDF(datos, registroId) {
         doc.text(`Inicio: ${vehiculo.inicio} - Fin: ${vehiculo.fin}`);
         doc.text(`Cajas: ${vehiculo.cajas}`);
         doc.text(`Personas: ${vehiculo.personas}`);
+        if (vehiculo.tipo_carga) doc.text(`Tipo Carga: ${vehiculo.tipo_carga}`);
         
         if (vehiculo.destino) doc.text(`Destino: ${vehiculo.destino}`);
         if (vehiculo.origen) doc.text(`Origen: ${vehiculo.origen}`);
-        if (vehiculo.tipo_carga) doc.text(`Tipo Carga: ${vehiculo.tipo_carga}`);
         
         // ✅ Justificaciones
         if (vehiculo.justificaciones && vehiculo.justificaciones.length > 0) {
@@ -150,8 +152,8 @@ function generarPDF(datos, registroId) {
 // ✅ FUNCIÓN PARA ENVIAR CORREO CON PDF
 async function enviarCorreoConPDF(datos, registroId, pdfPath) {
   const mailOptions = {
-    from: process.env.GMAIL_USER,
-    to: process.env.EMAIL_TO,
+    from: process.env.OUTLOOK_EMAIL,
+    to: process.env.EMAIL_DESTINO,
     subject: `📋 Reporte de Operación - ${datos.lugar} - ${datos.fecha} (ID: ${registroId})`,
     text: `
 Nuevo registro de operación generado:
@@ -250,6 +252,7 @@ app.post('/api/registro', async (req, res) => {
         tiene_novedades: vehiculo.hasOwnProperty('novedades')
       });
 
+      // ✅ INSERTAR VEHÍCULO (CON tipo_carga)
       const [vehiculoResult] = await connection.query(
         `INSERT INTO vehiculos (
           registro_id, inicio, fin, motivo, otro_motivo, tipo_carga, muelle, otro_muelle_num,
@@ -262,7 +265,7 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.fin || '',
           vehiculo.motivo || '',
           vehiculo.otro_motivo || '',
-          vehiculo.tipo_carga || '',
+          vehiculo.tipo_carga || '',  // ✅ NUEVO CAMPO
           vehiculo.muelle || '',
           vehiculo.otro_muelle_num || '',
           vehiculo.placa || '',
@@ -388,7 +391,7 @@ app.post('/api/registro', async (req, res) => {
       const pdfPath = await generarPDF(req.body, registroId);
       console.log('✅ PDF generado:', pdfPath);
       
-      console.log('📧 Enviando correo a:', process.env.EMAIL_TO);
+      console.log('📧 Enviando correo a:', process.env.EMAIL_DESTINO);
       const correoEnviado = await enviarCorreoConPDF(req.body, registroId, pdfPath);
       
       if (correoEnviado) {
@@ -435,8 +438,8 @@ app.get('/health', async (req, res) => {
         port: process.env.MYSQLPORT || '3306 (default)',
         user: process.env.MYSQLUSER || '❌ NO DEFINIDO',
         database: process.env.MYSQLDATABASE || '❌ NO DEFINIDO',
-        gmail: process.env.GMAIL_USER ? '✅ Configurado' : '❌ NO DEFINIDO',
-        email_to: process.env.EMAIL_TO || '❌ NO DEFINIDO'
+        outlook: process.env.OUTLOOK_EMAIL ? '✅ Configurado' : '❌ NO DEFINIDO',
+        email_to: process.env.EMAIL_DESTINO || '❌ NO DEFINIDO'
       }
     });
   } catch (error) {
