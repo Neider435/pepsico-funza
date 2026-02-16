@@ -1,23 +1,13 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
-const PDFDocument = require('pdfkit');
-const nodemailer = require('nodemailer');
-const fs = require('fs');
-const path = require('path');
-
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors({
-  origin: ['https://pepsico-funza.netlify.app', 'https://pepsico-funza-production-b0f5.up.railway.app', '*'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
-
+app.use(cors());
 app.use(express.json());
 
+// ===== LOGS DE VARIABLES DE ENTORNO =====
 console.log('=== VARIABLES DE ENTORNO AL INICIAR ===');
 console.log('HOST:', process.env.MYSQLHOST || '❌ NO DEFINIDO');
 console.log('PORT:', process.env.MYSQLPORT || '❌ NO DEFINIDO');
@@ -26,6 +16,7 @@ console.log('PASSWORD:', process.env.MYSQLPASSWORD ? '✅ DEFINIDO (oculto)' : '
 console.log('DATABASE:', process.env.MYSQLDATABASE || '❌ NO DEFINIDO');
 console.log('=======================================');
 
+// Conexión a MySQL
 const pool = mysql.createPool({
   host: process.env.MYSQLHOST,
   user: process.env.MYSQLUSER,
@@ -37,122 +28,32 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-async function generarPDF(datos) {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ margin: 50 });
-    const chunks = [];
-    
-    doc.on('data', chunk => chunks.push(chunk));
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('error', reject);
-    
-    doc.fontSize(20).text('REPORTE DE OPERACIÓN - PEPSICO FUNZA', { align: 'center' });
-    doc.moveDown();
-    
-    doc.fontSize(14).text('INFORMACIÓN GENERAL', { underline: true });
-    doc.fontSize(12);
-    doc.text(`Fecha: ${datos.fecha}`);
-    doc.text(`Lugar: ${datos.lugar}`);
-    doc.text(`Turno: ${datos.turno}`);
-    doc.text(`Líder Asignado: ${datos.lider_asignado}`);
-    doc.text(`Coordinador: ${datos.coordinador}`);
-    doc.text(`Líder Pepsico: ${datos.lider_pepsico}`);
-    doc.text(`Total Personas: ${datos.total_personas}`);
-    doc.text(`Total Cajas: ${datos.cajas_totales}`);
-    doc.text(`Responsable: ${datos.respo_diligen}`);
-    doc.moveDown();
-    
-    doc.fontSize(14).text('VEHÍCULOS', { underline: true });
-    doc.fontSize(12);
-    
-    datos.datos_vehiculos.forEach((vehiculo, index) => {
-      doc.text(`\n--- VEHÍCULO #${index + 1} ---`);
-      doc.text(`Placa: ${vehiculo.placa}`);
-      doc.text(`Tipo Vehículo: ${vehiculo.tipo_vehi}`);
-      doc.text(`Motivo: ${vehiculo.motivo}`);
-      doc.text(`Tipo Carga: ${vehiculo.tipo_carga || 'N/A'}`);
-      doc.text(`Muelle: ${vehiculo.muelle}`);
-      doc.text(`Inicio: ${vehiculo.inicio} - Fin: ${vehiculo.fin}`);
-      doc.text(`Destino/Origen: ${vehiculo.destino || vehiculo.origen}`);
-      doc.text(`Cajas: ${vehiculo.cajas}`);
-      doc.text(`Personas: ${vehiculo.personas}`);
-      
-      if (vehiculo.novedades && vehiculo.novedades.length > 0) {
-        doc.text(`Novedades: ${vehiculo.novedades.length}`);
-        vehiculo.novedades.forEach(n => {
-          doc.text(`  • ${n.tipo}: ${n.descripcion}`);
-        });
-      }
-      
-      if (vehiculo.justificaciones && vehiculo.justificaciones.length > 0) {
-        doc.text(`Justificaciones: ${vehiculo.justificaciones.length}`);
-        vehiculo.justificaciones.forEach(j => {
-          doc.text(`  • ${j.justificacion}: ${j.tiempo_muerto_inicio} - ${j.tiempo_muerto_final}`);
-        });
-      }
-    });
-    
-    doc.moveDown();
-    
-    doc.fontSize(14).text('PARADAS DE OPERACIÓN', { underline: true });
-    doc.fontSize(12);
-    
-    datos.datos_paradas_operacion.forEach((parada, index) => {
-      doc.text(`\nParada #${index + 1}: ${parada.inicio} - ${parada.fin}`);
-      doc.text(`Motivo: ${parada.motivo}`);
-      if (parada.otro_motivo) doc.text(`Especificación: ${parada.otro_motivo}`);
-    });
-    
-    doc.moveDown();
-    doc.fontSize(10).text(`Generado: ${new Date().toLocaleString()}`, { align: 'right' });
-    
-    doc.end();
-  });
-}
-
-async function enviarCorreo(pdfBuffer, datos) {
-  const transporter = nodemailer.createTransport({
-    host: process.env.OUTLOOK_SMTP || 'smtp-mail.outlook.com',
-    port: parseInt(process.env.OUTLOOK_PORT) || 587,
-    secure: false,
-    auth: {
-      user: process.env.OUTLOOK_EMAIL,
-      pass: process.env.OUTLOOK_PASSWORD
-    }
-  });
-  
-  const fechaFormateada = new Date().toISOString().split('T')[0].replace(/-/g, '_');
-  const horaFormateada = new Date().toISOString().split('T')[1].split('.')[0].replace(/:/g, '_');
-  const nombreArchivo = `Reporte_Pepsico_${fechaFormateada}_${horaFormateada}.pdf`;
-  
-  const mailOptions = {
-    from: process.env.OUTLOOK_EMAIL,
-    to: process.env.EMAIL_DESTINO || 'julia.espitia@inlotrans.com.co',
-    cc: process.env.OUTLOOK_EMAIL,
-    subject: `Reporte de Operación - ${datos.fecha} - ${datos.lugar}`,
-    text: `Se adjunta el reporte de operación correspondiente a la fecha ${datos.fecha} en ${datos.lugar}.`,
-    attachments: [{
-      filename: nombreArchivo,
-      content: pdfBuffer
-    }]
-  };
-  
-  return await transporter.sendMail(mailOptions);
-}
-
+// Endpoint para recibir datos del formulario
 app.post('/api/registro', async (req, res) => {
   let connection;
   
   try {
+    // Obtener conexión para transacción
     connection = await pool.getConnection();
     await connection.beginTransaction();
     
     const {
-      fecha, lugar, lider_asignado, coordinador, coordinador_otro,
-      lider_pepsico, lider_pepsico_otro, turno, total_personas,
-      cajas_totales, respo_diligen, datos_vehiculos, datos_paradas_operacion
+      fecha,
+      lugar,
+      lider_asignado,
+      coordinador,
+      coordinador_otro,
+      lider_pepsico,
+      lider_pepsico_otro,
+      turno,
+      total_personas,
+      cajas_totales,
+      respo_diligen,
+      datos_vehiculos,
+      datos_paradas_operacion
     } = req.body;
 
+    // ✅ Obtener respo_diligen y limpiar puntos
     let respo_diligen_limpio = respo_diligen || '';
     respo_diligen_limpio = respo_diligen_limpio.replace(/\./g, '');
     
@@ -169,13 +70,24 @@ app.post('/api/registro', async (req, res) => {
     
     const registroId = registroResult.insertId;
     
+    // 2. Insertar vehículos Y sus detalles de inspección
     for (let i = 0; i < datos_vehiculos.length; i++) {
       const vehiculo = datos_vehiculos[i];
       
       const nombresJSON = vehiculo.nombres_personal && Array.isArray(vehiculo.nombres_personal) && vehiculo.nombres_personal.length > 0 
         ? JSON.stringify(vehiculo.nombres_personal) 
         : null;
+      
+      // ✅ Depuración: Verificar qué llega al servidor
+      console.log('📥 Vehículo recibido:', {
+        placa: vehiculo.placa,
+        tipo_operacion: vehiculo.tipo_operacion,
+        tipo_carga: vehiculo.tipo_carga,
+        tiene_justificaciones: vehiculo.hasOwnProperty('justificaciones'),
+        tiene_novedades: vehiculo.hasOwnProperty('novedades')
+      });
 
+      // ✅ INSERTAR VEHÍCULO (SIN CAMPOS DE JUSTIFICACIÓN - AHORA EN TABLA SEPARADA)
       const [vehiculoResult] = await connection.query(
         `INSERT INTO vehiculos (
           registro_id, inicio, fin, motivo, otro_motivo, tipo_carga, muelle, otro_muelle_num,
@@ -188,7 +100,7 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.fin || '',
           vehiculo.motivo || '',
           vehiculo.otro_motivo || '',
-          vehiculo.tipo_carga || '',
+          vehiculo.tipo_carga || '',  // ✅ NUEVO CAMPO AGREGADO
           vehiculo.muelle || '',
           vehiculo.otro_muelle_num || '',
           vehiculo.placa || '',
@@ -208,6 +120,7 @@ app.post('/api/registro', async (req, res) => {
       
       const vehiculoId = vehiculoResult.insertId;
       
+      // ✅ NUEVO: Insertar justificaciones por vehículo (TABLA SEPARADA)
       if (vehiculo.justificaciones && Array.isArray(vehiculo.justificaciones)) {
         for (const justificacion of vehiculo.justificaciones) {
           await connection.query(
@@ -225,8 +138,10 @@ app.post('/api/registro', async (req, res) => {
             ]
           );
         }
+        console.log(`✅ Justificaciones guardadas para Vehículo ${i + 1}:`, vehiculo.justificaciones.length);
       }
       
+      // ✅ Insertar novedades por vehículo
       if (vehiculo.novedades && Array.isArray(vehiculo.novedades)) {
         for (const novedad of vehiculo.novedades) {
           await connection.query(
@@ -242,8 +157,10 @@ app.post('/api/registro', async (req, res) => {
             ]
           );
         }
+        console.log(`✅ Novedades guardadas para Vehículo ${i + 1}:`, vehiculo.novedades.length);
       }
       
+      // ✅ INSERTAR DETALLES DE INSPECCIÓN
       await connection.query(
         `INSERT INTO detalles_vehiculos (
           vehiculo_id, interior_camion, estado_carpa, olores_extraños, objetos_extraños,
@@ -261,6 +178,7 @@ app.post('/api/registro', async (req, res) => {
         ]
       );
       
+      // ✅ Insertar productos escaneados por vehículo
       if (vehiculo.productos_escaneados && Array.isArray(vehiculo.productos_escaneados)) {
         for (const producto of vehiculo.productos_escaneados) {
           await connection.query(
@@ -277,9 +195,12 @@ app.post('/api/registro', async (req, res) => {
             ]
           );
         }
+        console.log(`✅ Productos escaneados guardados para Vehículo ${i + 1}:`, vehiculo.productos_escaneados.length);
       }
-    }
+      
+    } // <-- CIERRE DEL BUCLE FOR
     
+    // 3. Insertar paradas de operación
     for (const parada of datos_paradas_operacion) {
       await connection.query(
         `INSERT INTO paradas_operacion (
@@ -295,26 +216,17 @@ app.post('/api/registro', async (req, res) => {
       );
     }
     
+    // Confirmar transacción
     await connection.commit();
     connection.release();
-
-    const pdfBuffer = await generarPDF(req.body);
-    
-    try {
-      const emailResult = await enviarCorreo(pdfBuffer, req.body);
-      console.log('✅ Correo enviado:', emailResult.messageId);
-    } catch (emailError) {
-      console.error('❌ Error al enviar correo:', emailError.message);
-    }
 
     res.json({
       success: true,
       message: 'Registro guardado correctamente con detalles',
-      id: registroId,
-      pdf: true,
-      email: true
+      id: registroId
     });
   } catch (error) {
+    // Revertir transacción en caso de error
     if (connection) {
       await connection.rollback();
       connection.release();
@@ -328,6 +240,7 @@ app.post('/api/registro', async (req, res) => {
   }
 });
 
+// Health check mejorado
 app.get('/health', async (req, res) => {
   try {
     const connection = await pool.getConnection();
