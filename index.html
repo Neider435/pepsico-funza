@@ -1017,92 +1017,71 @@ function manejarOtroMuelle(vIndex) {
 
         // ✅ FUNCIÓN PARA GENERAR CAMPOS DE NOMBRES POR VEHÍCULO (NUEVO)
         function generarCamposNombresVehiculo(vIndex) {
-  const totalInput = document.querySelector(`input[name="vehiculo_${vIndex}_personas"]`);
-  if (!totalInput) return;
-  
-  const total = parseInt(totalInput.value) || 0;
-  const container = document.getElementById(`nombres-personal-${vIndex}`);
-  if (!container) return;
-  
-  container.innerHTML = '';
-  
-  if (total > 0) {
-    const label = document.createElement('label');
-    label.textContent = 'Cédulas de los Colaboradores:';
-    label.style.display = 'block';
-    label.style.fontWeight = 'bold';
-    label.style.marginTop = '15px';
-    label.style.color = '#333';
-    container.appendChild(label);
-  }
-  
-  for (let i = 1; i <= total; i++) {
+            const totalInput = document.querySelector(`input[name="vehiculo_${vIndex}_personas"]`);
+            if (!totalInput) return;
+            
+            const total = parseInt(totalInput.value) || 0;
+            const container = document.getElementById(`nombres-personal-${vIndex}`);
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            if (total > 0) {
+                const label = document.createElement('label');
+                label.textContent = 'Nombres del Colaborador:';
+                label.style.display = 'block';
+                label.style.fontWeight = 'bold';
+                label.style.marginTop = '15px';
+                container.appendChild(label);
+            }
+            
+            for (let i = 1; i <= total; i++) {
     const div = document.createElement('div');
-    div.style.marginBottom = '15px';
-    div.style.padding = '10px';
-    div.style.backgroundColor = '#f8f9fa';
-    div.style.borderRadius = '8px';
+    div.style.marginBottom = '10px';
     
     const label = document.createElement('label');
-    label.textContent = `Cédula colaborador ${i}:`;
+    label.textContent = `Nombre persona ${i}:`;
     label.style.display = 'block';
     label.style.fontWeight = 'bold';
-    label.style.marginBottom = '8px';
-    label.style.fontSize = '0.95em';
-    label.style.color = '#555';
+    label.style.marginBottom = '5px';
+    label.style.fontSize = '0.9em';
     label.htmlFor = `vehiculo_${vIndex}_nombre_persona_${i}`;
     
     const input = document.createElement('input');
-    input.type = 'text';  // ✅ 'text' para poder usar maxlength y validación personalizada
+    input.type = 'text';  // ✅ Usar 'text' para mejor control
     input.inputmode = 'numeric';  // ✅ Teclado numérico en móviles
-    input.id = `vehiculo_${vIndex}_nombre_persona_${i}`;  // ✅ CORREGIDO: usar 'i' en lugar de 'idx'
-    input.name = `vehiculo_${vIndex}_nombre_persona_${i}`;  // ✅ CORREGIDO: usar 'i' en lugar de 'idx'
-    input.placeholder = `Ingrese cédula (máx. 10 dígitos)`;
-    input.value = '';  // ✅ CORREGIDO: valor vacío inicial (no 'nombre')
+    input.id = `vehiculo_${vIndex}_nombre_persona_${i}`;
+    input.name = `vehiculo_${vIndex}_nombre_persona_${i}`;
+    input.placeholder = `Número de Cédula ${i}`;
     input.required = true;
     input.maxLength = 10;  // ✅ Limitar a máximo 10 caracteres
     input.style.width = '100%';
-    input.style.padding = '10px';
-    input.style.border = '2px solid #001855';
+    input.style.padding = '8px';
+    input.style.border = '1px solid #170303';
     input.style.borderRadius = '8px';
     input.style.boxSizing = 'border-box';
-    input.style.fontSize = '1.1em';
-    input.style.fontFamily = 'Arial, sans-serif';
-
+    
     // ✅ Limitar a solo números y máximo 10 dígitos
     input.oninput = function() {
-      // Eliminar todo excepto números
-      this.value = this.value.replace(/\D/g, '');
-      
-      // Limitar a máximo 10 dígitos
-      if (this.value.length > 10) {
-        this.value = this.value.substring(0, 10);
-      }
-      
-      guardarProgreso();
-    };
-    
-    // ✅ Formatear visualmente con puntos cada 3 dígitos (opcional, solo visual)
-    input.onblur = function() {
-      if (this.value.length === 10) {
-        const sinPuntos = this.value.replace(/\./g, '');
-        const conPuntos = sinPuntos.replace(/(\d{3})(\d{3})(\d{4})/, '$1.$2.$3');
-        this.value = conPuntos;
-      }
-    };
-    
-    // ✅ Eliminar puntos al enfocar para editar
-    input.onfocus = function() {
-      this.value = this.value.replace(/\./g, '');
+        // Eliminar todo excepto números
+        this.value = this.value.replace(/\D/g, '');
+        
+        // Limitar a máximo 10 dígitos
+        if (this.value.length > 10) {
+            this.value = this.value.substring(0, 10);
+        }
+        
+        guardarProgreso();
     };
     
     div.appendChild(label);
     div.appendChild(input);
     container.appendChild(div);
-  }
-  
-  guardarProgreso();
 }
+            
+            guardarProgreso();
+        }
+
         // ============================================
         // FUNCIONES DE VALIDACIÓN DE HORAS
         // ============================================
