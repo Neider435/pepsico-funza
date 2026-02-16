@@ -1390,12 +1390,12 @@ function manejarOtroMuelle(vIndex) {
         const tiempo_fin = justificacion.querySelector(`input[name="vehiculo_${i}_tiempo_muerto_final_${jIndex}"]`)?.value || '';
         
         justificacionesData.push({
-          justificacion: motivo,
-          otro_justificacion: otro_motivo,
-          tiempo_muerto_inicio: tiempo_inicio,
-          tiempo_muerto_final: tiempo_fin
-        });
+        justificacion: motivo,  // ✅ DEBE SER 'justificacion'
+        otro_justificacion: otro_motivo,  // ✅ DEBE SER 'otro_justificacion'
+        tiempo_muerto_inicio: tiempo_inicio,  // ✅ DEBE SER 'tiempo_muerto_inicio'
+        tiempo_muerto_final: tiempo_fin  // ✅ DEBE SER 'tiempo_muerto_final'
       });
+            });
     }
     
     // ✅ CAPTURAR NOVEDADES DEL VEHÍCULO
@@ -4209,27 +4209,28 @@ function mostrarFeedbackPicking(mensaje, vIndex, tipo = 'info') {
     }
     
     // ✅ CAPTURAR JUSTIFICACIONES POR VEHÍCULO
-    const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${vIndex}`);
-    if (justificacionesContenedor) {
-      const justificaciones = justificacionesContenedor.querySelectorAll('.justificacion-group');
-      const justificacionesData = [];
-      
-      justificaciones.forEach((justificacion, jIndex) => {
-        const motivo = justificacion.querySelector(`select[name="vehiculo_${vIndex}_justificacion_${jIndex}"]`)?.value || '';
-        const otro_motivo = justificacion.querySelector(`input[name="vehiculo_${vIndex}_otro_justificacion_${jIndex}"]`)?.value || '';
-        const tiempo_inicio = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_inicio_${jIndex}"]`)?.value || '';
-        const tiempo_fin = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_final_${jIndex}"]`)?.value || '';
-        
-        justificacionesData.push({
-          motivo: motivo,
-          otro_motivo: otro_motivo,
-          tiempo_inicio: tiempo_inicio,
-          tiempo_fin: tiempo_fin
-        });
-      });
-      
-      data[`_justificaciones_${vIndex}`] = justificacionesData;
-    }
+    // ✅ CAPTURAR JUSTIFICACIONES POR VEHÍCULO (CORREGIDO)
+const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${vIndex}`);
+if (justificacionesContenedor) {
+  const justificaciones = justificacionesContenedor.querySelectorAll('.justificacion-group');
+  const justificacionesData = [];
+  
+  justificaciones.forEach((justificacion, jIndex) => {
+    const motivo = justificacion.querySelector(`select[name="vehiculo_${vIndex}_justificacion_${jIndex}"]`)?.value || '';
+    const otro_motivo = justificacion.querySelector(`input[name="vehiculo_${vIndex}_otro_justificacion_${jIndex}"]`)?.value || '';
+    const tiempo_inicio = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_inicio_${jIndex}"]`)?.value || '';
+    const tiempo_fin = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_final_${jIndex}"]`)?.value || '';
+    
+    justificacionesData.push({
+      justificacion: motivo,  // ✅ CAMBIAR: de 'motivo' a 'justificacion'
+      otro_justificacion: otro_motivo,  // ✅ CAMBIAR: de 'otro_motivo' a 'otro_justificacion'
+      tiempo_muerto_inicio: tiempo_inicio,  // ✅ CAMBIAR: de 'tiempo_inicio' a 'tiempo_muerto_inicio'
+      tiempo_muerto_final: tiempo_fin  // ✅ CAMBIAR: de 'tiempo_fin' a 'tiempo_muerto_final'
+    });
+  });
+  
+  data[`_justificaciones_${vIndex}`] = justificacionesData;
+}
     
     // ✅ CAPTURAR NOVEDADES POR VEHÍCULO
     const novedadesContenedor = document.getElementById(`novedades-contenedor-${vIndex}`);
@@ -4681,78 +4682,76 @@ const formData = {
       }
       
       // ✅ RESTAURAR JUSTIFICACIONES POR VEHÍCULO
-      const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${i}`);
-      if (justificacionesContenedor && data[`_justificaciones_${i}`]) {
-        justificacionesContenedor.innerHTML = '';
-        
-        data[`_justificaciones_${i}`].forEach((justificacion, jIndex) => {
-          const div = document.createElement('div');
-          div.className = 'justificacion-group';
-          div.dataset.index = jIndex;
-          
-          const botonEliminar = document.createElement('button');
-          botonEliminar.type = 'button';
-          botonEliminar.className = 'btn-eliminar';
-          botonEliminar.textContent = 'Eliminar';
-          botonEliminar.onclick = function() {
-            div.remove();
-            guardarProgreso();
-          };
-          
-          const dInicio = `muerto-inicio-${i}-${jIndex}`;
-          const dFin = `muerto-final-${i}-${jIndex}`;
-          
-          div.innerHTML = `
-            <div class="time-row">
-              <div>
-                <label class="time-label">Tiempo Muerto Inicio:</label>
-                <input type="tel" name="vehiculo_${i}_tiempo_muerto_inicio_${jIndex}" class="time-input-masked"
-                    placeholder="HH:MM" maxlength="5" value="${justificacion.tiempo_inicio}"
-                    onblur="applyTimeMask(this, '${dInicio}')">
-                <span id="${dInicio}" class="time-display"></span>
-              </div>
-              <div>
-                <label class="time-label">Tiempo Muerto Final:</label>
-                <input type="tel" name="vehiculo_${i}_tiempo_muerto_final_${jIndex}" class="time-input-masked"
-                    placeholder="HH:MM" maxlength="5" value="${justificacion.tiempo_fin}"
-                    onblur="applyTimeMask(this, '${dFin}')">
-                <span id="${dFin}" class="time-display"></span>
-              </div>
-            </div>
-            
-            <label>Motivo:</label>
-            <select name="vehiculo_${i}_justificacion_${jIndex}">
-              <option value="">Seleccione motivo</option>
-              <option value="faltante_producto" ${justificacion.motivo === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
-              <option value="liberacion_calidad" ${justificacion.motivo === 'liberacion_calidad' ? 'selected' : ''}>Liberacion de calidad</option>
-              <option value="Daños" ${justificacion.motivo === 'Daños' ? 'selected' : ''}>Daños (electricos, muelle, montacargas, etc.)</option>
-              <option value="otro" ${justificacion.motivo === 'otro' ? 'selected' : ''}>Otro</option>
-            </select>
-            <input type="text" name="vehiculo_${i}_otro_justificacion_${jIndex}" placeholder="Especifique la incidencia" class="otro-input" value="${justificacion.otro_motivo}">
-          `;
-          
-          div.appendChild(botonEliminar);
-          justificacionesContenedor.appendChild(div);
-          
-          // Configurar eventos
-          const motivoSelect = div.querySelector(`select[name="vehiculo_${i}_justificacion_${jIndex}"]`);
-          if (motivoSelect) {
-            motivoSelect.addEventListener('change', function() {
-              const otroInput = div.querySelector('.otro-input');
-              if (otroInput) {
-                if (this.value === 'otro') {
-                  otroInput.style.display = 'block';
-                } else {
-                  otroInput.style.display = 'none';
-                  otroInput.value = '';
-                }
-              }
-            });
+      // ✅ RESTAURAR JUSTIFICACIONES POR VEHÍCULO (CORREGIDO)
+const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${i}`);
+if (justificacionesContenedor && data[`_justificaciones_${i}`]) {
+  justificacionesContenedor.innerHTML = '';
+  data[`_justificaciones_${i}`].forEach((justificacion, jIndex) => {
+    const div = document.createElement('div');
+    div.className = 'justificacion-group';
+    div.dataset.index = jIndex;
+    
+    const botonEliminar = document.createElement('button');
+    botonEliminar.type = 'button';
+    botonEliminar.className = 'btn-eliminar';
+    botonEliminar.textContent = 'Eliminar';
+    botonEliminar.onclick = function() {
+      div.remove();
+      guardarProgreso();
+    };
+    
+    const dInicio = `muerto-inicio-${i}-${jIndex}`;
+    const dFin = `muerto-final-${i}-${jIndex}`;
+    
+    div.innerHTML = `
+      <div class="time-row">
+        <div>
+          <label class="time-label">Tiempo Muerto Inicio:</label>
+          <input type="tel" name="vehiculo_${i}_tiempo_muerto_inicio_${jIndex}" class="time-input-masked"
+              placeholder="HH:MM" maxlength="5" value="${justificacion.tiempo_muerto_inicio || ''}"
+              onblur="applyTimeMask(this, '${dInicio}')">
+          <span id="${dInicio}" class="time-display"></span>
+        </div>
+        <div>
+          <label class="time-label">Tiempo Muerto Final:</label>
+          <input type="tel" name="vehiculo_${i}_tiempo_muerto_final_${jIndex}" class="time-input-masked"
+              placeholder="HH:MM" maxlength="5" value="${justificacion.tiempo_muerto_final || ''}"
+              onblur="applyTimeMask(this, '${dFin}')">
+          <span id="${dFin}" class="time-display"></span>
+        </div>
+      </div>
+      
+      <label>Motivo:</label>
+      <select name="vehiculo_${i}_justificacion_${jIndex}">
+        <option value="">Seleccione motivo</option>
+        <option value="faltante_producto" ${justificacion.justificacion === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
+        <option value="liberacion_calidad" ${justificacion.justificacion === 'liberacion_calidad' ? 'selected' : ''}>Liberacion de calidad</option>
+        <option value="Daños" ${justificacion.justificacion === 'Daños' ? 'selected' : ''}>Daños (electricos, muelle, montacargas, etc.)</option>
+        <option value="otro" ${justificacion.justificacion === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      <input type="text" name="vehiculo_${i}_otro_justificacion_${jIndex}" placeholder="Especifique la incidencia" class="otro-input" value="${justificacion.otro_justificacion || ''}">
+    `;
+    
+    div.appendChild(botonEliminar);
+    justificacionesContenedor.appendChild(div);
+    
+    // Configurar eventos
+    const motivoSelect = div.querySelector(`select[name="vehiculo_${i}_justificacion_${jIndex}"]`);
+    if (motivoSelect) {
+      motivoSelect.addEventListener('change', function() {
+        const otroInput = div.querySelector('.otro-input');
+        if (otroInput) {
+          if (this.value === 'otro') {
+            otroInput.style.display = 'block';
+          } else {
+            otroInput.style.display = 'none';
+            otroInput.value = '';
           }
-        });
-      }
-      
-      
+        }
+      });
+    }
+  });
+}
       
     }
 
