@@ -1663,7 +1663,7 @@ function actualizarTipoOperacionPorLugar() {
       <input type="tel" name="vehiculo_${vIndex}_inicio" id="inicio-input-${vIndex}" class="time-input-masked" required
           placeholder="HH:MM" maxlength="5" value="${datos.inicio || ''}"
           onblur="applyTimeMask(this, '${inicioId}');"
-          readonly
+          readonly  <!-- ✅ BLOQUEADO POR DEFECTO -->
           <style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1em; box-sizing: border-box;">
       <span id="${inicioId}" class="time-display"></span>
     </div>
@@ -1672,7 +1672,7 @@ function actualizarTipoOperacionPorLugar() {
       <input type="tel" name="vehiculo_${vIndex}_fin" id="fin-input-${vIndex}" class="time-input-masked" required
           placeholder="HH:MM" maxlength="5" value="${datos.fin || ''}"
           onblur="applyTimeMask(this, '${finId}');"
-          readonly
+          readonly  <!-- ✅ BLOQUEADO POR DEFECTO -->
           <style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1em; box-sizing: border-box;">
       <span id="${finId}" class="time-display"></span>
     </div>
@@ -1998,9 +1998,9 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
                 </p>
 
                 <button type="button" onclick="abrirNovedadesVehiculo(${vIndex})"
-                        style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 15px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                    📝 Novedades del Vehículo
-                </button>
+                    style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 15px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                📝 Novedades del Vehículo
+            </button>
 
 
 
@@ -3301,7 +3301,7 @@ function abrirInspeccionVehiculo(vIndex) {
 function cerrarInspeccionVehiculo(vIndex) {
     const overlay = document.getElementById(`overlay-inspeccion-${vIndex}`);
     if (overlay) {
-        // ✅ Limpiar estilos de validación visual
+        // ✅ Quitar resaltado de campos
         const campos = [
             `interior_camion_${vIndex}`,
             `estado_carpa_${vIndex}`,
@@ -3311,6 +3311,7 @@ function cerrarInspeccionVehiculo(vIndex) {
             `estado_suelo_${vIndex}`,
             `aprobado_${vIndex}`
         ];
+        
         campos.forEach(id => {
             const campo = document.getElementById(id);
             if (campo) {
@@ -3318,6 +3319,7 @@ function cerrarInspeccionVehiculo(vIndex) {
                 campo.style.boxShadow = '';
             }
         });
+        
         overlay.style.display = 'none';
         document.body.style.overflow = 'auto';
     }
