@@ -33,7 +33,6 @@ app.post('/api/registro', async (req, res) => {
   let connection;
   
   try {
-    // Obtener conexión para transacción
     connection = await pool.getConnection();
     await connection.beginTransaction();
     
@@ -48,13 +47,15 @@ app.post('/api/registro', async (req, res) => {
       turno,
       total_personas,
       cajas_totales,
+      respo_diligen,
       datos_vehiculos,
       datos_paradas_operacion
     } = req.body;
 
     // ✅ Obtener respo_diligen y limpiar puntos
-    let respo_diligen = req.body.respo_diligen || '';
-    respo_diligen = respo_diligen.replace(/\./g, '');
+    let respo_diligen_limpio = respo_diligen || '';
+    respo_diligen_limpio = respo_diligen_limpio.replace(/\./g, '');
+    
     const [registroResult] = await connection.query(
       `INSERT INTO registros (
         fecha, lugar, lider_asignado, coordinador, coordinador_otro,
@@ -62,13 +63,13 @@ app.post('/api/registro', async (req, res) => {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         fecha, lugar, lider_asignado, coordinador, coordinador_otro,
-        lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales, respo_diligen
+        lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales, respo_diligen_limpio
       ]
-    )
+    );
     
     const registroId = registroResult.insertId;
     
-    // 2. Insertar vehículos Y sus detalles de inspección
+    // 2. Insertar vehículos Y sus detalles
     for (let i = 0; i < datos_vehiculos.length; i++) {
       const vehiculo = datos_vehiculos[i];
       
@@ -76,28 +77,28 @@ app.post('/api/registro', async (req, res) => {
         ? JSON.stringify(vehiculo.nombres_personal) 
         : null;
       
-      // Insertar vehículo
-      // ✅ Depuración: Verificar qué llega al servidor
       console.log('📥 Vehículo recibido:', {
         placa: vehiculo.placa,
         tipo_operacion: vehiculo.tipo_operacion,
-        tipo_operacion_tipo: typeof vehiculo.tipo_operacion,
-        tiene_tipo_operacion: vehiculo.hasOwnProperty('tipo_operacion')
+        tipo_carga: vehiculo.tipo_carga,
+        tiene_justificaciones: vehiculo.hasOwnProperty('justificaciones'),
+        tiene_novedades: vehiculo.hasOwnProperty('novedades')
       });
 
+      // ✅ INSERTAR VEHÍCULO (SIN columnas de justificación)
       const [vehiculoResult] = await connection.query(
         `INSERT INTO vehiculos (
-          registro_id, inicio, fin, motivo, otro_motivo, muelle, otro_muelle_num,
+          registro_id, inicio, fin, motivo, otro_motivo, tipo_carga, muelle, otro_muelle_num,
           placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, otro_origen, personas, cajas,
-          justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_final, 
           foto_url, nombres_personal, tipo_operacion
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           registroId,
           vehiculo.inicio || '',
           vehiculo.fin || '',
           vehiculo.motivo || '',
           vehiculo.otro_motivo || '',
+          vehiculo.tipo_carga || '',  // ✅ NUEVO CAMPO
           vehiculo.muelle || '',
           vehiculo.otro_muelle_num || '',
           vehiculo.placa || '',
@@ -109,36 +110,55 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.otro_origen || '',
           vehiculo.personas || '',
           vehiculo.cajas || '',
-          vehiculo.justificacion || '',
-          vehiculo.otro_justificacion || '',
-          vehiculo.tiempo_muerto_inicio || '',
-          vehiculo.tiempo_muerto_final || '',
           vehiculo.foto_url || '',
           nombresJSON,
-          vehiculo.tipo_operacion || ''  // ✅ CORREGIDO: valor por defecto
-        ]
-    );
-      
-      const vehiculoId = vehiculoResult.insertId;
-      // ✅ NUEVO: Insertar novedades por vehículo
-  if (vehiculo.novedades && Array.isArray(vehiculo.novedades)) {
-    for (const novedad of vehiculo.novedades) {
-      await connection.query(
-        `INSERT INTO novedades (
-          vehiculo_id, registro_id, tipo_novedad, descripcion, foto_url
-        ) VALUES (?, ?, ?, ?, ?)`,
-        [
-          vehiculoId,
-          registroId,
-          novedad.tipo || '',
-          novedad.descripcion || '',
-          novedad.foto_url || ''
+          vehiculo.tipo_operacion || ''
         ]
       );
-    }
-  }
       
-      // ✅ INSERTAR DETALLES DE INSPECCIÓN usando los campos del mismo objeto vehiculo
+      const vehiculoId = vehiculoResult.insertId;
+      
+      // ✅ INSERTAR JUSTIFICACIONES (TABLA SEPARADA)
+      if (vehiculo.justificaciones && Array.isArray(vehiculo.justificaciones)) {
+        for (const justificacion of vehiculo.justificaciones) {
+          await connection.query(
+            `INSERT INTO justificaciones (
+              vehiculo_id, registro_id, justificacion, otro_justificacion, 
+              tiempo_muerto_inicio, tiempo_muerto_final
+            ) VALUES (?, ?, ?, ?, ?, ?)`,
+            [
+              vehiculoId,
+              registroId,
+              justificacion.justificacion || '',
+              justificacion.otro_justificacion || '',
+              justificacion.tiempo_muerto_inicio || '',
+              justificacion.tiempo_muerto_final || ''
+            ]
+          );
+        }
+        console.log(`✅ Justificaciones guardadas para Vehículo ${i + 1}:`, vehiculo.justificaciones.length);
+      }
+      
+      // ✅ INSERTAR NOVEDADES
+      if (vehiculo.novedades && Array.isArray(vehiculo.novedades)) {
+        for (const novedad of vehiculo.novedades) {
+          await connection.query(
+            `INSERT INTO novedades (
+              vehiculo_id, registro_id, tipo_novedad, descripcion, foto_url
+            ) VALUES (?, ?, ?, ?, ?)`,
+            [
+              vehiculoId,
+              registroId,
+              novedad.tipo || '',
+              novedad.descripcion || '',
+              novedad.foto_url || ''
+            ]
+          );
+        }
+        console.log(`✅ Novedades guardadas para Vehículo ${i + 1}:`, vehiculo.novedades.length);
+      }
+      
+      // ✅ INSERTAR DETALLES DE INSPECCIÓN
       await connection.query(
         `INSERT INTO detalles_vehiculos (
           vehiculo_id, interior_camion, estado_carpa, olores_extraños, objetos_extraños,
@@ -156,7 +176,7 @@ app.post('/api/registro', async (req, res) => {
         ]
       );
       
-      // ✅ NUEVO: Insertar productos escaneados por vehículo (AHORA DENTRO DEL BUCLE)
+      // ✅ INSERTAR PRODUCTOS ESCANEADOS
       if (vehiculo.productos_escaneados && Array.isArray(vehiculo.productos_escaneados)) {
         for (const producto of vehiculo.productos_escaneados) {
           await connection.query(
@@ -173,9 +193,10 @@ app.post('/api/registro', async (req, res) => {
             ]
           );
         }
+        console.log(`✅ Productos escaneados guardados para Vehículo ${i + 1}:`, vehiculo.productos_escaneados.length);
       }
       
-    } // <-- CIERRE DEL BUCLE FOR
+    }
     
     // 3. Insertar paradas de operación
     for (const parada of datos_paradas_operacion) {
@@ -193,7 +214,6 @@ app.post('/api/registro', async (req, res) => {
       );
     }
     
-    // Confirmar transacción
     await connection.commit();
     connection.release();
 
@@ -203,7 +223,6 @@ app.post('/api/registro', async (req, res) => {
       id: registroId
     });
   } catch (error) {
-    // Revertir transacción en caso de error
     if (connection) {
       await connection.rollback();
       connection.release();
@@ -217,7 +236,7 @@ app.post('/api/registro', async (req, res) => {
   }
 });
 
-// Health check mejorado
+// Health check
 app.get('/health', async (req, res) => {
   try {
     const connection = await pool.getConnection();
