@@ -497,6 +497,209 @@
   }
 }
 
+// ✅ ESTADO DE TIEMPO POR PARADA
+const estadoTiempoParada = {};
+
+// ✅ FUNCIÓN UNIFICADA: Generar time-row con botones inteligentes
+function generarTimeRowConBotonesParada(index, sufijo = '', valorInicio = '', valorFin = '') {
+  const dInicio = `operacion-inicio-${index}${sufijo ? '-' + sufijo : ''}`;
+  const dFin = `operacion-fin-${index}${sufijo ? '-' + sufijo : ''}`;
+  const nombreInicio = `parada_inicio_operacion_${index}${sufijo ? '_' + sufijo : ''}`;
+  const nombreFin = `parada_fin_operacion_${index}${sufijo ? '_' + sufijo : ''}`;
+  const btnId = `btn-control-tiempo-${index}${sufijo ? '-' + sufijo : ''}`;
+  
+  // Determinar estado inicial del botón
+  let btnTexto = '▶️ Iniciar';
+  let btnStyle = '';
+  let btnDisabled = '';
+  
+  if (valorInicio && !valorFin) {
+    btnTexto = '⏹️ Finalizar';
+    btnStyle = 'background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white;';
+  } else if (valorInicio && valorFin) {
+    btnTexto = '✅ Finalizado';
+    btnStyle = 'background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;';
+    btnDisabled = 'disabled';
+  }
+  
+  return `
+    <div class="time-row" style="display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px;">
+      <div style="flex: 1;">
+        <label class="time-label">Hora Inicio (HH:MM):</label>
+        <input type="tel" name="${nombreInicio}" class="time-input-masked"
+            placeholder="HH:MM" maxlength="5" value="${valorInicio}"
+            onblur="applyTimeMask(this, '${dInicio}')"
+            style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1em; text-align: center;">
+        <span id="${dInicio}" class="time-display"></span>
+      </div>
+      <div style="flex: 1;">
+        <label class="time-label">Hora Final (HH:MM):</label>
+        <input type="tel" name="${nombreFin}" class="time-input-masked"
+            placeholder="HH:MM" maxlength="5" value="${valorFin}"
+            onblur="applyTimeMask(this, '${dFin}')"
+            style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1em; text-align: center;">
+        <span id="${dFin}" class="time-display"></span>
+      </div>
+    </div>
+    
+    <!-- ✅ BOTONES INTELIGENTES (una sola línea) -->
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
+      <button type="button" id="${btnId}" onclick="controlarTiempoParada(${index}, '${sufijo}')"
+              style="flex: 1; min-width: 100px; padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; font-size: 0.85em; cursor: pointer; transition: all 0.2s; ${btnStyle}"
+              ${btnDisabled}>
+        ${btnTexto}
+      </button>
+      
+      <button type="button" onclick="editarTiempoParada(${index}, '${sufijo}')"
+              style="flex: 1; min-width: 90px; padding: 10px 15px; background: linear-gradient(135deg, #6c757d 0%, #495054 100%); color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 0.85em; cursor: pointer;">
+        ✏️ Editar
+      </button>
+      
+      <button type="button" onclick="eliminarTiempoParada(${index}, '${sufijo}')"
+              style="flex: 1; min-width: 90px; padding: 10px 15px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 0.85em; cursor: pointer;">
+        🗑️ Eliminar
+      </button>
+    </div>
+  `;
+}
+
+// ✅ CONTROLAR TIEMPO PARADA (Iniciar/Finalizar)
+// ✅ CONTROLAR TIEMPO PARADA (Iniciar/Finalizar) - SIN ALERTA AL INICIAR
+function controlarTiempoParada(index, sufijo) {
+  const sufijoName = sufijo ? `_${sufijo}` : '';
+  const inicioInput = document.querySelector(`input[name="parada_inicio_operacion_${index}${sufijoName}"]`);
+  const finInput = document.querySelector(`input[name="parada_fin_operacion_${index}${sufijoName}"]`);
+  const btnControl = document.getElementById(`btn-control-tiempo-${index}${sufijo ? '-' + sufijo : ''}`);
+  
+  if (!inicioInput || !finInput || !btnControl) return;
+  
+  if (!inicioInput.value) {
+    // ✅ INICIAR TIEMPO - SIN ALERTA
+    const ahora = new Date();
+    const hora = String(ahora.getHours()).padStart(2, '0');
+    const minuto = String(ahora.getMinutes()).padStart(2, '0');
+    const horaActual = `${hora}:${minuto}`;
+    
+    // ✅ Sin confirmación - iniciar directamente
+    inicioInput.value = horaActual;
+    applyTimeMask(inicioInput, `operacion-inicio-${index}${sufijo ? '-' + sufijo : ''}`);
+    
+    // Actualizar botón
+    btnControl.innerHTML = '⏹️ Finalizar';
+    btnControl.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+    btnControl.style.color = 'white';
+    
+    // Guardar estado
+    estadoTiempoParada[`${index}-${sufijo}`] = 'iniciado';
+    
+    guardarProgreso();
+    console.log(`▶️ Tiempo iniciado para Parada ${index + 1} a las ${inicioInput.value}`);
+    
+  } else if (!finInput.value) {
+    // ✅ FINALIZAR TIEMPO - CON ALERTA (más crítico)
+    if (!confirm(`⚠️ ¿Estás seguro de FINALIZAR la parada con la hora actual?\n\nEsta acción registrará la hora actual como hora de finalización.`)) {
+      return;
+    }
+    
+    const ahora = new Date();
+    const hora = String(ahora.getHours()).padStart(2, '0');
+    const minuto = String(ahora.getMinutes()).padStart(2, '0');
+    const horaActual = `${hora}:${minuto}`;
+    
+    finInput.value = horaActual;
+    applyTimeMask(finInput, `operacion-fin-${index}${sufijo ? '-' + sufijo : ''}`);
+    
+    // Validar que fin no sea menor que inicio
+    const inicioMin = horaAMinutos(inicioInput.value);
+    const finMin = horaAMinutos(finInput.value);
+    
+    if (finMin < inicioMin) {
+      alert('❌ Error: La hora final no puede ser menor que la hora de inicio.');
+      finInput.value = '';
+      return;
+    }
+    
+    // Actualizar botón
+    btnControl.innerHTML = '✅ Finalizado';
+    btnControl.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+    btnControl.style.color = 'white';
+    btnControl.disabled = true;
+    
+    // Guardar estado
+    estadoTiempoParada[`${index}-${sufijo}`] = 'finalizado';
+    
+    guardarProgreso();
+    console.log(`⏹️ Tiempo finalizado para Parada ${index + 1} a las ${finInput.value}`);
+    
+  } else {
+    // ✅ YA FINALIZADO
+    alert('✅ El tiempo ya ha sido finalizado para esta parada.');
+  }
+}
+
+// ✅ EDITAR TIEMPO PARADA MANUALMENTE
+function editarTiempoParada(index, sufijo) {
+  const sufijoName = sufijo ? `_${sufijo}` : '';
+  const inicioInput = document.querySelector(`input[name="parada_inicio_operacion_${index}${sufijoName}"]`);
+  const finInput = document.querySelector(`input[name="parada_fin_operacion_${index}${sufijoName}"]`);
+  const btnControl = document.getElementById(`btn-control-tiempo-${index}${sufijo ? '-' + sufijo : ''}`);
+  
+  if (!inicioInput || !finInput || !btnControl) return;
+  
+  // Mostrar advertencia
+  if (!confirm('⚠️ ¿Estás seguro de EDITAR manualmente las horas?\n\nEsto puede afectar el cálculo de tiempos.')) {
+    return;
+  }
+  
+  // Habilitar edición
+  inicioInput.focus();
+  inicioInput.select();
+  
+  guardarProgreso();
+  console.log(`✏️ Modo edición activado para Parada ${index + 1}`);
+}
+
+// ✅ ELIMINAR TIEMPO PARADA
+function eliminarTiempoParada(index, sufijo) {
+  const sufijoName = sufijo ? `_${sufijo}` : '';
+  const inicioInput = document.querySelector(`input[name="parada_inicio_operacion_${index}${sufijoName}"]`);
+  const finInput = document.querySelector(`input[name="parada_fin_operacion_${index}${sufijoName}"]`);
+  const btnControl = document.getElementById(`btn-control-tiempo-${index}${sufijo ? '-' + sufijo : ''}`);
+  
+  if (!inicioInput || !finInput || !btnControl) return;
+  
+  if (!inicioInput.value && !finInput.value) {
+    alert('ℹ️ No hay tiempo registrado para eliminar.');
+    return;
+  }
+  
+  if (!confirm('⚠️ ¿Estás seguro de ELIMINAR las horas de inicio y fin?\n\nEsta acción no se puede deshacer.')) {
+    return;
+  }
+  
+  // Limpiar campos
+  inicioInput.value = '';
+  finInput.value = '';
+  
+  // Limpiar displays
+  const dInicio = document.getElementById(`operacion-inicio-${index}${sufijo ? '-' + sufijo : ''}`);
+  const dFin = document.getElementById(`operacion-fin-${index}${sufijo ? '-' + sufijo : ''}`);
+  if (dInicio) dInicio.innerHTML = '';
+  if (dFin) dFin.innerHTML = '';
+  
+  // Restaurar botón
+  btnControl.innerHTML = '▶️ Iniciar';
+  btnControl.style.background = '';
+  btnControl.style.color = '';
+  btnControl.disabled = false;
+  
+  // Limpiar estado
+  delete estadoTiempoParada[`${index}-${sufijo}`];
+  
+  guardarProgreso();
+  console.log(`🗑️ Tiempo eliminado para Parada ${index + 1}`);
+}
+
 // ✅ ABRIR OVERLAY DE PARADAS DE OPERACIÓN
 function abrirParadasOperacion() {
   const overlay = document.getElementById('overlay-paradas-operacion');
@@ -548,22 +751,8 @@ function abrirParadasOperacion() {
     div.innerHTML = `
       <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #<span class="numero-parada">${index + 1}</span> (Operación)</p>
       
-      <div class="time-row">
-        <div>
-          <label class="time-label">Hora Inicio (HH:MM):</label>
-          <input type="tel" name="parada_inicio_operacion_${index}_overlay" class="time-input-masked"
-              placeholder="HH:MM" maxlength="5" value="${inicio}"
-              onblur="applyTimeMask(this, '${dInicio}')">
-          <span id="${dInicio}" class="time-display"></span>
-        </div>
-        <div>
-          <label class="time-label">Hora Final (HH:MM):</label>
-          <input type="tel" name="parada_fin_operacion_${index}_overlay" class="time-input-masked"
-              placeholder="HH:MM" maxlength="5" value="${fin}"
-              onblur="applyTimeMask(this, '${dFin}')">
-          <span id="${dFin}" class="time-display"></span>
-        </div>
-      </div>
+        
+  ${generarTimeRowConBotonesParada(index, 'overlay', inicio, fin)}
       
       <label style="margin-top:5px;">Motivo:</label>
       <select name="parada_motivo_operacion_${index}_overlay" id="motivo-overlay-${index}">
@@ -664,22 +853,7 @@ function cerrarParadasOperacion() {
     div.innerHTML = `
       <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #<span class="numero-parada">${index + 1}</span> (Operación)</p>
       
-      <div class="time-row">
-        <div>
-          <label class="time-label">Hora Inicio (HH:MM):</label>
-          <input type="tel" name="parada_inicio_operacion_${index}" class="time-input-masked"
-              placeholder="HH:MM" maxlength="5" value="${inicio}"
-              onblur="applyTimeMask(this, '${dInicio}')">
-          <span id="${dInicio}" class="time-display"></span>
-        </div>
-        <div>
-          <label class="time-label">Hora Final (HH:MM):</label>
-          <input type="tel" name="parada_fin_operacion_${index}" class="time-input-masked"
-              placeholder="HH:MM" maxlength="5" value="${fin}"
-              onblur="applyTimeMask(this, '${dFin}')">
-          <span id="${dFin}" class="time-display"></span>
-        </div>
-      </div>
+        ${generarTimeRowConBotonesParada(index, '', inicio, fin)}
       
       <label style="margin-top:5px;">Motivo:</label>
       <select name="parada_motivo_operacion_${index}" id="motivo-${index}">
@@ -777,22 +951,7 @@ function agregarParadaOperacionOverlay() {
   div.innerHTML = `
     <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #<span class="numero-parada">${index + 1}</span> (Operación)</p>
     
-    <div class="time-row">
-      <div>
-        <label class="time-label">Hora Inicio (HH:MM):</label>
-        <input type="tel" name="parada_inicio_operacion_${index}_overlay" class="time-input-masked"
-            placeholder="HH:MM" maxlength="5"
-            onblur="applyTimeMask(this, '${dInicio}')">
-        <span id="${dInicio}" class="time-display"></span>
-      </div>
-      <div>
-        <label class="time-label">Hora Final (HH:MM):</label>
-        <input type="tel" name="parada_fin_operacion_${index}_overlay" class="time-input-masked"
-            placeholder="HH:MM" maxlength="5"
-            onblur="applyTimeMask(this, '${dFin}')">
-        <span id="${dFin}" class="time-display"></span>
-      </div>
-    </div>
+    ${generarTimeRowConBotonesParada(index, 'overlay', '', '')}
     
     <label style="margin-top:5px;">Motivo:</label>
     <select name="parada_motivo_operacion_${index}_overlay" id="motivo-overlay-${index}">
@@ -872,22 +1031,7 @@ function agregarCampoParadaOverlay(tipo, index) {
   div.innerHTML = `
     <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #<span class="numero-parada">${index + 1}</span> (Operación)</p>
     
-    <div class="time-row">
-      <div>
-        <label class="time-label">Hora Inicio (HH:MM):</label>
-        <input type="tel" name="parada_inicio_operacion_${index}_overlay" class="time-input-masked"
-            placeholder="HH:MM" maxlength="5"
-            onblur="applyTimeMask(this, '${dInicio}')">
-        <span id="${dInicio}" class="time-display"></span>
-      </div>
-      <div>
-        <label class="time-label">Hora Final (HH:MM):</label>
-        <input type="tel" name="parada_fin_operacion_${index}_overlay" class="time-input-masked"
-            placeholder="HH:MM" maxlength="5"
-            onblur="applyTimeMask(this, '${dFin}')">
-        <span id="${dFin}" class="time-display"></span>
-      </div>
-    </div>
+    ${generarTimeRowConBotonesParada(index, 'overlay', '', '')}
     
     <label style="margin-top:5px;">Motivo:</label>
     <select name="parada_motivo_operacion_${index}_overlay">
@@ -1484,22 +1628,53 @@ function actualizarTipoOperacionPorLugar() {
                 <div class="parada-group">
                     <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #1 (Cargue/Descargue)</p>
                     
-                    <div class="time-row">
-                        <div>
-                            <label class="time-label">Hora Inicio (HH:MM):</label>
-                            <input type="tel" name="vehiculo_${vIndex}_inicio" class="time-input-masked" required
-                                placeholder="HH:MM" maxlength="5" value="${datos.inicio || ''}"
-                                onblur="applyTimeMask(this, '${inicioId}');">
-                            <span id="${inicioId}" class="time-display"></span>
-                        </div>
-                        <div>
-                            <label class="time-label">Hora Final (HH:MM):</label>
-                            <input type="tel" name="vehiculo_${vIndex}_fin" class="time-input-masked" required
-                                placeholder="HH:MM" maxlength="5" value="${datos.fin || ''}"
-                                onblur="applyTimeMask(this, '${finId}');">
-                            <span id="${finId}" class="time-display"></span>
-                        </div>
-                    </div>
+                    <!-- ✅ SISTEMA INTELIGENTE DE CONTROL DE TIEMPO -->
+<div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
+  <div class="time-row" style="margin-bottom: 12px;">
+    <div>
+      <label class="time-label">Hora Inicio (HH:MM):</label>
+      <input type="tel" name="vehiculo_${vIndex}_inicio" id="inicio-input-${vIndex}" class="time-input-masked" required
+          placeholder="HH:MM" maxlength="5" value="${datos.inicio || ''}"
+          onblur="applyTimeMask(this, '${inicioId}');"
+          readonly  <!-- ✅ BLOQUEADO POR DEFECTO -->
+          <style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1em; box-sizing: border-box;">
+      <span id="${inicioId}" class="time-display"></span>
+    </div>
+    <div>
+      <label class="time-label">Hora Final (HH:MM):</label>
+      <input type="tel" name="vehiculo_${vIndex}_fin" id="fin-input-${vIndex}" class="time-input-masked" required
+          placeholder="HH:MM" maxlength="5" value="${datos.fin || ''}"
+          onblur="applyTimeMask(this, '${finId}');"
+          readonly  <!-- ✅ BLOQUEADO POR DEFECTO -->
+          <style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1em; box-sizing: border-box;">
+      <span id="${finId}" class="time-display"></span>
+    </div>
+  </div>
+
+  <!-- ✅ BOTONES DE CONTROL EN UNA SOLA LÍNEA -->
+  <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+    <!-- Botón Iniciar/Finalizar -->
+    <button type="button" id="btn-control-tiempo-${vIndex}" 
+            onclick="controlarTiempoVehiculo(${vIndex})"
+            style="flex: 1; min-width: 120px; padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; font-size: 0.95em; cursor: pointer; transition: all 0.2s;">
+      ${datos.inicio ? '⏹️ Finalizar' : '▶️ Iniciar'}
+    </button>
+
+    <!-- Botón Editar / Guardar -->
+    <button type="button" id="btn-editar-tiempo-${vIndex}"
+            onclick="editarTiempoVehiculo(${vIndex})"
+            style="flex: 1; min-width: 120px; padding: 10px 15px; background: linear-gradient(135deg, #6c757d 0%, #495054 100%); color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 0.95em; cursor: pointer; transition: all 0.2s;">
+      ✏️ Editar Tiempo
+    </button>
+
+    <!-- Botón Eliminar -->
+    <button type="button" id="btn-eliminar-tiempo-${vIndex}"
+            onclick="eliminarTiempoVehiculo(${vIndex})"
+            style="flex: 1; min-width: 120px; padding: 10px 15px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 0.95em; cursor: pointer; transition: all 0.2s;">
+      🗑️ Eliminar
+    </button>
+  </div>
+</div>
                     
                     <!-- ✅ MOTIVO Y TIPO DE OPERACIÓN EN UNA SOLA LÍNEA (solo para Santo Domingo) -->
 <div id="motivo-tipo-operacion-container-${vIndex}" style="margin-bottom: 15px;">
@@ -2033,6 +2208,212 @@ input.oninput = function() {
                 setupFotoPreview(fotoInputId, previewFotoId, nombrePersonalizado);
             });
         }
+
+        // ✅ ESTADO DE TIEMPO POR VEHÍCULO (ahora incluye modo edición)
+const estadoTiempoVehiculo = {};
+
+// ✅ CONTROLAR TIEMPO (Iniciar/Finalizar)
+function controlarTiempoVehiculo(vIndex) {
+  const inicioInput = document.getElementById(`inicio-input-${vIndex}`);
+  const finInput = document.getElementById(`fin-input-${vIndex}`);
+  const btnControl = document.getElementById(`btn-control-tiempo-${vIndex}`);
+  const btnEditar = document.getElementById(`btn-editar-tiempo-${vIndex}`);
+
+  // ❌ Si está en modo edición, no permitir iniciar/finalizar
+  if (estadoTiempoVehiculo[vIndex] === 'editando') {
+    alert('⚠️ Primero guarda la edición antes de iniciar/finalizar.');
+    return;
+  }
+
+  if (!inicioInput.value) {
+    // ✅ INICIAR TIEMPO
+    const ahora = new Date();
+    const hora = String(ahora.getHours()).padStart(2, '0');
+    const minuto = String(ahora.getMinutes()).padStart(2, '0');
+    inicioInput.value = `${hora}:${minuto}`;
+    applyTimeMask(inicioInput, `cargue-inicio-${vIndex}`);
+    
+    // Actualizar botón
+    btnControl.innerHTML = '⏹️ Finalizar';
+    btnControl.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+    btnControl.style.color = 'white';
+    
+    // Bloquear edición mientras está activo
+    btnEditar.disabled = true;
+    btnEditar.style.opacity = '0.7';
+    
+    // Guardar estado
+    estadoTiempoVehiculo[vIndex] = 'iniciado';
+    
+    guardarProgreso();
+    console.log(`▶️ Tiempo iniciado para Vehículo ${vIndex + 1} a las ${inicioInput.value}`);
+    
+  } else if (!finInput.value) {
+    // ✅ FINALIZAR TIEMPO
+    if (!confirm(`⚠️ ¿Estás seguro de finalizar el tiempo para el Vehículo ${vIndex + 1}?\n\nEsta acción registrará la hora actual como hora de finalización.`)) {
+      return;
+    }
+    
+    const ahora = new Date();
+    const hora = String(ahora.getHours()).padStart(2, '0');
+    const minuto = String(ahora.getMinutes()).padStart(2, '0');
+    finInput.value = `${hora}:${minuto}`;
+    applyTimeMask(finInput, `cargue-fin-${vIndex}`);
+    
+    // Actualizar botón
+    btnControl.innerHTML = '✅ Finalizado';
+    btnControl.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+    btnControl.style.color = 'white';
+    btnControl.disabled = true;
+    
+    // Habilitar edición nuevamente (por si quiere corregir después)
+    btnEditar.disabled = false;
+    btnEditar.style.opacity = '1';
+    
+    // Guardar estado
+    estadoTiempoVehiculo[vIndex] = 'finalizado';
+    
+    guardarProgreso();
+    console.log(`⏹️ Tiempo finalizado para Vehículo ${vIndex + 1} a las ${finInput.value}`);
+    
+  } else {
+    // ✅ YA FINALIZADO - No hacer nada
+    alert('✅ El tiempo ya ha sido finalizado para este vehículo.');
+  }
+}
+
+// ✅ EDITAR TIEMPO (modo bloqueado → desbloqueado)
+function editarTiempoVehiculo(vIndex) {
+  const inicioInput = document.getElementById(`inicio-input-${vIndex}`);
+  const finInput = document.getElementById(`fin-input-${vIndex}`);
+  const btnEditar = document.getElementById(`btn-editar-tiempo-${vIndex}`);
+  const btnControl = document.getElementById(`btn-control-tiempo-${vIndex}`);
+  const btnEliminar = document.getElementById(`btn-eliminar-tiempo-${vIndex}`);
+
+  // ✅ SI ESTÁ EN MODO EDICIÓN → GUARDAR
+  if (estadoTiempoVehiculo[vIndex] === 'editando') {
+    // ✅ Validar formato
+    if (!/^\d{2}:\d{2}$/.test(inicioInput.value)) {
+      alert('❌ Formato de hora de inicio inválido. Usa HH:MM');
+      inicioInput.focus();
+      return;
+    }
+    if (!/^\d{2}:\d{2}$/.test(finInput.value)) {
+      alert('❌ Formato de hora de finalización inválido. Usa HH:MM');
+      finInput.focus();
+      return;
+    }
+
+    // ✅ Validar que final ≥ inicio
+    const inicioMin = horaAMinutos(inicioInput.value);
+    const finMin = horaAMinutos(finInput.value);
+    if (finMin < inicioMin) {
+      alert('❌ La hora final no puede ser menor que la hora de inicio.');
+      finInput.focus();
+      return;
+    }
+
+    // ✅ Guardar cambios
+    btnEditar.innerHTML = '✏️ Editar Tiempo';
+    btnEditar.style.background = 'linear-gradient(135deg, #6c757d 0%, #495054 100%)';
+    btnEditar.style.color = 'white';
+    btnEditar.disabled = false;
+
+    // ✅ Bloquear los campos nuevamente
+    inicioInput.readOnly = true;
+    finInput.readOnly = true;
+
+    // ✅ Restaurar otros botones
+    btnControl.disabled = false;
+    btnEliminar.disabled = false;
+
+    // ✅ Guardar estado
+    estadoTiempoVehiculo[vIndex] = 'editado';
+
+    guardarProgreso();
+    console.log(`💾 Cambios guardados para Vehículo ${vIndex + 1}`);
+    mostrarNotificacion(`✅ Edición guardada`, 'success');
+
+    return;
+  }
+
+  // ✅ SI NO ESTÁ EN MODO EDICIÓN → ACTIVAR EDICIÓN
+  if (estadoTiempoVehiculo[vIndex] === 'finalizado') {
+    if (!confirm('⚠️ Estás editando un tiempo finalizado. ¿Deseas continuar?')) return;
+  }
+
+  // ✅ Activar modo edición
+  inicioInput.readOnly = false;
+  finInput.readOnly = false;
+  inicioInput.focus();
+
+  // ✅ Cambiar botón a "Guardar Edición"
+  btnEditar.innerHTML = '💾 Guardar Edición';
+  btnEditar.style.background = 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)';
+  btnEditar.style.color = 'white';
+
+  // ✅ Bloquear otros botones mientras edita
+  btnControl.disabled = true;
+  btnEliminar.disabled = true;
+
+  // ✅ Guardar estado
+  estadoTiempoVehiculo[vIndex] = 'editando';
+
+  console.log(`✏️ Modo edición activado para Vehículo ${vIndex + 1}`);
+  mostrarNotificacion(`📝 Edición activada. Cambia las horas y haz clic en "Guardar Edición".`, 'warning');
+}
+
+// ✅ ELIMINAR TIEMPO (con advertencia y bloqueo durante edición)
+function eliminarTiempoVehiculo(vIndex) {
+  const inicioInput = document.getElementById(`inicio-input-${vIndex}`);
+  const finInput = document.getElementById(`fin-input-${vIndex}`);
+  const btnControl = document.getElementById(`btn-control-tiempo-${vIndex}`);
+  const btnEditar = document.getElementById(`btn-editar-tiempo-${vIndex}`);
+  const btnEliminar = document.getElementById(`btn-eliminar-tiempo-${vIndex}`);
+
+  // ❌ Si está en modo edición, no permitir eliminar
+  if (estadoTiempoVehiculo[vIndex] === 'editando') {
+    alert('⚠️ Primero guarda o cancela la edición antes de eliminar.');
+    return;
+  }
+
+  if (!inicioInput.value && !finInput.value) {
+    alert('ℹ️ No hay tiempo registrado para eliminar.');
+    return;
+  }
+
+  const mensaje = `🗑️ ¿Estás seguro de eliminar el registro de tiempo para el Vehículo ${vIndex + 1}?\n\nSe borrarán las horas de inicio y finalización.`;
+
+  if (!confirm(mensaje)) return;
+
+  // Limpiar campos
+  inicioInput.value = '';
+  finInput.value = '';
+  document.getElementById(`cargue-inicio-${vIndex}`).innerHTML = '';
+  document.getElementById(`cargue-fin-${vIndex}`).innerHTML = '';
+
+  // Restaurar botón principal
+  btnControl.innerHTML = '▶️ Iniciar';
+  btnControl.style.background = '';
+  btnControl.style.color = '';
+  btnControl.disabled = false;
+
+  // Restaurar botón de editar
+  btnEditar.innerHTML = '✏️ Editar Tiempo';
+  btnEditar.style.background = 'linear-gradient(135deg, #6c757d 0%, #495054 100%)';
+  btnEditar.style.color = 'white';
+  btnEditar.disabled = false;
+
+  // Restaurar botón de eliminar
+  btnEliminar.disabled = false;
+
+  // Limpiar estado
+  delete estadoTiempoVehiculo[vIndex];
+
+  guardarProgreso();
+  console.log(`🗑️ Tiempo eliminado para Vehículo ${vIndex + 1}`);
+  mostrarNotificacion(`🗑️ Tiempo eliminado`, 'warning');
+}
 
         // ✅ ABRIR OVERLAY DE NOVEDADES
 function abrirNovedadesVehiculo(vIndex) {
@@ -2581,24 +2962,53 @@ function crearJustificacionOverlay(vIndex, index, datosElemento = null) {
   const dFin = `muerto-final-${vIndex}-${index}-overlay`;
   
   div.innerHTML = `
-    <div style="margin-top: 20px;">
-      <!-- Campos de tiempo muerto -->
-      <div class="time-row" style="display: flex; gap: 15px; margin-bottom: 15px;">
-        <div style="flex: 1;">
-          <label class="time-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Tiempo Muerto Inicio:</label>
-          <input type="tel" name="vehiculo_${vIndex}_tiempo_muerto_inicio_${index}_overlay" class="time-input-masked"
-              placeholder="HH:MM" maxlength="5" value="${tiempo_muerto_inicio}"
-              onblur="applyTimeMask(this, '${dInicio}')" style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
-          <span id="${dInicio}" class="time-display"></span>
-        </div>
-        <div style="flex: 1;">
-          <label class="time-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Tiempo Muerto Final:</label>
-          <input type="tel" name="vehiculo_${vIndex}_tiempo_muerto_final_${index}_overlay" class="time-input-masked"
-              placeholder="HH:MM" maxlength="5" value="${tiempo_muerto_final}"
-              onblur="applyTimeMask(this, '${dFin}')" style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
-          <span id="${dFin}" class="time-display"></span>
-        </div>
-      </div>
+    <!-- ✅ SISTEMA INTELIGENTE DE CONTROL DE TIEMPO MUERTO -->
+<div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
+  <div class="time-row" style="margin-bottom: 12px;">
+    <div>
+      <label class="time-label">Tiempo Muerto Inicio (HH:MM):</label>
+      <input type="tel" name="vehiculo_${vIndex}_tiempo_muerto_inicio_${index}_overlay" id="tm-inicio-${vIndex}-${index}" class="time-input-masked"
+          placeholder="HH:MM" maxlength="5" value="${tiempo_muerto_inicio}"
+          onblur="applyTimeMask(this, '${dInicio}')"
+          readonly
+          style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1em; box-sizing: border-box;">
+      <span id="${dInicio}" class="time-display"></span>
+    </div>
+    <div>
+      <label class="time-label">Tiempo Muerto Final (HH:MM):</label>
+      <input type="tel" name="vehiculo_${vIndex}_tiempo_muerto_final_${index}_overlay" id="tm-fin-${vIndex}-${index}" class="time-input-masked"
+          placeholder="HH:MM" maxlength="5" value="${tiempo_muerto_final}"
+          onblur="applyTimeMask(this, '${dFin}')"
+          readonly
+          style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1em; box-sizing: border-box;">
+      <span id="${dFin}" class="time-display"></span>
+    </div>
+  </div>
+  
+  <!-- ✅ BOTONES DE CONTROL EN UNA SOLA LÍNEA -->
+  <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+    <!-- Botón Iniciar/Finalizar -->
+    <button type="button" id="btn-tm-control-${vIndex}-${index}" 
+            onclick="controlarTiempoMuerto(${vIndex}, ${index})"
+            style="flex: 1; min-width: 120px; padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; font-size: 0.95em; cursor: pointer; transition: all 0.2s;">
+      ${tiempo_muerto_inicio ? '⏹️ Finalizar' : '▶️ Iniciar'}
+    </button>
+    
+    <!-- Botón Editar -->
+    <button type="button" id="btn-tm-editar-${vIndex}-${index}"
+            onclick="editarTiempoMuerto(${vIndex}, ${index})"
+            style="flex: 1; min-width: 120px; padding: 10px 15px; background: linear-gradient(135deg, #6c757d 0%, #495054 100%); color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 0.95em; cursor: pointer; transition: all 0.2s;">
+      ✏️ Editar Tiempo
+    </button>
+    
+    <!-- Botón Eliminar -->
+    <button type="button" id="btn-tm-eliminar-${vIndex}-${index}"
+            onclick="eliminarTiempoMuerto(${vIndex}, ${index})"
+            style="flex: 1; min-width: 120px; padding: 10px 15px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 0.95em; cursor: pointer; transition: all 0.2s;">
+      🗑️ Eliminar
+    </button>
+  </div>
+</div>
       
       <!-- Motivo -->
       <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; margin-top: 10px;">Motivo:</label>
@@ -2662,6 +3072,167 @@ document.addEventListener('click', function(event) {
     }
   });
 });
+
+// ✅ ESTADO DE TIEMPO MUERTO POR VEHÍCULO Y ÍNDICE
+const estadoTiempoMuerto = {};
+
+// ✅ CONTROLAR TIEMPO MUERTO (Iniciar/Finalizar)
+function controlarTiempoMuerto(vIndex, nIndex) {
+  const inicioInput = document.getElementById(`tm-inicio-${vIndex}-${nIndex}`);
+  const finInput = document.getElementById(`tm-fin-${vIndex}-${nIndex}`);
+  const btnControl = document.getElementById(`btn-tm-control-${vIndex}-${nIndex}`);
+  const btnEditar = document.getElementById(`btn-tm-editar-${vIndex}-${nIndex}`);
+
+  // ❌ Si está en modo edición, no permitir iniciar/finalizar
+  if (estadoTiempoMuerto[`${vIndex}-${nIndex}`] === 'editando') {
+    alert('⚠️ Primero guarda la edición antes de iniciar/finalizar.');
+    return;
+  }
+
+  if (!inicioInput.value) {
+    // ✅ INICIAR TIEMPO
+    const ahora = new Date();
+    const hora = String(ahora.getHours()).padStart(2, '0');
+    const minuto = String(ahora.getMinutes()).padStart(2, '0');
+    inicioInput.value = `${hora}:${minuto}`;
+    applyTimeMask(inicioInput, `muerto-inicio-${vIndex}-${nIndex}`);
+    
+    btnControl.innerHTML = '⏹️ Finalizar';
+    btnControl.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+    btnControl.style.color = 'white';
+    btnEditar.disabled = true;
+    btnEditar.style.opacity = '0.7';
+    
+    estadoTiempoMuerto[`${vIndex}-${nIndex}`] = 'iniciado';
+    guardarProgreso();
+    console.log(`▶️ Tiempo muerto iniciado para Vehículo ${vIndex + 1} - Justificación ${nIndex + 1}`);
+    
+  } else if (!finInput.value) {
+    // ✅ FINALIZAR TIEMPO
+    if (!confirm(`⚠️ ¿Estás seguro de finalizar el tiempo muerto para la justificación #${nIndex + 1} del Vehículo ${vIndex + 1}?`)) return;
+    
+    const ahora = new Date();
+    const hora = String(ahora.getHours()).padStart(2, '0');
+    const minuto = String(ahora.getMinutes()).padStart(2, '0');
+    finInput.value = `${hora}:${minuto}`;
+    applyTimeMask(finInput, `muerto-fin-${vIndex}-${nIndex}`);
+    
+    btnControl.innerHTML = '✅ Finalizado';
+    btnControl.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+    btnControl.style.color = 'white';
+    btnControl.disabled = true;
+    btnEditar.disabled = false;
+    btnEditar.style.opacity = '1';
+    
+    estadoTiempoMuerto[`${vIndex}-${nIndex}`] = 'finalizado';
+    guardarProgreso();
+    console.log(`⏹️ Tiempo muerto finalizado para Vehículo ${vIndex + 1} - Justificación ${nIndex + 1}`);
+    
+  } else {
+    alert('✅ El tiempo muerto ya ha sido finalizado.');
+  }
+}
+
+// ✅ EDITAR TIEMPO MUERTO
+function editarTiempoMuerto(vIndex, nIndex) {
+  const inicioInput = document.getElementById(`tm-inicio-${vIndex}-${nIndex}`);
+  const finInput = document.getElementById(`tm-fin-${vIndex}-${nIndex}`);
+  const btnEditar = document.getElementById(`btn-tm-editar-${vIndex}-${nIndex}`);
+  const btnControl = document.getElementById(`btn-tm-control-${vIndex}-${nIndex}`);
+  const btnEliminar = document.getElementById(`btn-tm-eliminar-${vIndex}-${nIndex}`);
+
+  // ✅ SI ESTÁ EN MODO EDICIÓN → GUARDAR
+  if (estadoTiempoMuerto[`${vIndex}-${nIndex}`] === 'editando') {
+    if (!/^\d{2}:\d{2}$/.test(inicioInput.value)) {
+      alert('❌ Formato de hora de inicio inválido. Usa HH:MM');
+      inicioInput.focus();
+      return;
+    }
+    if (!/^\d{2}:\d{2}$/.test(finInput.value)) {
+      alert('❌ Formato de hora de finalización inválido. Usa HH:MM');
+      finInput.focus();
+      return;
+    }
+
+    const inicioMin = horaAMinutos(inicioInput.value);
+    const finMin = horaAMinutos(finInput.value);
+    if (finMin < inicioMin) {
+      alert('❌ La hora final no puede ser menor que la hora de inicio.');
+      finInput.focus();
+      return;
+    }
+
+    // Guardar cambios
+    btnEditar.innerHTML = '✏️ Editar Tiempo';
+    btnEditar.style.background = 'linear-gradient(135deg, #6c757d 0%, #495054 100%)';
+    btnEditar.style.color = 'white';
+    inicioInput.readOnly = true;
+    finInput.readOnly = true;
+    btnControl.disabled = false;
+    btnEliminar.disabled = false;
+    estadoTiempoMuerto[`${vIndex}-${nIndex}`] = 'editado';
+    guardarProgreso();
+    mostrarNotificacion(`✅ Edición guardada`, 'success');
+    return;
+  }
+
+  // ✅ ACTIVAR MODO EDICIÓN
+  if (estadoTiempoMuerto[`${vIndex}-${nIndex}`] === 'finalizado') {
+    if (!confirm('⚠️ Estás editando un tiempo muerto finalizado. ¿Deseas continuar?')) return;
+  }
+
+  inicioInput.readOnly = false;
+  finInput.readOnly = false;
+  inicioInput.focus();
+
+  btnEditar.innerHTML = '💾 Guardar Edición';
+  btnEditar.style.background = 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)';
+  btnEditar.style.color = 'white';
+  btnControl.disabled = true;
+  btnEliminar.disabled = true;
+  estadoTiempoMuerto[`${vIndex}-${nIndex}`] = 'editando';
+
+  mostrarNotificacion(`📝 Edición activada. Cambia las horas y haz clic en "Guardar Edición".`, 'warning');
+}
+
+// ✅ ELIMINAR TIEMPO MUERTO
+function eliminarTiempoMuerto(vIndex, nIndex) {
+  const inicioInput = document.getElementById(`tm-inicio-${vIndex}-${nIndex}`);
+  const finInput = document.getElementById(`tm-fin-${vIndex}-${nIndex}`);
+  const btnControl = document.getElementById(`btn-tm-control-${vIndex}-${nIndex}`);
+  const btnEditar = document.getElementById(`btn-tm-editar-${vIndex}-${nIndex}`);
+  const btnEliminar = document.getElementById(`btn-tm-eliminar-${vIndex}-${nIndex}`);
+
+  if (estadoTiempoMuerto[`${vIndex}-${nIndex}`] === 'editando') {
+    alert('⚠️ Primero guarda o cancela la edición antes de eliminar.');
+    return;
+  }
+
+  if (!inicioInput.value && !finInput.value) {
+    alert('ℹ️ No hay tiempo muerto registrado para eliminar.');
+    return;
+  }
+
+  if (!confirm(`🗑️ ¿Estás seguro de eliminar el tiempo muerto para la justificación #${nIndex + 1} del Vehículo ${vIndex + 1}?`)) return;
+
+  inicioInput.value = '';
+  finInput.value = '';
+  document.getElementById(`muerto-inicio-${vIndex}-${nIndex}`).innerHTML = '';
+  document.getElementById(`muerto-fin-${vIndex}-${nIndex}`).innerHTML = '';
+
+  btnControl.innerHTML = '▶️ Iniciar';
+  btnControl.style.background = '';
+  btnControl.style.color = '';
+  btnControl.disabled = false;
+  btnEditar.innerHTML = '✏️ Editar Tiempo';
+  btnEditar.style.background = 'linear-gradient(135deg, #6c757d 0%, #495054 100%)';
+  btnEditar.style.color = 'white';
+  btnEditar.disabled = false;
+
+  delete estadoTiempoMuerto[`${vIndex}-${nIndex}`];
+  guardarProgreso();
+  mostrarNotificacion(`🗑️ Tiempo muerto eliminado`, 'warning');
+}
 
         // ✅ ABRIR OVERLAY DE INSPECCIÓN
 // ✅ ABRIR OVERLAY DE INSPECCIÓN
@@ -2819,22 +3390,7 @@ document.addEventListener('click', function(event) {
   div.innerHTML = `
     <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #<span class="numero-parada">${index + 1}</span> (Operación)</p>
     
-    <div class="time-row">
-      <div>
-        <label class="time-label">Hora Inicio (HH:MM):</label>
-        <input type="tel" name="parada_inicio_operacion_${index}" class="time-input-masked"
-            placeholder="HH:MM" maxlength="5" value="${datos.inicio || ''}"
-            onblur="applyTimeMask(this, '${dInicio}')">
-        <span id="${dInicio}" class="time-display"></span>
-      </div>
-      <div>
-        <label class="time-label">Hora Final (HH:MM):</label>
-        <input type="tel" name="parada_fin_operacion_${index}" class="time-input-masked"
-            placeholder="HH:MM" maxlength="5" value="${datos.fin || ''}"
-            onblur="applyTimeMask(this, '${dFin}')">
-        <span id="${dFin}" class="time-display"></span>
-      </div>
-    </div>
+    ${generarTimeRowConBotonesParada(index, '', datos.inicio || '', datos.fin || '')}
     
     <label style="margin-top:5px;">Motivo:</label>
     <select name="parada_motivo_operacion_${index}">
