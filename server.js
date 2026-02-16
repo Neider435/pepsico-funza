@@ -21,6 +21,8 @@ console.log('PASSWORD:', process.env.MYSQLPASSWORD ? '✅ DEFINIDO (oculto)' : '
 console.log('DATABASE:', process.env.MYSQLDATABASE || '❌ NO DEFINIDO');
 console.log('OUTLOOK_EMAIL:', process.env.OUTLOOK_EMAIL || '❌ NO DEFINIDO');
 console.log('EMAIL_DESTINO:', process.env.EMAIL_DESTINO || '❌ NO DEFINIDO');
+console.log('OUTLOOK_SMTP:', process.env.OUTLOOK_SMTP || '❌ NO DEFINIDO');
+console.log('OUTLOOK_PORT:', process.env.OUTLOOK_PORT || '❌ NO DEFINIDO');
 console.log('=======================================');
 
 // Conexión a MySQL
@@ -39,10 +41,22 @@ const pool = mysql.createPool({
 const transporter = nodemailer.createTransport({
   host: process.env.OUTLOOK_SMTP,
   port: parseInt(process.env.OUTLOOK_PORT),
-  secure: false, // false para TLS (puerto 587)
+  secure: false,
   auth: {
     user: process.env.OUTLOOK_EMAIL,
     pass: process.env.OUTLOOK_PASSWORD
+  },
+  tls: {
+    rejectUnauthorized: false
+  }
+});
+
+// ✅ VERIFICAR CONEXIÓN SMTP AL INICIAR
+transporter.verify((error, success) => {
+  if (error) {
+    console.error('❌ Error de conexión SMTP:', error.message);
+  } else {
+    console.log('✅ Servidor SMTP listo para enviar correos');
   }
 });
 
@@ -55,7 +69,6 @@ function generarPDF(datos, registroId) {
     
     doc.pipe(stream);
     
-    // ✅ Encabezado
     doc.fontSize(20).text('REPORTE DE OPERACIÓN - PEPSICO', { align: 'center' });
     doc.moveDown();
     doc.fontSize(12).text(`Registro ID: ${registroId}`, { align: 'center' });
@@ -63,7 +76,6 @@ function generarPDF(datos, registroId) {
     doc.text(`Lugar: ${datos.lugar}`, { align: 'center' });
     doc.moveDown();
     
-    // ✅ Información General
     doc.fontSize(16).text('INFORMACIÓN GENERAL', { underline: true });
     doc.fontSize(11);
     doc.text(`Turno: ${datos.turno}`);
@@ -75,7 +87,6 @@ function generarPDF(datos, registroId) {
     doc.text(`Responsable: ${datos.respo_diligen}`);
     doc.moveDown();
     
-    // ✅ Vehículos
     doc.fontSize(16).text('VEHÍCULOS REGISTRADOS', { underline: true });
     doc.fontSize(11);
     
@@ -96,7 +107,6 @@ function generarPDF(datos, registroId) {
         if (vehiculo.destino) doc.text(`Destino: ${vehiculo.destino}`);
         if (vehiculo.origen) doc.text(`Origen: ${vehiculo.origen}`);
         
-        // ✅ Justificaciones
         if (vehiculo.justificaciones && vehiculo.justificaciones.length > 0) {
           doc.moveDown();
           doc.fontSize(12).text('Justificaciones:', { underline: true });
@@ -106,7 +116,6 @@ function generarPDF(datos, registroId) {
           });
         }
         
-        // ✅ Novedades
         if (vehiculo.novedades && vehiculo.novedades.length > 0) {
           doc.moveDown();
           doc.fontSize(12).text('Novedades:', { underline: true });
@@ -120,7 +129,6 @@ function generarPDF(datos, registroId) {
       });
     }
     
-    // ✅ Paradas de Operación
     doc.moveDown();
     doc.fontSize(16).text('PARADAS DE OPERACIÓN', { underline: true });
     doc.fontSize(11);
@@ -132,7 +140,6 @@ function generarPDF(datos, registroId) {
       });
     }
     
-    // ✅ Pie de página
     doc.moveDown(2);
     doc.fontSize(10).text('Generado automáticamente por Sistema Pepsico Funza', { align: 'center' });
     doc.text(`Fecha de generación: ${new Date().toLocaleString('es-CO')}`, { align: 'center' });
@@ -149,7 +156,7 @@ function generarPDF(datos, registroId) {
   });
 }
 
-// ✅ FUNCIÓN PARA ENVIAR CORREO CON PDF
+// ✅ FUNCIÓN PARA ENVIAR CORREO CON PDF (CON TIMEOUT)
 async function enviarCorreoConPDF(datos, registroId, pdfPath) {
   const mailOptions = {
     from: process.env.OUTLOOK_EMAIL,
@@ -181,15 +188,24 @@ Generado automáticamente
   };
   
   try {
+    console.log('📧 Enviando correo desde:', process.env.OUTLOOK_EMAIL);
+    console.log('📧 Enviando correo a:', process.env.EMAIL_DESTINO);
+    
     const info = await transporter.sendMail(mailOptions);
     console.log('✅ Correo enviado:', info.messageId);
     
-    // ✅ Eliminar archivo PDF después de enviar
-    fs.unlinkSync(pdfPath);
+    // Eliminar archivo PDF después de enviar
+    try {
+      fs.unlinkSync(pdfPath);
+      console.log('🗑️ PDF eliminado:', pdfPath);
+    } catch (unlinkError) {
+      console.warn('⚠️ No se pudo eliminar el PDF:', unlinkError.message);
+    }
     
     return true;
   } catch (error) {
     console.error('❌ Error al enviar correo:', error.message);
+    console.error('❌ Error details:', error);
     return false;
   }
 }
@@ -199,6 +215,8 @@ app.post('/api/registro', async (req, res) => {
   let connection;
   
   try {
+    console.log('📥 Recibiendo petición de registro...');
+    
     // Obtener conexión para transacción
     connection = await pool.getConnection();
     await connection.beginTransaction();
@@ -219,6 +237,14 @@ app.post('/api/registro', async (req, res) => {
       datos_paradas_operacion
     } = req.body;
 
+    console.log('📊 Datos recibidos:', {
+      fecha,
+      lugar,
+      turno,
+      vehiculos: datos_vehiculos ? datos_vehiculos.length : 0,
+      paradas: datos_paradas_operacion ? datos_paradas_operacion.length : 0
+    });
+
     // ✅ Obtener respo_diligen y limpiar puntos
     let respo_diligen_limpio = respo_diligen || '';
     respo_diligen_limpio = respo_diligen_limpio.replace(/\./g, '');
@@ -235,6 +261,7 @@ app.post('/api/registro', async (req, res) => {
     );
     
     const registroId = registroResult.insertId;
+    console.log('✅ Registro creado con ID:', registroId);
     
     // 2. Insertar vehículos Y sus detalles de inspección
     for (let i = 0; i < datos_vehiculos.length; i++) {
@@ -265,7 +292,7 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.fin || '',
           vehiculo.motivo || '',
           vehiculo.otro_motivo || '',
-          vehiculo.tipo_carga || '',  // ✅ NUEVO CAMPO
+          vehiculo.tipo_carga || '',
           vehiculo.muelle || '',
           vehiculo.otro_muelle_num || '',
           vehiculo.placa || '',
@@ -284,6 +311,7 @@ app.post('/api/registro', async (req, res) => {
       );
       
       const vehiculoId = vehiculoResult.insertId;
+      console.log('✅ Vehículo', i + 1, 'guardado con ID:', vehiculoId);
       
       // ✅ Insertar justificaciones por vehículo (TABLA SEPARADA)
       if (vehiculo.justificaciones && Array.isArray(vehiculo.justificaciones)) {
@@ -342,6 +370,7 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.aprobado || null
         ]
       );
+      console.log('✅ Detalles de inspección guardados');
       
       // ✅ Insertar productos escaneados por vehículo
       if (vehiculo.productos_escaneados && Array.isArray(vehiculo.productos_escaneados)) {
@@ -380,12 +409,14 @@ app.post('/api/registro', async (req, res) => {
         ]
       );
     }
+    console.log('✅ Paradas de operación guardadas');
     
     // ✅ Confirmar transacción
     await connection.commit();
     connection.release();
-    
-    // ✅ GENERAR PDF Y ENVIAR CORREO (DESPUÉS DE GUARDAR EN BD)
+    console.log('✅ Transacción confirmada en MySQL');
+
+    // ✅ ENVIAR CORREO (DESPUÉS DE GUARDAR EN BD)
     try {
       console.log('📧 Generando PDF para envío por correo...');
       const pdfPath = await generarPDF(req.body, registroId);
@@ -401,7 +432,7 @@ app.post('/api/registro', async (req, res) => {
       }
     } catch (error) {
       console.error('❌ Error al generar/enviar PDF:', error.message);
-      // ✅ No fallar la petición si el correo falla (los datos ya están en BD)
+      // No fallar la petición si el correo falla (los datos ya están en BD)
     }
 
     res.json({
@@ -416,7 +447,8 @@ app.post('/api/registro', async (req, res) => {
       connection.release();
     }
     
-    console.error('Error al guardar:', error);
+    console.error('❌ Error al guardar:', error);
+    console.error('❌ Error stack:', error.stack);
     res.status(500).json({
       success: false,
       error: error.message
