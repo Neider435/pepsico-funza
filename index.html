@@ -1423,6 +1423,7 @@ function manejarOtroMuelle(vIndex) {
       fin: getValue(`vehiculo_${i}_fin`),
       motivo: getValue(`vehiculo_${i}_motivo`),
       otro_motivo: getValue(`vehiculo_${i}_otro_motivo`),
+      tipo_carga: getValue(`vehiculo_${i}_tipo_carga`),
       muelle: getValue(`vehiculo_${i}_muelle`),
       otro_muelle_num: getValue(`vehiculo_${i}_otro_muelle_num`),
       placa: getValue(`vehiculo_${i}_placa`),
@@ -1739,6 +1740,16 @@ function actualizarTipoOperacionPorLugar() {
     </select>
     <input type="text" name="vehiculo_${vIndex}_otro_motivo" placeholder="Especifique otro motivo" class="otro-input" value="${datos.otro_motivo || ''}">
   </div>
+</div>
+
+<div style="margin-bottom: 15px;">
+  <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Tipo de Carga:</label>
+  <select name="vehiculo_${vIndex}_tipo_carga" id="tipo-carga-${vIndex}"
+    style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+    <option value="">Seleccione tipo de carga</option>
+    <option value="Paletizado" ${datos.tipo_carga === 'Paletizado' ? 'selected' : ''}>Paletizado</option>
+    <option value="Arrume" ${datos.tipo_carga === 'Arrume' ? 'selected' : ''}>Arrume</option>
+  </select>
 </div>
                 </div>
                 
@@ -4430,6 +4441,7 @@ const formData = {
     }
     // ✅ Incluir novedades
     v.novedades = v.novedades || [];
+    v.tipo_carga = v.tipo_carga || '';
     // ✅ Incluir justificaciones (como array)
     v.justificaciones = v.justificaciones || [];
     return v;
@@ -4534,6 +4546,7 @@ const formData = {
         fin: data[`vehiculo_${i}_fin`] || '',
         motivo: data[`vehiculo_${i}_motivo`] || '',
         otro_motivo: data[`vehiculo_${i}_otro_motivo`] || '',
+        tipo_carga: data[`vehiculo_${i}_tipo_carga`] || '',
         muelle: data[`vehiculo_${i}_muelle`] || '',
         otro_muelle_num: data[`vehiculo_${i}_otro_muelle_num`] || '',
         placa: data[`vehiculo_${i}_placa`] || '',
