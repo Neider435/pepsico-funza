@@ -1419,38 +1419,35 @@ function manejarOtroMuelle(vIndex) {
     
     // ✅ ASIGNAR TODOS LOS DATOS AL VEHÍCULO
     vehiculosData[i] = {
-      inicio: getValue(`vehiculo_${i}_inicio`),
-      fin: getValue(`vehiculo_${i}_fin`),
-      motivo: getValue(`vehiculo_${i}_motivo`),
-      otro_motivo: getValue(`vehiculo_${i}_otro_motivo`),
-      tipo_carga: getValue(`vehiculo_${i}_tipo_carga`),
-      muelle: getValue(`vehiculo_${i}_muelle`),
-      otro_muelle_num: getValue(`vehiculo_${i}_otro_muelle_num`),
-      placa: getValue(`vehiculo_${i}_placa`),
-      tipo_vehi: getValue(`vehiculo_${i}_tipo_vehi`),
-      otro_tipo: getValue(`vehiculo_${i}_otro_tipo`),
-      destino: getValue(`vehiculo_${i}_destino`),
-      otro_destino: getValue(`vehiculo_${i}_otro_destino`),
-      origen: getValue(`vehiculo_${i}_origen`),
-      otro_origen: getValue(`vehiculo_${i}_otro_origen`),
-      personas: getValue(`vehiculo_${i}_personas`),
-      nombres_personal: nombresPersonal,
-      cajas: getValue(`vehiculo_${i}_cajas`),
-      foto_url: getValue(`vehiculo_${i}_foto_url`),
-      tipo_operacion: getValue(`vehiculo_${i}_tipo_operacion`) || '',
-      // ✅ DATOS DE INSPECCIÓN
-      interior_camion: interiorCamion,
-      estado_carpa: estadoCarpa,
-      olores_extranos: oloresExtranos,
-      objetos_extranos: objetosExtranos,
-      evidencias_plagas: evidenciasPlagas,
-      estado_suelo: estadoSuelo,
-      aprobado: aprobado,
-      // ✅ DATOS DE JUSTIFICACIONES (NUEVO)
-      justificaciones: justificacionesData,
-      // ✅ DATOS DE NOVEDADES
-      novedades: novedadesData
-    };
+  inicio: getValue(`vehiculo_${i}_inicio`),
+  fin: getValue(`vehiculo_${i}_fin`),
+  motivo: getValue(`vehiculo_${i}_motivo`),
+  otro_motivo: getValue(`vehiculo_${i}_otro_motivo`),
+  tipo_carga: getValue(`vehiculo_${i}_tipo_carga`),
+  muelle: getValue(`vehiculo_${i}_muelle`),
+  otro_muelle_num: getValue(`vehiculo_${i}_otro_muelle_num`),
+  placa: getValue(`vehiculo_${i}_placa`),
+  tipo_vehi: getValue(`vehiculo_${i}_tipo_vehi`),
+  otro_tipo: getValue(`vehiculo_${i}_otro_tipo`),
+  destino: getValue(`vehiculo_${i}_destino`),
+  otro_destino: getValue(`vehiculo_${i}_otro_destino`),
+  origen: getValue(`vehiculo_${i}_origen`),
+  otro_origen: getValue(`vehiculo_${i}_otro_origen`),
+  personas: getValue(`vehiculo_${i}_personas`),
+  nombres_personal: nombresPersonal,
+  cajas: getValue(`vehiculo_${i}_cajas`),
+  foto_url: getValue(`vehiculo_${i}_foto_url`),
+  tipo_operacion: getValue(`vehiculo_${i}_tipo_operacion`) || '',
+  interior_camion: interiorCamion,
+  estado_carpa: estadoCarpa,
+  olores_extranos: oloresExtranos,
+  objetos_extranos: objetosExtranos,
+  evidencias_plagas: evidenciasPlagas,
+  estado_suelo: estadoSuelo,
+  aprobado: aprobado,
+  justificaciones: justificacionesData,
+  novedades: novedadesData
+};
   }
   
   // ✅ Depuración
@@ -2841,7 +2838,6 @@ function abrirNovedadesVehiculo(vIndex) {
 }
 
 // ✅ CERRAR OVERLAY DE JUSTIFICACIONES
-// ✅ CERRAR OVERLAY DE JUSTIFICACIONES
 function cerrarJustificacionesVehiculo(vIndex) {
   const contenedorOculto = document.getElementById(`justificaciones-contenedor-${vIndex}`);
   const contenedorOverlay = document.getElementById(`justificaciones-overlay-contenedor-${vIndex}`);
@@ -4220,7 +4216,7 @@ if (justificacionesContenedor) {
     const tiempo_inicio = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_inicio_${jIndex}"]`)?.value || '';
     const tiempo_fin = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_final_${jIndex}"]`)?.value || '';
     
-    // ✅ NOMENCLATURA UNIFICADA (debe coincidir con sincronizarVehiculosDesdeDOM)
+    // ✅ NOMENCLATURA UNIFICADA (debe coincidir en TODAS las funciones)
     justificacionesData.push({
       justificacion: motivo,              // ✅ CAMBIAR: de 'motivo' a 'justificacion'
       otro_justificacion: otro_motivo,    // ✅ CAMBIAR: de 'otro_motivo' a 'otro_justificacion'
@@ -4496,10 +4492,10 @@ function enviarFormulario(event) {
       }
       // ✅ Incluir novedades
       v.novedades = v.novedades || [];
+      // ✅ Incluir justificaciones (AGREGAR ESTA LÍNEA)
+      v.justificaciones = v.justificaciones || [];
       // ✅ Incluir tipo_carga
       v.tipo_carga = v.tipo_carga || '';
-      // ✅ Incluir justificaciones (como array)
-      v.justificaciones = v.justificaciones || [];
       return v;
     }),
     datos_paradas_operacion: Array.from(
@@ -4697,6 +4693,7 @@ function enviarFormulario(event) {
       
       // ✅ RESTAURAR JUSTIFICACIONES POR VEHÍCULO
       // ✅ RESTAURAR JUSTIFICACIONES POR VEHÍCULO (CORREGIDO)
+// ✅ RESTAURAR JUSTIFICACIONES POR VEHÍCULO (CORREGIDO)
 // ✅ RESTAURAR JUSTIFICACIONES POR VEHÍCULO (CORREGIDO)
 const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${i}`);
 if (justificacionesContenedor && data[`_justificaciones_${i}`]) {
