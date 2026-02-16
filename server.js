@@ -4,13 +4,14 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// ✅ CONFIGURACIÓN CORS EXPLÍCITA (CORREGIDO PARA NETLIFY)
+// ===== CONFIGURACIÓN CORS EXPLÍCITA PARA NETLIFY =====
 app.use(cors({
   origin: [
-    'https://pepsico-funza.netlify.app',           // ✅ Tu frontend en Netlify
-    'https://pepsico-funza-production-b0f5.up.railway.app',  // ✅ Tu backend en Railway
+    'https://pepsico-funza.netlify.app',
+    'https://pepsico-funza-production-b0f5.up.railway.app',
     'http://localhost:3000',
-    'http://localhost:5500'
+    'http://localhost:5500',
+    '*'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -21,7 +22,8 @@ app.use(cors({
 // ✅ MANEJAR PREFLIGHT (OPTIONS) EXPLÍCITAMENTE
 app.options('*', cors());
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // ===== LOGS DE VARIABLES DE ENTORNO =====
 console.log('=== VARIABLES DE ENTORNO AL INICIAR ===');
@@ -44,11 +46,41 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-// Endpoint para recibir datos del formulario
+// ✅ ENDPOINT HEALTH CHECK
+app.get('/health', async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+    connection.release();
+    
+    res.json({
+      status: 'ok',
+      message: 'API y base de datos funcionando correctamente',
+      timestamp: new Date().toISOString(),
+      env: {
+        host: process.env.MYSQLHOST ? '✅ Definido' : '❌ NO DEFINIDO',
+        port: process.env.MYSQLPORT || '3306 (default)',
+        user: process.env.MYSQLUSER || '❌ NO DEFINIDO',
+        database: process.env.MYSQLDATABASE || '❌ NO DEFINIDO'
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error en health check:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Base de datos NO accesible',
+      error: error.message
+    });
+  }
+});
+
+// ✅ ENDPOINT PARA RECIBIR DATOS DEL FORMULARIO
 app.post('/api/registro', async (req, res) => {
   let connection;
   
   try {
+    console.log('📥 Recibiendo datos del formulario...');
+    console.log('📊 Datos recibidos:', JSON.stringify(req.body, null, 2));
+    
     // Obtener conexión para transacción
     connection = await pool.getConnection();
     await connection.beginTransaction();
@@ -85,8 +117,9 @@ app.post('/api/registro', async (req, res) => {
     );
     
     const registroId = registroResult.insertId;
+    console.log('✅ Registro creado con ID:', registroId);
     
-    // 2. Insertar vehículos Y sus detalles de inspección
+    // 2. Insertar vehículos Y sus detalles
     for (let i = 0; i < datos_vehiculos.length; i++) {
       const vehiculo = datos_vehiculos[i];
       
@@ -94,7 +127,6 @@ app.post('/api/registro', async (req, res) => {
         ? JSON.stringify(vehiculo.nombres_personal) 
         : null;
       
-      // ✅ Depuración: Verificar qué llega al servidor
       console.log('📥 Vehículo recibido:', {
         placa: vehiculo.placa,
         tipo_operacion: vehiculo.tipo_operacion,
@@ -103,7 +135,6 @@ app.post('/api/registro', async (req, res) => {
         tiene_novedades: vehiculo.hasOwnProperty('novedades')
       });
 
-      // ✅ INSERTAR VEHÍCULO (SIN CAMPOS DE JUSTIFICACIÓN - AHORA EN TABLA SEPARADA)
       const [vehiculoResult] = await connection.query(
         `INSERT INTO vehiculos (
           registro_id, inicio, fin, motivo, otro_motivo, tipo_carga, muelle, otro_muelle_num,
@@ -116,7 +147,7 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.fin || '',
           vehiculo.motivo || '',
           vehiculo.otro_motivo || '',
-          vehiculo.tipo_carga || '',  // ✅ NUEVO CAMPO AGREGADO
+          vehiculo.tipo_carga || '',
           vehiculo.muelle || '',
           vehiculo.otro_muelle_num || '',
           vehiculo.placa || '',
@@ -135,8 +166,9 @@ app.post('/api/registro', async (req, res) => {
       );
       
       const vehiculoId = vehiculoResult.insertId;
+      console.log('✅ Vehículo', i + 1, 'creado con ID:', vehiculoId);
       
-      // ✅ NUEVO: Insertar justificaciones por vehículo (TABLA SEPARADA)
+      // ✅ Insertar justificaciones por vehículo (TABLA SEPARADA)
       if (vehiculo.justificaciones && Array.isArray(vehiculo.justificaciones)) {
         for (const justificacion of vehiculo.justificaciones) {
           await connection.query(
@@ -154,7 +186,7 @@ app.post('/api/registro', async (req, res) => {
             ]
           );
         }
-        console.log(`✅ Justificaciones guardadas para Vehículo ${i + 1}:`, vehiculo.justificaciones.length);
+        console.log('✅ Justificaciones guardadas para Vehículo', i + 1, ':', vehiculo.justificaciones.length);
       }
       
       // ✅ Insertar novedades por vehículo
@@ -173,7 +205,7 @@ app.post('/api/registro', async (req, res) => {
             ]
           );
         }
-        console.log(`✅ Novedades guardadas para Vehículo ${i + 1}:`, vehiculo.novedades.length);
+        console.log('✅ Novedades guardadas para Vehículo', i + 1, ':', vehiculo.novedades.length);
       }
       
       // ✅ INSERTAR DETALLES DE INSPECCIÓN
@@ -193,6 +225,7 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.aprobado || null
         ]
       );
+      console.log('✅ Detalles de inspección guardados para Vehículo', i + 1);
       
       // ✅ Insertar productos escaneados por vehículo
       if (vehiculo.productos_escaneados && Array.isArray(vehiculo.productos_escaneados)) {
@@ -211,30 +244,35 @@ app.post('/api/registro', async (req, res) => {
             ]
           );
         }
-        console.log(`✅ Productos escaneados guardados para Vehículo ${i + 1}:`, vehiculo.productos_escaneados.length);
+        console.log('✅ Productos escaneados guardados para Vehículo', i + 1, ':', vehiculo.productos_escaneados.length);
       }
       
     } // <-- CIERRE DEL BUCLE FOR
     
     // 3. Insertar paradas de operación
-    for (const parada of datos_paradas_operacion) {
-      await connection.query(
-        `INSERT INTO paradas_operacion (
-          registro_id, inicio, fin, motivo, otro_motivo
-        ) VALUES (?, ?, ?, ?, ?)`,
-        [
-          registroId,
-          parada.inicio,
-          parada.fin,
-          parada.motivo,
-          parada.otro_motivo
-        ]
-      );
+    if (datos_paradas_operacion && Array.isArray(datos_paradas_operacion)) {
+      for (const parada of datos_paradas_operacion) {
+        await connection.query(
+          `INSERT INTO paradas_operacion (
+            registro_id, inicio, fin, motivo, otro_motivo
+          ) VALUES (?, ?, ?, ?, ?)`,
+          [
+            registroId,
+            parada.inicio,
+            parada.fin,
+            parada.motivo,
+            parada.otro_motivo
+          ]
+        );
+      }
+      console.log('✅ Paradas de operación guardadas:', datos_paradas_operacion.length);
     }
     
     // Confirmar transacción
     await connection.commit();
     connection.release();
+
+    console.log('✅ Registro completado exitosamente con ID:', registroId);
 
     res.json({
       success: true,
@@ -248,39 +286,36 @@ app.post('/api/registro', async (req, res) => {
       connection.release();
     }
     
-    console.error('Error al guardar:', error);
+    console.error('❌ Error al guardar:', error);
+    console.error('❌ Stack trace:', error.stack);
+    
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
+      stack: error.stack
     });
   }
 });
 
-// Health check mejorado
-app.get('/health', async (req, res) => {
-  try {
-    const connection = await pool.getConnection();
-    connection.release();
-    
-    res.json({
-      status: 'ok',
-      message: 'API y base de datos funcionando correctamente',
-      env: {
-        host: process.env.MYSQLHOST ? '✅ Definido' : '❌ NO DEFINIDO',
-        port: process.env.MYSQLPORT || '3306 (default)',
-        user: process.env.MYSQLUSER || '❌ NO DEFINIDO',
-        database: process.env.MYSQLDATABASE || '❌ NO DEFINIDO'
-      }
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'Base de datos NO accesible',
-      error: error.message
-    });
-  }
+// ✅ MANEJO DE ERRORES GLOBAL
+app.use((err, req, res, next) => {
+  console.error('❌ Error global:', err);
+  res.status(500).json({
+    success: false,
+    error: err.message
+  });
+});
+
+// ✅ RUTA 404
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Ruta no encontrada'
+  });
 });
 
 app.listen(port, () => {
-  console.log(`Servidor corriendo en puerto ${port}`);
+  console.log(`✅ Servidor corriendo en puerto ${port}`);
+  console.log(`✅ Health check: http://localhost:${port}/health`);
+  console.log(`✅ API registro: http://localhost:${port}/api/registro`);
 });
