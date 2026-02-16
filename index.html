@@ -1345,23 +1345,42 @@ function manejarOtroMuelle(vIndex) {
             guardarProgreso();
         }
 
-        //FUNCIÓN: Mostrar/Ocultar Tipo de Operación basado en lugar
+        // ✅ NUEVA FUNCIÓN: Mostrar/Ocultar Tipo de Operación basado en lugar
 function actualizarTipoOperacionPorLugar() {
   const lugar = document.getElementById('lugar').value;
   const contenedor = document.getElementById('vehiculos-contenedor');
   const registros = contenedor.querySelectorAll('.registro-vehiculo');
   
   registros.forEach((registro, index) => {
+    const containerMotivoTipo = document.getElementById(`motivo-tipo-operacion-container-${index}`);
+    const lineaMotivoTipo = document.getElementById(`motivo-tipo-linea-${index}`);
+    const motivoSolo = document.getElementById(`motivo-solo-${index}`);
     const tipoOperacionGroup = document.getElementById(`tipo-operacion-group-${index}`);
-    if (tipoOperacionGroup) {
+    
+    if (containerMotivoTipo && lineaMotivoTipo && motivoSolo) {
       if (lugar === 'SantoDomingo') {
-        tipoOperacionGroup.style.display = 'block';
+        // ✅ Mostrar en una sola línea para Santo Domingo
+        lineaMotivoTipo.style.display = 'flex';
+        motivoSolo.style.display = 'none';
+        
+        // Limpiar valor si se oculta
+        if (tipoOperacionGroup) {
+          const tipoOperacionSelect = document.getElementById(`tipo-operacion-${index}`);
+          if (tipoOperacionSelect) {
+            // No limpiar, mantener el valor
+          }
+        }
       } else {
-        tipoOperacionGroup.style.display = 'none';
-        // Limpiar valor cuando se oculta
-        const tipoOperacionSelect = document.getElementById(`tipo-operacion-${index}`);
-        if (tipoOperacionSelect) {
-          tipoOperacionSelect.value = '';
+        // ✅ Mostrar diseño original para otros lugares
+        lineaMotivoTipo.style.display = 'none';
+        motivoSolo.style.display = 'block';
+        
+        // Limpiar valor de tipo de operación
+        if (tipoOperacionGroup) {
+          const tipoOperacionSelect = document.getElementById(`tipo-operacion-${index}`);
+          if (tipoOperacionSelect) {
+            tipoOperacionSelect.value = '';
+          }
         }
       }
     }
@@ -1415,40 +1434,79 @@ function actualizarTipoOperacionPorLugar() {
                         </div>
                     </div>
                     
-                    <label style="margin-top:5px;">Motivo:</label>
-                    <select id="${motivoSelectId}" name="vehiculo_${vIndex}_motivo" required>
-                        <option value="">Seleccione</option>
-                        <option value="cargue" ${datos.motivo === 'cargue' ? 'selected' : ''}>Cargue</option>
-                        <option value="descargue" ${datos.motivo === 'descargue' ? 'selected' : ''}>Descargue</option>
-                        <option value="otro" ${datos.motivo === 'otro' ? 'selected' : ''}>Otro</option>
-                    </select>
-                    <input type="text" name="vehiculo_${vIndex}_otro_motivo" placeholder="Especifique otro motivo" class="otro-input" value="${datos.otro_motivo || ''}">
-
-                    <!-- ✅ TIPO DE OPERACIÓN: mostrar/ocultar basado en lugar (Santo Domingo) -->
-                    <div class="form-group-custom" id="tipo-operacion-group-${vIndex}" style="display:none;">
-                      <label style="margin-top:0;">Tipo de Operación:</label>
-                      <select id="tipo-operacion-${vIndex}" name="vehiculo_${vIndex}_tipo_operacion">
-                        <option value="">Seleccione tipo</option>
-                        <option value="3PD" ${datos.tipo_operacion === '3PD' ? 'selected' : ''}>3PD</option>
-                        <option value="MQ" ${datos.tipo_operacion === 'MQ' ? 'selected' : ''}>MQ</option>
-                      </select>
-                    </div>
+                    <!-- ✅ MOTIVO Y TIPO DE OPERACIÓN EN UNA SOLA LÍNEA (solo para Santo Domingo) -->
+<div id="motivo-tipo-operacion-container-${vIndex}" style="margin-bottom: 15px;">
+  <!-- Para Santo Domingo: en una sola línea -->
+  <div id="motivo-tipo-linea-${vIndex}" style="display: none; display: flex; gap: 20px; align-items: flex-start;">
+    <!-- Motivo -->
+    <div style="flex: 1;">
+      <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Motivo:</label>
+      <select id="${motivoSelectId}" name="vehiculo_${vIndex}_motivo" required
+              style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;"
+              onchange="alternarDestinoRemitente(this, ${vIndex}); manejarOtroCampo(this);">
+        <option value="">Seleccione</option>
+        <option value="cargue" ${datos.motivo === 'cargue' ? 'selected' : ''}>Cargue</option>
+        <option value="descargue" ${datos.motivo === 'descargue' ? 'selected' : ''}>Descargue</option>
+        <option value="otro" ${datos.motivo === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      <input type="text" name="vehiculo_${vIndex}_otro_motivo" placeholder="Especifique otro motivo" class="otro-input" 
+             value="${datos.otro_motivo || ''}"
+             style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
+    </div>
+    
+    <!-- Tipo de Operación -->
+    <div style="flex: 1;">
+      <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Tipo de Operación:</label>
+      <select id="tipo-operacion-${vIndex}" name="vehiculo_${vIndex}_tipo_operacion"
+              style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione tipo</option>
+        <option value="3PD" ${datos.tipo_operacion === '3PD' ? 'selected' : ''}>3PD</option>
+        <option value="MQ" ${datos.tipo_operacion === 'MQ' ? 'selected' : ''}>MQ</option>
+      </select>
+    </div>
+  </div>
+  
+  <!-- Para otros lugares: diseño original -->
+  <div id="motivo-solo-${vIndex}" style="display: block;">
+    <label style="margin-top:5px; display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Motivo:</label>
+    <select id="${motivoSelectId}" name="vehiculo_${vIndex}_motivo" required
+            onchange="alternarDestinoRemitente(this, ${vIndex}); manejarOtroCampo(this);">
+      <option value="">Seleccione</option>
+      <option value="cargue" ${datos.motivo === 'cargue' ? 'selected' : ''}>Cargue</option>
+      <option value="descargue" ${datos.motivo === 'descargue' ? 'selected' : ''}>Descargue</option>
+      <option value="otro" ${datos.motivo === 'otro' ? 'selected' : ''}>Otro</option>
+    </select>
+    <input type="text" name="vehiculo_${vIndex}_otro_motivo" placeholder="Especifique otro motivo" class="otro-input" value="${datos.otro_motivo || ''}">
+  </div>
+</div>
                 </div>
                 
                 <hr style="margin-top:25px; border-style:dashed;">
-                
-                <label>Muelle:</label>
-                <select name="vehiculo_${vIndex}_muelle" id="muelle-select-${vIndex}" required onchange="manejarOtroMuelle(${vIndex})">
-                    <option value="">Seleccione</option>
-                    <!-- Los muelles se generarán dinámicamente -->
-                </select>
-                <input type="number" name="vehiculo_${vIndex}_otro_muelle_num" id="otro_muelle_${vIndex}" class="otro-input" placeholder="N° muelle" min="1" max="999" value="${datos.otro_muelle_num || ''}">
-                
-                <label>Placa:</label>
-                <input type="text" name="vehiculo_${vIndex}_placa" required placeholder="ABC123, 123ABC o A12345" maxlength="6"
-                    value="${datos.placa || ''}"
-                    oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0,6); guardarProgreso();">
-                
+
+                <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 15px;">
+                  <!-- Muelle -->
+                  <div style="flex: 1;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Muelle:</label>
+                    <select name="vehiculo_${vIndex}_muelle" id="muelle-select-${vIndex}" required onchange="manejarOtroMuelle(${vIndex})"
+                            style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+                      <option value="">Seleccione</option>
+                      <!-- Los muelles se generarán dinámicamente -->
+                    </select>
+                    <input type="number" name="vehiculo_${vIndex}_otro_muelle_num" id="otro_muelle_${vIndex}" class="otro-input" 
+                          placeholder="N° muelle" min="1" max="999" value="${datos.otro_muelle_num || ''}"
+                          style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
+                  </div>
+                  
+                  <!-- Placa -->
+                  <div style="flex: 1;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Placa:</label>
+                    <input type="text" name="vehiculo_${vIndex}_placa" required 
+                          placeholder="ABC123, 123ABC o A12345" maxlength="6"
+                          value="${datos.placa || ''}"
+                          oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0,6); guardarProgreso();"
+                          style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+                  </div>
+                </div>
                 <label>Tipo De Vehiculo:</label>
                 <select name="vehiculo_${vIndex}_tipo_vehi" required id="tipo_vehi_${vIndex}">
                     <option value="">Seleccione</option>
@@ -1704,14 +1762,20 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
             registro.innerHTML = html;
             contenedor.appendChild(registro);
             
-            // ✅ MOSTRAR/OCULTAR "Tipo de Operación" basado en lugar (Santo Domingo)
-            const lugar = document.getElementById('lugar').value;
-  const tipoOperacionGroup = document.getElementById(`tipo-operacion-group-${vIndex}`);
-  if (tipoOperacionGroup) {
+            
+             // ✅ MOSTRAR/OCULTAR "Tipo de Operación" basado en lugar (Santo Domingo)
+  const lugar = document.getElementById('lugar').value;
+  const containerMotivoTipo = document.getElementById(`motivo-tipo-operacion-container-${vIndex}`);
+  const lineaMotivoTipo = document.getElementById(`motivo-tipo-linea-${vIndex}`);
+  const motivoSolo = document.getElementById(`motivo-solo-${vIndex}`);
+  
+  if (containerMotivoTipo && lineaMotivoTipo && motivoSolo) {
     if (lugar === 'SantoDomingo') {
-      tipoOperacionGroup.style.display = 'block';
+      lineaMotivoTipo.style.display = 'flex';
+      motivoSolo.style.display = 'none';
     } else {
-      tipoOperacionGroup.style.display = 'none';
+      lineaMotivoTipo.style.display = 'none';
+      motivoSolo.style.display = 'block';
     }
   }
             
