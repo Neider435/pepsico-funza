@@ -1312,24 +1312,50 @@ function manejarOtroMuelle(vIndex) {
         // ============================================
 
         function alternarDestinoRemitente(selectMotivo, vIndex) {
-            const motivo = selectMotivo.value;
-            const destinoGroup = document.getElementById(`destino-group-${vIndex}`);
-            const remitenteGroup = document.getElementById(`remitente-group-${vIndex}`);
-            
-            if (destinoGroup) destinoGroup.style.display = motivo === 'cargue' ? 'block' : 'none';
-            if (remitenteGroup) remitenteGroup.style.display = motivo === 'descargue' ? 'block' : 'none';
-            
-            // ✅ ELIMINAR la lógica del tipo de operación de aquí
-            // (se manejará solo por el lugar, no por el motivo)
-            
-            const destinoSelect = document.getElementById(`destino-select-${vIndex}`);
-            const remitenteInput = document.getElementById(`remitente-input-${vIndex}`);
-            if (motivo === 'cargue' && destinoSelect) {
-                destinoSelect.removeAttribute('required'); // Destino opcional
-            } else if (remitenteInput) {
-                remitenteInput.required = motivo === 'descargue';
-            }
-        }
+  const motivo = selectMotivo.value;
+  const destinoGroup = document.getElementById(`destino-group-${vIndex}`);
+  const remitenteGroup = document.getElementById(`remitente-group-${vIndex}`);
+  
+  // ✅ Mostrar/ocultar Destino y Origen según el motivo
+  if (destinoGroup) destinoGroup.style.display = motivo === 'cargue' ? 'block' : 'none';
+  if (remitenteGroup) remitenteGroup.style.display = motivo === 'descargue' ? 'block' : 'none';
+  
+  // ✅ Mostrar/ocultar el contenedor completo de Destino/Origen
+  const container = document.getElementById(`conditional-destino-origen-${vIndex}`);
+  if (container) {
+    container.style.display = (motivo === 'cargue' || motivo === 'descargue') ? 'block' : 'none';
+  }
+  
+  // ✅ Manejar campos "otro" si existen
+  const destinoSelect = document.getElementById(`destino-select-${vIndex}`);
+  const remitenteSelect = document.getElementById(`remitente-select-${vIndex}`);
+  
+  if (destinoSelect) {
+    const otroDestinoInput = document.getElementById(`otro_destino_${vIndex}`);
+    if (otroDestinoInput) {
+      if (destinoSelect.value === 'otro') {
+        otroDestinoInput.style.display = 'block';
+      } else {
+        otroDestinoInput.style.display = 'none';
+        otroDestinoInput.value = '';
+      }
+    }
+  }
+  
+  if (remitenteSelect) {
+    const otroOrigenInput = document.getElementById(`otro_origen_${vIndex}`);
+    if (otroOrigenInput) {
+      if (remitenteSelect.value === 'otro') {
+        otroOrigenInput.style.display = 'block';
+      } else {
+        otroOrigenInput.style.display = 'none';
+        otroOrigenInput.value = '';
+      }
+    }
+  }
+  
+  guardarProgreso();
+}
 
         function mostrarTiempoMuerto(select, vIndex) {
             const div = document.getElementById(`tiempo-muerto-${vIndex}`);
@@ -1507,76 +1533,96 @@ function actualizarTipoOperacionPorLugar() {
                           style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
                   </div>
                 </div>
-                <label>Tipo De Vehiculo:</label>
-                <select name="vehiculo_${vIndex}_tipo_vehi" required id="tipo_vehi_${vIndex}">
-                    <option value="">Seleccione</option>
-                    <option value="Van extralargo" ${datos.tipo_vehi === 'Van extralargo' ? 'selected' : ''}>Van extralargo</option>
-                    <option value="Camion sencillo furgonado" ${datos.tipo_vehi === 'Camion sencillo furgonado' ? 'selected' : ''}>Camión sencillo furgonado</option>
-                    <option value="Camabaja furgonado" ${datos.tipo_vehi === 'Camabaja furgonado' ? 'selected' : ''}>Camabaja furgonado</option>
-                    <option value="Tractomula furgonado" ${datos.tipo_vehi === 'Tractomula furgonado' ? 'selected' : ''}>Tractomula furgonado</option>
-                    <option value="Exportacion 35" ${datos.tipo_vehi === 'Exportacion 35' ? 'selected' : ''}>Exportacion 35</option>
-                    <option value="Exportacion 40" ${datos.tipo_vehi === 'Exportacion 40' ? 'selected' : ''}>Exportacion 40</option>
-                    <option value="Cama baja con topes" ${datos.tipo_vehi === 'Cama baja con topes' ? 'selected' : ''}>Cama baja con topes</option>
-                    <option value="Camion sencillo carpado" ${datos.tipo_vehi === 'Camion sencillo carpado' ? 'selected' : ''}>Camión Sencillo Carpado</option>
-                    <option value="Camabaja estandar" ${datos.tipo_vehi === 'Camabaja estandar' ? 'selected' : ''}>Camabaja estandar</option>
-                    <option value="otro" ${datos.tipo_vehi === 'otro' ? 'selected' : ''}>Otro</option>
-                </select>
-                <input type="text" name="vehiculo_${vIndex}_otro_tipo" id="otro_tipo_${vIndex}" class="otro-input" placeholder="Especifique tipo" value="${datos.otro_tipo || ''}">
-                
-                <div class="form-group-custom" id="destino-group-${vIndex}" style="${(datos.motivo === 'cargue') ? 'display:block;' : 'display:none;'}">
-                    <label style="margin-top:0;">Destino:</label>
-                    <select id="destino-select-${vIndex}" name="vehiculo_${vIndex}_destino">
-<option value="">Seleccione Destino</option>
-<option value="BARRANQUILLA" ${datos.destino === 'BARRANQUILLA' ? 'selected' : ''}>BARRANQUILLA</option>
-<option value="CALI" ${datos.destino === 'CALI' ? 'selected' : ''}>CALI</option>
-<option value="BUCARAMANGA" ${datos.destino === 'BUCARAMANGA' ? 'selected' : ''}>BUCARAMANGA</option>
-<option value="MEDELLIN" ${datos.destino === 'MEDELLIN' ? 'selected' : ''}>MEDELLIN</option>
-<option value="MONTERIA" ${datos.destino === 'MONTERIA' ? 'selected' : ''}>MONTERIA</option>
-<option value="GUARNE" ${datos.destino === 'GUARNE' ? 'selected' : ''}>GUARNE</option>
-<option value="PEREIRA" ${datos.destino === 'PEREIRA' ? 'selected' : ''}>PEREIRA</option>
-<option value="PERU" ${datos.destino === 'PERU' ? 'selected' : ''}>PERU</option>
-<option value="ECUADOR" ${datos.destino === 'ECUADOR' ? 'selected' : ''}>ECUADOR</option>
-<option value="FUNZA" ${datos.destino === 'FUNZA' ? 'selected' : ''}>FUNZA</option>
-<option value="BOLIVIA" ${datos.destino === 'BOLIVIA' ? 'selected' : ''}>BOLIVIA</option>
-<option value="SANTO DOMINGO" ${datos.destino === 'SANTO DOMINGO' ? 'selected' : ''}>SANTO DOMINGO</option>
-<option value="LOCALES" ${datos.destino === 'LOCALES' ? 'selected' : ''}>LOCALES</option>
-<option value="INNOVA" ${datos.destino === 'INNOVA' ? 'selected' : ''}>INNOVA</option>
-<option value="CUCUTA" ${datos.destino === 'CUCUTA' ? 'selected' : ''}>CUCUTA</option>
-<option value="LA ESTANCIA" ${datos.destino === 'LA ESTANCIA' ? 'selected' : ''}>LA ESTANCIA</option>
-<option value="CIUDAD BOLIVAR" ${datos.destino === 'CIUDAD BOLIVAR' ? 'selected' : ''}>CIUDAD BOLIVAR</option>
-<option value="VILLAVICENCIO" ${datos.destino === 'VILLAVICENCIO' ? 'selected' : ''}>VILLAVICENCIO</option>
-<option value="ACACIAS" ${datos.destino === 'ACACIAS' ? 'selected' : ''}>ACACIAS</option>
-<option value="otro" ${datos.destino === 'otro' ? 'selected' : ''}>Otro</option>
-</select>
-                    <input type="text" name="vehiculo_${vIndex}_otro_destino" id="otro_destino_${vIndex}" class="otro-input" placeholder="Especifique otro destino" value="${datos.otro_destino || ''}">
-                </div>
-                
-                <div class="form-group-custom" id="remitente-group-${vIndex}" style="${(datos.motivo === 'descargue') ? 'display:block;' : 'display:none;'}">
-<label style="margin-top:0;">Origen / Remitente:</label>
-<select id="remitente-select-${vIndex}" name="vehiculo_${vIndex}_origen">
-<option value="">Seleccione Origen</option>
-<option value="BARRANQUILLA" ${datos.origen === 'BARRANQUILLA' ? 'selected' : ''}>BARRANQUILLA</option>
-<option value="CALI" ${datos.origen === 'CALI' ? 'selected' : ''}>CALI</option>
-<option value="BUCARAMANGA" ${datos.origen === 'BUCARAMANGA' ? 'selected' : ''}>BUCARAMANGA</option>
-<option value="MEDELLIN" ${datos.origen === 'MEDELLIN' ? 'selected' : ''}>MEDELLIN</option>
-<option value="MONTERIA" ${datos.origen === 'MONTERIA' ? 'selected' : ''}>MONTERIA</option>
-<option value="GUARNE" ${datos.origen === 'GUARNE' ? 'selected' : ''}>GUARNE</option>
-<option value="PEREIRA" ${datos.origen === 'PEREIRA' ? 'selected' : ''}>PEREIRA</option>
-<option value="PERU" ${datos.origen === 'PERU' ? 'selected' : ''}>PERU</option>
-<option value="ECUADOR" ${datos.origen === 'ECUADOR' ? 'selected' : ''}>ECUADOR</option>
-<option value="FUNZA" ${datos.origen === 'FUNZA' ? 'selected' : ''}>FUNZA</option>
-<option value="BOLIVIA" ${datos.origen === 'BOLIVIA' ? 'selected' : ''}>BOLIVIA</option>
-<option value="SANTO DOMINGO" ${datos.origen === 'SANTO DOMINGO' ? 'selected' : ''}>SANTO DOMINGO</option>
-<option value="LOCALES" ${datos.origen === 'LOCALES' ? 'selected' : ''}>LOCALES</option>
-<option value="INNOVA" ${datos.origen === 'INNOVA' ? 'selected' : ''}>INNOVA</option>
-<option value="CUCUTA" ${datos.origen === 'CUCUTA' ? 'selected' : ''}>CUCUTA</option>
-<option value="LA ESTANCIA" ${datos.origen === 'LA ESTANCIA' ? 'selected' : ''}>LA ESTANCIA</option>
-<option value="CIUDAD BOLIVAR" ${datos.origen === 'CIUDAD BOLIVAR' ? 'selected' : ''}>CIUDAD BOLIVAR</option>
-<option value="VILLAVICENCIO" ${datos.origen === 'VILLAVICENCIO' ? 'selected' : ''}>VILLAVICENCIO</option>
-<option value="ACACIAS" ${datos.origen === 'ACACIAS' ? 'selected' : ''}>ACACIAS</option>
-<option value="otro" ${datos.origen === 'otro' ? 'selected' : ''}>Otro</option>
-</select>
-<input type="text" name="vehiculo_${vIndex}_otro_origen" id="otro_origen_${vIndex}" class="otro-input" placeholder="Especifique otro origen" value="${datos.otro_origen || ''}">
+                <!-- ✅ TIPO DE VEHÍCULO Y DESTINO/ORIGEN EN UNA SOLA LÍNEA -->
+<div style="display: flex; gap: 20px; margin-bottom: 15px;">
+  <!-- TIPO DE VEHÍCULO (siempre visible) -->
+  <div style="flex: 1;">
+    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Tipo De Vehículo:</label>
+    <select name="vehiculo_${vIndex}_tipo_vehi" required id="tipo_vehi_${vIndex}"
+            style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+      <option value="">Seleccione</option>
+      <option value="Van extralargo" ${datos.tipo_vehi === 'Van extralargo' ? 'selected' : ''}>Van extralargo</option>
+      <option value="Camion sencillo furgonado" ${datos.tipo_vehi === 'Camion sencillo furgonado' ? 'selected' : ''}>Camión sencillo furgonado</option>
+      <option value="Camabaja furgonado" ${datos.tipo_vehi === 'Camabaja furgonado' ? 'selected' : ''}>Camabaja furgonado</option>
+      <option value="Tractomula furgonado" ${datos.tipo_vehi === 'Tractomula furgonado' ? 'selected' : ''}>Tractomula furgonado</option>
+      <option value="Exportacion 35" ${datos.tipo_vehi === 'Exportacion 35' ? 'selected' : ''}>Exportacion 35</option>
+      <option value="Exportacion 40" ${datos.tipo_vehi === 'Exportacion 40' ? 'selected' : ''}>Exportacion 40</option>
+      <option value="Cama baja con topes" ${datos.tipo_vehi === 'Cama baja con topes' ? 'selected' : ''}>Cama baja con topes</option>
+      <option value="Camion sencillo carpado" ${datos.tipo_vehi === 'Camion sencillo carpado' ? 'selected' : ''}>Camión Sencillo Carpado</option>
+      <option value="Camabaja estandar" ${datos.tipo_vehi === 'Camabaja estandar' ? 'selected' : ''}>Camabaja estandar</option>
+      <option value="otro" ${datos.tipo_vehi === 'otro' ? 'selected' : ''}>Otro</option>
+    </select>
+    <input type="text" name="vehiculo_${vIndex}_otro_tipo" id="otro_tipo_${vIndex}" class="otro-input" 
+           placeholder="Especifique tipo" value="${datos.otro_tipo || ''}"
+           style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
+  </div>
+  
+  <!-- DESTINO/ORIGEN (condicional según motivo) -->
+  <div style="flex: 1;" id="conditional-destino-origen-${vIndex}">
+    <!-- DESTINO (visible solo si motivo = cargue) -->
+    <div class="form-group-custom" id="destino-group-${vIndex}" style="${(datos.motivo === 'cargue') ? 'display:block;' : 'display:none;'}">
+      <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; margin-top:0;">Destino:</label>
+      <select id="destino-select-${vIndex}" name="vehiculo_${vIndex}_destino"
+              style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione Destino</option>
+        <option value="BARRANQUILLA" ${datos.destino === 'BARRANQUILLA' ? 'selected' : ''}>BARRANQUILLA</option>
+        <option value="CALI" ${datos.destino === 'CALI' ? 'selected' : ''}>CALI</option>
+        <option value="BUCARAMANGA" ${datos.destino === 'BUCARAMANGA' ? 'selected' : ''}>BUCARAMANGA</option>
+        <option value="MEDELLIN" ${datos.destino === 'MEDELLIN' ? 'selected' : ''}>MEDELLIN</option>
+        <option value="MONTERIA" ${datos.destino === 'MONTERIA' ? 'selected' : ''}>MONTERIA</option>
+        <option value="GUARNE" ${datos.destino === 'GUARNE' ? 'selected' : ''}>GUARNE</option>
+        <option value="PEREIRA" ${datos.destino === 'PEREIRA' ? 'selected' : ''}>PEREIRA</option>
+        <option value="PERU" ${datos.destino === 'PERU' ? 'selected' : ''}>PERU</option>
+        <option value="ECUADOR" ${datos.destino === 'ECUADOR' ? 'selected' : ''}>ECUADOR</option>
+        <option value="FUNZA" ${datos.destino === 'FUNZA' ? 'selected' : ''}>FUNZA</option>
+        <option value="BOLIVIA" ${datos.destino === 'BOLIVIA' ? 'selected' : ''}>BOLIVIA</option>
+        <option value="SANTO DOMINGO" ${datos.destino === 'SANTO DOMINGO' ? 'selected' : ''}>SANTO DOMINGO</option>
+        <option value="LOCALES" ${datos.destino === 'LOCALES' ? 'selected' : ''}>LOCALES</option>
+        <option value="INNOVA" ${datos.destino === 'INNOVA' ? 'selected' : ''}>INNOVA</option>
+        <option value="CUCUTA" ${datos.destino === 'CUCUTA' ? 'selected' : ''}>CUCUTA</option>
+        <option value="LA ESTANCIA" ${datos.destino === 'LA ESTANCIA' ? 'selected' : ''}>LA ESTANCIA</option>
+        <option value="CIUDAD BOLIVAR" ${datos.destino === 'CIUDAD BOLIVAR' ? 'selected' : ''}>CIUDAD BOLIVAR</option>
+        <option value="VILLAVICENCIO" ${datos.destino === 'VILLAVICENCIO' ? 'selected' : ''}>VILLAVICENCIO</option>
+        <option value="ACACIAS" ${datos.destino === 'ACACIAS' ? 'selected' : ''}>ACACIAS</option>
+        <option value="otro" ${datos.destino === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      <input type="text" name="vehiculo_${vIndex}_otro_destino" id="otro_destino_${vIndex}" class="otro-input" 
+             placeholder="Especifique otro destino" value="${datos.otro_destino || ''}"
+             style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
+    </div>
+    
+    <!-- ORIGEN (visible solo si motivo = descargue) -->
+    <div class="form-group-custom" id="remitente-group-${vIndex}" style="${(datos.motivo === 'descargue') ? 'display:block;' : 'display:none;'}">
+      <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; margin-top:0;">Origen / Remitente:</label>
+      <select id="remitente-select-${vIndex}" name="vehiculo_${vIndex}_origen"
+              style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione Origen</option>
+        <option value="BARRANQUILLA" ${datos.origen === 'BARRANQUILLA' ? 'selected' : ''}>BARRANQUILLA</option>
+        <option value="CALI" ${datos.origen === 'CALI' ? 'selected' : ''}>CALI</option>
+        <option value="BUCARAMANGA" ${datos.origen === 'BUCARAMANGA' ? 'selected' : ''}>BUCARAMANGA</option>
+        <option value="MEDELLIN" ${datos.origen === 'MEDELLIN' ? 'selected' : ''}>MEDELLIN</option>
+        <option value="MONTERIA" ${datos.origen === 'MONTERIA' ? 'selected' : ''}>MONTERIA</option>
+        <option value="GUARNE" ${datos.origen === 'GUARNE' ? 'selected' : ''}>GUARNE</option>
+        <option value="PEREIRA" ${datos.origen === 'PEREIRA' ? 'selected' : ''}>PEREIRA</option>
+        <option value="PERU" ${datos.origen === 'PERU' ? 'selected' : ''}>PERU</option>
+        <option value="ECUADOR" ${datos.origen === 'ECUADOR' ? 'selected' : ''}>ECUADOR</option>
+        <option value="FUNZA" ${datos.origen === 'FUNZA' ? 'selected' : ''}>FUNZA</option>
+        <option value="BOLIVIA" ${datos.origen === 'BOLIVIA' ? 'selected' : ''}>BOLIVIA</option>
+        <option value="SANTO DOMINGO" ${datos.origen === 'SANTO DOMINGO' ? 'selected' : ''}>SANTO DOMINGO</option>
+        <option value="LOCALES" ${datos.origen === 'LOCALES' ? 'selected' : ''}>LOCALES</option>
+        <option value="INNOVA" ${datos.origen === 'INNOVA' ? 'selected' : ''}>INNOVA</option>
+        <option value="CUCUTA" ${datos.origen === 'CUCUTA' ? 'selected' : ''}>CUCUTA</option>
+        <option value="LA ESTANCIA" ${datos.origen === 'LA ESTANCIA' ? 'selected' : ''}>LA ESTANCIA</option>
+        <option value="CIUDAD BOLIVAR" ${datos.origen === 'CIUDAD BOLIVAR' ? 'selected' : ''}>CIUDAD BOLIVAR</option>
+        <option value="VILLAVICENCIO" ${datos.origen === 'VILLAVICENCIO' ? 'selected' : ''}>VILLAVICENCIO</option>
+        <option value="ACACIAS" ${datos.origen === 'ACACIAS' ? 'selected' : ''}>ACACIAS</option>
+        <option value="otro" ${datos.origen === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      <input type="text" name="vehiculo_${vIndex}_otro_origen" id="otro_origen_${vIndex}" class="otro-input" 
+             placeholder="Especifique otro origen" value="${datos.otro_origen || ''}"
+             style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
+    </div>
+  </div>
 </div>
                 
                 <label>Total De Personas:</label>
@@ -1761,6 +1807,8 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
             
             registro.innerHTML = html;
             contenedor.appendChild(registro);
+
+            
             
             
              // ✅ MOSTRAR/OCULTAR "Tipo de Operación" basado en lugar (Santo Domingo)
