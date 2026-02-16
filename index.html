@@ -299,6 +299,15 @@
 }
     </style>
 
+    <!-- ✅ EMAILJS SDK -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script type="text/javascript">
+  (function() {
+    // ✅ REEMPLAZA CON TU PUBLIC KEY DE EMAILJS
+    emailjs.init("Aj5Ky5P4DCu-u_BFj4G-t");
+  })();
+</script>
+
 </head>
 <body>
   <script>
@@ -4549,22 +4558,41 @@ function enviarFormulario(event) {
     return response.json();
   })
   .then(result => {
-    if (result.success) {
-      // ✅ Eliminar datos de localStorage
-      localStorage.removeItem('pepsico_data');
-      
-      // ✅ Redirigir a aceptacion.html
-      window.location.href = 'aceptacion.html';
-    } else {
-      throw new Error(result.error || 'Error desconocido');
-    }
-  })
+  if (result.success) {
+    localStorage.removeItem('pepsico_data');
+    enviarCorreoConfirmacion(formData);
+    window.location.href = 'aceptacion.html';
+  }
+})
   .catch(error => {
     console.error('Error:', error);
     alert('❌ Error al guardar: ' + error.message + '\n\nPor favor, inténtalo de nuevo.');
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
   });
+}
+
+function enviarCorreoConfirmacion(datos) {
+  const templateParams = {
+    fecha: datos.fecha,
+    lugar: datos.lugar,
+    turno: datos.turno,
+    respo_diligen: datos.respo_diligen,
+    total_vehiculos: datos.datos_vehiculos.length,
+    cajas_totales: datos.cajas_totales,
+    total_personas: datos.total_personas,
+    to_email: 'notificaciones@emmacolombia.com'
+  };
+
+  // ✅ TU SERVICE ID Y TEMPLATE ID VAN AQUÍ
+  emailjs.send('service_7fe29nl', 'template_xey3tlm', templateParams)
+    .then(() => {
+      console.log('✅ Correo enviado exitosamente');
+      mostrarNotificacion('✅ Correo de confirmación enviado', 'success');
+    }, (error) => {
+      console.error('❌ Error al enviar correo:', error);
+      mostrarNotificacion('⚠️ Error al enviar correo de confirmación', 'warning');
+    });
 }
         
 
