@@ -5,9 +5,15 @@
     <title>Registro - Pepsico Funza</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
-            padding: 40px;
+          font-family: Arial, sans-serif;
+          /* ✅ FONDO DE IMAGEN */
+          background-image: url('fondo.jpg');
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+          background-attachment: fixed;
+          padding: 40px;
+          min-height: 100vh;
         }
         
         .logo-container {
@@ -53,7 +59,7 @@
         
         .btn-agregar-registro,
         .btn-agregar-parada-op {
-            background-color: #001855;
+            background-color: #23668e;
             color: white;
             border: none;
             cursor: pointer;
@@ -387,18 +393,18 @@
         <hr style="margin-top: 25px; border-style: dotted;">
         
         <!-- SECCIÓN: REGISTRO DE VEHÍCULOS -->
-        <h3 style="text-align:center; font-size:1.3em; color:#C76E00;">REGISTRO DE VEHÍCULOS</h3>
+        <h3 style="text-align:center; font-size:1.3em; color:#74153b;">REGISTRO DE VEHÍCULOS</h3>
         <div id="vehiculos-contenedor"></div>
         <button type="button" class="btn-agregar-registro" onclick="agregarRegistroVehiculo()">
             + Registrar Nuevo Vehículo
         </button>
         
+      
         <hr style="margin-top: 25px; border-style: dotted;">
-        
-        <!-- SECCIÓN: PARADAS DE OPERACIÓN -->
-        <!-- ✅ BOTÓN PARA ABRIR PARADAS DE OPERACIÓN -->
+        <h3 style="font-family: Arial, sans-serif; color: #983f03; text-align: center; text-transform: uppercase; margin: 20px 0;">Paradas De Operativas</h3>
+
 <button type="button" onclick="abrirParadasOperacion()"
-        style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 15px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+        style="background: linear-gradient(135deg, #626e8e 0%, #68143a 100%); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 15px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
     🛑 Paradas de Operación
 </button>
 
@@ -459,8 +465,8 @@
 
         <!-- ✅ BOTONES ENVIAR Y BORRAR TODO (sin cambios) -->
         <div style="display: flex; gap: 10px;">
-            <button type="submit" style="flex: 3; padding: 12px; background: #001855; color: white; border: none; border-radius: 5px; font-weight: bold; font-size: 1.1em; cursor: pointer;">Enviar</button>
-            <button type="button" class="btn-borrar-todo" style="flex: 1; padding: 12px; background: #dc3545; color: white; border: none; border-radius: 5px; font-weight: bold; font-size: 1em; cursor: pointer;" onclick="limpiarTodo()">🗑️ Borrar Todo</button>
+            <button type="submit" style="flex: 3; padding: 12px; background: #205d35; color: white; border: none; border-radius: 5px; font-weight: bold; font-size: 1.1em; cursor: pointer;">Enviar</button>
+            <button type="button" class="btn-borrar-todo" style="flex: 1; padding: 12px; background: #852d36; color: white; border: none; border-radius: 5px; font-weight: bold; font-size: 1em; cursor: pointer;" onclick="limpiarTodo()">🗑️ Borrar Todo</button>
         </div>
         
     </form>
@@ -1639,9 +1645,13 @@ function actualizarTipoOperacionPorLugar() {
                 
                 <hr style="margin-top:25px; border-style:dashed;">
                 
-                <h4 style="text-align:center; color:#C76E00;">VEHÍCULO #${vIndex + 1}</h4>
-                <h5 style="text-align:center; color:#C76E00;">PARADA DE CARGUE/DESCARGUE</h5>
-                
+                <h3 style="text-align:center; color:#292929;">VEHÍCULO #${vIndex + 1}</h3>
+                <h4 style="font-family: Arial, sans-serif; color: #983f03; text-align: center; text-transform: uppercase; margin: 20px 0;">Cargue/Descargue</h4>
+                <button type="button" onclick="abrirInspeccionVehiculo(${vIndex})"
+                        style="background: linear-gradient(135deg, #001855 0%, #0039 100%); color: white; border: none; padding: 15px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; margin: 10px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                    🔍 Inspección de Vehículo
+                </button>
+
                 <div class="parada-group">
                     <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #1 (Cargue/Descargue)</p>
                     
@@ -1653,7 +1663,7 @@ function actualizarTipoOperacionPorLugar() {
       <input type="tel" name="vehiculo_${vIndex}_inicio" id="inicio-input-${vIndex}" class="time-input-masked" required
           placeholder="HH:MM" maxlength="5" value="${datos.inicio || ''}"
           onblur="applyTimeMask(this, '${inicioId}');"
-          readonly  <!-- ✅ BLOQUEADO POR DEFECTO -->
+          readonly
           <style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1em; box-sizing: border-box;">
       <span id="${inicioId}" class="time-display"></span>
     </div>
@@ -1662,7 +1672,7 @@ function actualizarTipoOperacionPorLugar() {
       <input type="tel" name="vehiculo_${vIndex}_fin" id="fin-input-${vIndex}" class="time-input-masked" required
           placeholder="HH:MM" maxlength="5" value="${datos.fin || ''}"
           onblur="applyTimeMask(this, '${finId}');"
-          readonly  <!-- ✅ BLOQUEADO POR DEFECTO -->
+          readonly
           <style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1em; box-sizing: border-box;">
       <span id="${finId}" class="time-display"></span>
     </div>
@@ -1948,10 +1958,7 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
 
 
 <!-- ✅ BOTÓN PARA ABRIR NOVEDADES -->
-<button type="button" onclick="abrirNovedadesVehiculo(${vIndex})"
-        style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 15px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-    📝 Novedades del Vehículo
-</button>
+
 
 <!-- ✅ CONTENEDOR OCULTO PARA NOVEDADES (se sincroniza con el overlay) -->
 <div id="novedades-contenedor-${vIndex}" style="display: none;"></div>
@@ -1990,13 +1997,13 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
                     📸 <strong>La foto se sube automáticamente.</strong> No necesita hacer nada más.
                 </p>
 
-                <!-- ✅ BOTÓN PARA ABRIR INSPECCIÓN -->
-<button type="button" onclick="abrirInspeccionVehiculo(${vIndex})"
-        style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 15px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-    🔍 Inspección de Vehículo
-</button>
+                <button type="button" onclick="abrirNovedadesVehiculo(${vIndex})"
+                        style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 15px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                    📝 Novedades del Vehículo
+                </button>
 
-<!-- ✅ OVERLAY/MODAL DE INSPECCIÓN (sin required) -->
+
+
 <!-- ✅ OVERLAY/MODAL DE INSPECCIÓN (con validación visual) -->
 <div id="overlay-inspeccion-${vIndex}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center;">
   <div style="background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
@@ -3294,7 +3301,7 @@ function abrirInspeccionVehiculo(vIndex) {
 function cerrarInspeccionVehiculo(vIndex) {
     const overlay = document.getElementById(`overlay-inspeccion-${vIndex}`);
     if (overlay) {
-        // ✅ Quitar resaltado de campos
+        // ✅ Limpiar estilos de validación visual
         const campos = [
             `interior_camion_${vIndex}`,
             `estado_carpa_${vIndex}`,
@@ -3304,7 +3311,6 @@ function cerrarInspeccionVehiculo(vIndex) {
             `estado_suelo_${vIndex}`,
             `aprobado_${vIndex}`
         ];
-        
         campos.forEach(id => {
             const campo = document.getElementById(id);
             if (campo) {
@@ -3312,7 +3318,6 @@ function cerrarInspeccionVehiculo(vIndex) {
                 campo.style.boxShadow = '';
             }
         });
-        
         overlay.style.display = 'none';
         document.body.style.overflow = 'auto';
     }
