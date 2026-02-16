@@ -1625,7 +1625,7 @@ function actualizarTipoOperacionPorLugar() {
   </div>
 </div>
                 
-                <label>Total De Personas:</label>
+                <label>Numero De Personas en Actividad:</label>
                 <input type="number" name="vehiculo_${vIndex}_personas" min="1" required value="${datos.personas || ''}" oninput="generarCamposNombresVehiculo(${vIndex}); guardarProgreso()">
                 
                 <!-- ✅ Contenedor para nombres del personal (NUEVO) -->
@@ -1666,32 +1666,38 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
 <!-- ✅ RESUMEN DE PRODUCTOS ESCANEADOS -->
 <div id="resumen-productos-${vIndex}" style="margin-top: 20px; margin-bottom: 15px;"></div>
                 
-                <label>Justificación del retraso o incidencia:</label>
-                <select name="vehiculo_${vIndex}_justificacion" onchange="mostrarTiempoMuerto(this, ${vIndex})">
-                    <option value="">Seleccione motivo</option>
-                    <option value="faltante_producto" ${datos.justificacion === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
-                    <option value="liberacion_calidad" ${datos.justificacion === 'liberacion_calidad' ? 'selected' : ''}>Liberacion de calidad</option>
-                    <option value="Daños" ${datos.justificacion === 'Daños' ? 'selected' : ''}>Daños(electricos, muelle, montacargas, etc.)</option>
-                    <option value="otro" ${datos.justificacion === 'otro' ? 'selected' : ''}>Otro</option>
-                </select>
-                <input type="text" name="vehiculo_${vIndex}_otro_justificacion" id="otro_justificacion_${vIndex}" class="otro-input" placeholder="Especifique la incidencia" value="${datos.otro_justificacion || ''}">
-                
-                <div class="time-row" id="tiempo-muerto-${vIndex}" style="display:${datos.justificacion ? 'flex' : 'none'};">
-                    <div>
-                        <label class="time-label">Tiempo Muerto Inicio:</label>
-                        <input type="tel" name="vehiculo_${vIndex}_tiempo_muerto_inicio" class="time-input-masked"
-                            placeholder="HH:MM" maxlength="5" value="${datos.tiempo_muerto_inicio || ''}"
-                            onblur="applyTimeMask(this, 'muerto-inicio-${vIndex}')">
-                        <span id="muerto-inicio-${vIndex}" class="time-display"></span>
-                    </div>
-                    <div>
-                        <label class="time-label">Tiempo Muerto Final:</label>
-                        <input type="tel" name="vehiculo_${vIndex}_tiempo_muerto_final" class="time-input-masked"
-                            placeholder="HH:MM" maxlength="5" value="${datos.tiempo_muerto_final || ''}"
-                            onblur="applyTimeMask(this, 'muerto-final-${vIndex}')">
-                        <span id="muerto-final-${vIndex}" class="time-display"></span>
-                    </div>
-                </div>
+                <!-- ✅ BOTÓN PARA ABRIR JUSTIFICACIONES -->
+<button type="button" onclick="abrirJustificacionesVehiculo(${vIndex})"
+        style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 15px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+    📋 Justificaciones de Retraso
+</button>
+
+<!-- ✅ CONTENEDOR OCULTO PARA JUSTIFICACIONES (se sincroniza con el overlay) -->
+<div id="justificaciones-contenedor-${vIndex}" style="display: none;"></div>
+
+<!-- ✅ OVERLAY/MODAL DE JUSTIFICACIONES -->
+<div id="overlay-justificaciones-${vIndex}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center; padding: 20px;">
+  <div style="background: white; padding: 25px; border-radius: 10px; width: 95%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
+    <h4 style="text-align: center; color: #C76E00; margin-top: 0;">JUSTIFICACIONES DE RETRASO - VEHÍCULO #${vIndex + 1}</h4>
+    <hr style="margin: 15px 0; border-style: dashed;">
+    
+    <!-- CONTENEDOR DE JUSTIFICACIONES -->
+    <div id="justificaciones-overlay-contenedor-${vIndex}" style="margin-bottom: 20px;"></div>
+    
+    <!-- BOTONES DE ACCIÓN -->
+    <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px; padding-top: 15px; border-top: 2px solid #001855;">
+      <button type="button" onclick="agregarJustificacionOverlay(${vIndex})"
+              style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; border: none; padding: 10px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; flex: 1;">
+        ➕ Agregar Justificación
+      </button>
+      
+      <button type="button" onclick="cerrarJustificacionesVehiculo(${vIndex})"
+              style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 10px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; flex: 1;">
+        ✅ Aceptar
+      </button>
+    </div>
+  </div>
+</div>
                 
                 <label>Foto De vehiculo:</label>
                 <input type="file" name="vehiculo_${vIndex}_foto" id="${fotoInputId}" accept="image/*" capture="environment">
@@ -1857,6 +1863,9 @@ if (origenSelect) {
                 manejarOtroCampo(motivoSelect);
                 guardarProgreso();
             });
+
+            // ✅ Inicializar visibilidad según el valor guardado
+            alternarDestinoRemitente(motivoSelect, vIndex);
             
             const selects = registro.querySelectorAll('select');
             selects.forEach(sel => {
@@ -1883,7 +1892,7 @@ if (origenSelect) {
                         div.style.marginBottom = '10px';
                         
                         const label = document.createElement('label');
-                        label.textContent = `Nombre persona ${idx + 1}:`;
+                        label.textContent = `Nombre del Colaborador # ${idx + 1}:`;
                         label.style.display = 'block';
                         label.style.fontWeight = 'bold';
                         label.style.marginBottom = '5px';
@@ -1891,18 +1900,32 @@ if (origenSelect) {
                         label.htmlFor = `vehiculo_${vIndex}_nombre_persona_${idx + 1}`;
                         
                         const input = document.createElement('input');
-                        input.type = 'text';
-                        input.id = `vehiculo_${vIndex}_nombre_persona_${idx + 1}`;
-                        input.name = `vehiculo_${vIndex}_nombre_persona_${idx + 1}`;
-                        input.placeholder = `Nombre del trabajador ${idx + 1}`;
-                        input.value = nombre;
-                        input.required = true;
-                        input.style.width = '100%';
-                        input.style.padding = '8px';
-                        input.style.border = '1px solid #170303';
-                        input.style.borderRadius = '8px';
-                        input.style.boxSizing = 'border-box';
-                        input.oninput = guardarProgreso;
+input.type = 'text';  // ✅ Cambiar a 'text' para poder usar maxlength
+input.inputmode = 'numeric';  // ✅ Teclado numérico en móviles
+input.id = `vehiculo_${vIndex}_nombre_persona_${idx + 1}`;
+input.name = `vehiculo_${vIndex}_nombre_persona_${idx + 1}`;
+input.placeholder = `Cédula del colaborador ${idx + 1}`;
+input.value = nombre;
+input.required = true;
+input.maxLength = 10;  // ✅ Limitar a máximo 10 caracteres
+input.style.width = '100%';
+input.style.padding = '8px';
+input.style.border = '1px solid #170303';
+input.style.borderRadius = '8px';
+input.style.boxSizing = 'border-box';
+
+// ✅ Limitar a solo números y máximo 10 caracteres
+input.oninput = function() {
+  // Eliminar todo excepto números
+  this.value = this.value.replace(/\D/g, '');
+  
+  // Limitar a máximo 10 dígitos
+  if (this.value.length > 10) {
+    this.value = this.value.substring(0, 10);
+  }
+  
+  guardarProgreso();
+};
                         
                         div.appendChild(label);
                         div.appendChild(input);
@@ -1930,6 +1953,221 @@ if (origenSelect) {
                 setupFotoPreview(fotoInputId, previewFotoId, nombrePersonalizado);
             });
         }
+
+        // ✅ ABRIR OVERLAY DE JUSTIFICACIONES
+function abrirJustificacionesVehiculo(vIndex) {
+  const overlay = document.getElementById(`overlay-justificaciones-${vIndex}`);
+  const contenedorOverlay = document.getElementById(`justificaciones-overlay-contenedor-${vIndex}`);
+  const contenedorOculto = document.getElementById(`justificaciones-contenedor-${vIndex}`);
+  
+  if (!overlay || !contenedorOverlay || !contenedorOculto) {
+    console.error('Error: Elementos del overlay no encontrados');
+    return;
+  }
+  
+  // Limpiar contenedor del overlay
+  contenedorOverlay.innerHTML = '';
+  
+  // Copiar justificaciones del contenedor oculto al overlay
+  const justificacionesOcultas = contenedorOculto.querySelectorAll('.justificacion-group');
+  justificacionesOcultas.forEach((justificacionOculta, index) => {
+    crearJustificacionOverlay(vIndex, index, justificacionOculta);
+  });
+  
+  // Si no hay justificaciones, agregar la primera vacía
+  if (contenedorOverlay.children.length === 0) {
+    agregarJustificacionOverlay(vIndex);
+  }
+  
+  // Mostrar overlay
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+// ✅ CERRAR OVERLAY DE JUSTIFICACIONES
+function cerrarJustificacionesVehiculo(vIndex) {
+  const contenedorOculto = document.getElementById(`justificaciones-contenedor-${vIndex}`);
+  const contenedorOverlay = document.getElementById(`justificaciones-overlay-contenedor-${vIndex}`);
+  const overlay = document.getElementById(`overlay-justificaciones-${vIndex}`);
+  
+  if (!contenedorOculto || !contenedorOverlay || !overlay) return;
+  
+  // Limpiar contenedor oculto
+  contenedorOculto.innerHTML = '';
+  
+  // Copiar justificaciones del overlay al contenedor oculto
+  const justificacionesOverlay = contenedorOverlay.querySelectorAll('.justificacion-group');
+  justificacionesOverlay.forEach((justificacionOverlay, index) => {
+    const nuevaJustificacion = justificacionOverlay.cloneNode(true);
+    
+    // Restaurar IDs originales
+    const inputs = nuevaJustificacion.querySelectorAll('input, select');
+    inputs.forEach(input => {
+      if (input.id) {
+        input.id = input.id.replace(/-\d+-overlay$/, `-${index}`);
+      }
+      if (input.name) {
+        input.name = input.name.replace(/_\d+_overlay$/, `_${index}`);
+      }
+    });
+    
+    // Restaurar botón eliminar original
+    const botonEliminar = nuevaJustificacion.querySelector('.btn-eliminar');
+    if (botonEliminar) {
+      botonEliminar.onclick = function() {
+        nuevaJustificacion.remove();
+        guardarProgreso();
+      };
+    }
+    
+    contenedorOculto.appendChild(nuevaJustificacion);
+  });
+  
+  // Ocultar overlay
+  overlay.style.display = 'none';
+  document.body.style.overflow = 'auto';
+  
+  guardarProgreso();
+}
+
+// ✅ AGREGAR JUSTIFICACIÓN EN EL OVERLAY
+function agregarJustificacionOverlay(vIndex) {
+  const index = document.getElementById(`justificaciones-overlay-contenedor-${vIndex}`)?.children.length || 0;
+  crearJustificacionOverlay(vIndex, index);
+}
+
+// ✅ CREAR JUSTIFICACIÓN EN EL OVERLAY
+function crearJustificacionOverlay(vIndex, index, datosElemento = null) {
+  const contenedor = document.getElementById(`justificaciones-overlay-contenedor-${vIndex}`);
+  if (!contenedor) return;
+  
+  const div = document.createElement('div');
+  div.className = 'justificacion-group';
+  div.dataset.index = index;
+  div.style.border = '2px solid #001855';
+  div.style.borderRadius = '8px';
+  div.style.padding = '15px';
+  div.style.marginBottom = '15px';
+  div.style.position = 'relative';
+  
+  // ✅ Botón eliminar (arriba a la derecha)
+  const botonEliminar = document.createElement('button');
+  botonEliminar.type = 'button';
+  botonEliminar.className = 'btn-eliminar';
+  botonEliminar.innerHTML = '🗑️';
+  botonEliminar.style.position = 'absolute';
+  botonEliminar.style.top = '5px';
+  botonEliminar.style.right = '5px';
+  botonEliminar.style.background = '#dc3545';
+  botonEliminar.style.color = 'white';
+  botonEliminar.style.border = 'none';
+  botonEliminar.style.padding = '5px 10px';
+  botonEliminar.style.borderRadius = '3px';
+  botonEliminar.style.cursor = 'pointer';
+  botonEliminar.style.fontSize = '1em';
+  botonEliminar.onclick = function() {
+    div.remove();
+    guardarProgreso();
+  };
+  
+  // ✅ Obtener valores si existe un elemento de datos
+  let justificacion = '';
+  let otro_justificacion = '';
+  let tiempo_muerto_inicio = '';
+  let tiempo_muerto_final = '';
+  
+  if (datosElemento) {
+    justificacion = datosElemento.querySelector(`select[name="vehiculo_${vIndex}_justificacion_${index}"]`)?.value || '';
+    otro_justificacion = datosElemento.querySelector(`input[name="vehiculo_${vIndex}_otro_justificacion_${index}"]`)?.value || '';
+    tiempo_muerto_inicio = datosElemento.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_inicio_${index}"]`)?.value || '';
+    tiempo_muerto_final = datosElemento.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_final_${index}"]`)?.value || '';
+  }
+  
+  const dInicio = `muerto-inicio-${vIndex}-${index}-overlay`;
+  const dFin = `muerto-final-${vIndex}-${index}-overlay`;
+  
+  div.innerHTML = `
+    <div style="margin-top: 20px;">
+      <!-- Campos de tiempo muerto -->
+      <div class="time-row" style="display: flex; gap: 15px; margin-bottom: 15px;">
+        <div style="flex: 1;">
+          <label class="time-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Tiempo Muerto Inicio:</label>
+          <input type="tel" name="vehiculo_${vIndex}_tiempo_muerto_inicio_${index}_overlay" class="time-input-masked"
+              placeholder="HH:MM" maxlength="5" value="${tiempo_muerto_inicio}"
+              onblur="applyTimeMask(this, '${dInicio}')" style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+          <span id="${dInicio}" class="time-display"></span>
+        </div>
+        <div style="flex: 1;">
+          <label class="time-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Tiempo Muerto Final:</label>
+          <input type="tel" name="vehiculo_${vIndex}_tiempo_muerto_final_${index}_overlay" class="time-input-masked"
+              placeholder="HH:MM" maxlength="5" value="${tiempo_muerto_final}"
+              onblur="applyTimeMask(this, '${dFin}')" style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+          <span id="${dFin}" class="time-display"></span>
+        </div>
+      </div>
+      
+      <!-- Motivo -->
+      <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; margin-top: 10px;">Motivo:</label>
+      <select name="vehiculo_${vIndex}_justificacion_${index}_overlay" id="justificacion-overlay-${vIndex}-${index}" style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione motivo</option>
+        <option value="faltante_producto" ${justificacion === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
+        <option value="liberacion_calidad" ${justificacion === 'liberacion_calidad' ? 'selected' : ''}>Liberacion de calidad</option>
+        <option value="Daños" ${justificacion === 'Daños' ? 'selected' : ''}>Daños (electricos, muelle, montacargas, etc.)</option>
+        <option value="otro" ${justificacion === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      
+      <!-- Otro motivo -->
+      <input type="text" name="vehiculo_${vIndex}_otro_justificacion_${index}_overlay" id="otro-justificacion-overlay-${vIndex}-${index}" 
+             placeholder="Especifique la incidencia" class="otro-input" value="${otro_justificacion}"
+             style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: ${justificacion === 'otro' ? 'block' : 'none'};">
+    </div>
+  `;
+  
+  div.appendChild(botonEliminar);
+  contenedor.appendChild(div);
+  
+  // ✅ Configurar evento onchange para mostrar/ocultar "otro motivo"
+  const justificacionSelect = div.querySelector(`#justificacion-overlay-${vIndex}-${index}`);
+  const otroJustificacionInput = div.querySelector(`#otro-justificacion-overlay-${vIndex}-${index}`);
+  
+  if (justificacionSelect && otroJustificacionInput) {
+    justificacionSelect.addEventListener('change', function() {
+      if (this.value === 'otro') {
+        otroJustificacionInput.style.display = 'block';
+        otroJustificacionInput.required = true;
+      } else {
+        otroJustificacionInput.style.display = 'none';
+        otroJustificacionInput.required = false;
+        otroJustificacionInput.value = '';
+      }
+      guardarProgreso();
+    });
+  }
+  
+  // ✅ Configurar eventos de tiempo
+  const inputsTiempo = div.querySelectorAll('.time-input-masked');
+  inputsTiempo.forEach(input => {
+    input.addEventListener('input', function() {
+      this.value = this.value.replace(/[^0-9]/g, '').substring(0, 5);
+    });
+  });
+}
+
+// ✅ CERRAR OVERLAY AL HACER CLIC FUERA
+document.addEventListener('click', function(event) {
+  // Buscar todos los overlays de justificaciones
+  const overlays = document.querySelectorAll('[id^="overlay-justificaciones-"]');
+  overlays.forEach(overlay => {
+    if (overlay.style.display === 'flex') {
+      const contenido = overlay.querySelector('div');
+      if (contenido && !contenido.contains(event.target) && event.target === overlay) {
+        // Extraer vIndex del ID del overlay
+        const vIndex = overlay.id.match(/\d+/)[0];
+        cerrarJustificacionesVehiculo(parseInt(vIndex));
+      }
+    }
+  });
+});
 
         // ✅ ABRIR OVERLAY DE INSPECCIÓN
 // ✅ ABRIR OVERLAY DE INSPECCIÓN
@@ -2863,26 +3101,41 @@ function mostrarFeedbackPicking(mensaje, vIndex, tipo = 'info') {
         data[`vehiculo_${vIndex}_nombre_persona_${p}`] = nombreInput.value || '';
       }
     }
+    
+    // ✅ CAPTURAR JUSTIFICACIONES POR VEHÍCULO
+    const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${vIndex}`);
+    if (justificacionesContenedor) {
+      const justificaciones = justificacionesContenedor.querySelectorAll('.justificacion-group');
+      const justificacionesData = [];
+      
+      justificaciones.forEach((justificacion, jIndex) => {
+        const motivo = justificacion.querySelector(`select[name="vehiculo_${vIndex}_justificacion_${jIndex}"]`)?.value || '';
+        const otro_motivo = justificacion.querySelector(`input[name="vehiculo_${vIndex}_otro_justificacion_${jIndex}"]`)?.value || '';
+        const tiempo_inicio = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_inicio_${jIndex}"]`)?.value || '';
+        const tiempo_fin = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_final_${jIndex}"]`)?.value || '';
+        
+        justificacionesData.push({
+          motivo: motivo,
+          otro_motivo: otro_motivo,
+          tiempo_inicio: tiempo_inicio,
+          tiempo_fin: tiempo_fin
+        });
+      });
+      
+      data[`_justificaciones_${vIndex}`] = justificacionesData;
+    }
   });
   
-  // ✅ GUARDAR PARADAS DE OPERACIÓN - CORREGIDO
+  // ✅ GUARDAR PARADAS DE OPERACIÓN
   const paradasData = [];
   const paradasContainer = document.getElementById('operacion-contenedor');
   const paradas = paradasContainer.querySelectorAll('.parada-group');
   
   paradas.forEach((parada, index) => {
-    // ✅ Capturar valores directamente del DOM
-    const inicioInput = parada.querySelector(`input[name="parada_inicio_operacion_${index}"]`);
-    const finInput = parada.querySelector(`input[name="parada_fin_operacion_${index}"]`);
-    const motivoSelect = parada.querySelector(`select[name="parada_motivo_operacion_${index}"]`);
-    const otroMotivoInput = parada.querySelector(`input[name="parada_otro_motivo_operacion_${index}"]`);
-    
-    const inicio = inicioInput ? inicioInput.value : '';
-    const fin = finInput ? finInput.value : '';
-    const motivo = motivoSelect ? motivoSelect.value : '';
-    const otro_motivo = otroMotivoInput ? otroMotivoInput.value : '';
-    
-    console.log(`Parada ${index}:`, { inicio, fin, motivo, otro_motivo });
+    const inicio = parada.querySelector(`input[name="parada_inicio_operacion_${index}"]`)?.value || '';
+    const fin = parada.querySelector(`input[name="parada_fin_operacion_${index}"]`)?.value || '';
+    const motivo = parada.querySelector(`select[name="parada_motivo_operacion_${index}"]`)?.value || '';
+    const otro_motivo = parada.querySelector(`input[name="parada_otro_motivo_operacion_${index}"]`)?.value || '';
     
     paradasData.push({
       inicio: inicio,
@@ -2896,7 +3149,6 @@ function mostrarFeedbackPicking(mensaje, vIndex, tipo = 'info') {
   data._paradasDetalle = paradasData;
   data._productosEscaneados = productosEscaneadosPorVehiculo;
   
-  console.log('💾 Guardando progreso:', data);
   localStorage.setItem('pepsico_data', JSON.stringify(data));
 }
 
@@ -3226,6 +3478,78 @@ Debe cumplir:
         if (tipoOperacionSelect) {
           tipoOperacionSelect.value = vObj.tipo_operacion;
         }
+      }
+      
+      // ✅ RESTAURAR JUSTIFICACIONES POR VEHÍCULO
+      const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${i}`);
+      if (justificacionesContenedor && data[`_justificaciones_${i}`]) {
+        justificacionesContenedor.innerHTML = '';
+        
+        data[`_justificaciones_${i}`].forEach((justificacion, jIndex) => {
+          const div = document.createElement('div');
+          div.className = 'justificacion-group';
+          div.dataset.index = jIndex;
+          
+          const botonEliminar = document.createElement('button');
+          botonEliminar.type = 'button';
+          botonEliminar.className = 'btn-eliminar';
+          botonEliminar.textContent = 'Eliminar';
+          botonEliminar.onclick = function() {
+            div.remove();
+            guardarProgreso();
+          };
+          
+          const dInicio = `muerto-inicio-${i}-${jIndex}`;
+          const dFin = `muerto-final-${i}-${jIndex}`;
+          
+          div.innerHTML = `
+            <div class="time-row">
+              <div>
+                <label class="time-label">Tiempo Muerto Inicio:</label>
+                <input type="tel" name="vehiculo_${i}_tiempo_muerto_inicio_${jIndex}" class="time-input-masked"
+                    placeholder="HH:MM" maxlength="5" value="${justificacion.tiempo_inicio}"
+                    onblur="applyTimeMask(this, '${dInicio}')">
+                <span id="${dInicio}" class="time-display"></span>
+              </div>
+              <div>
+                <label class="time-label">Tiempo Muerto Final:</label>
+                <input type="tel" name="vehiculo_${i}_tiempo_muerto_final_${jIndex}" class="time-input-masked"
+                    placeholder="HH:MM" maxlength="5" value="${justificacion.tiempo_fin}"
+                    onblur="applyTimeMask(this, '${dFin}')">
+                <span id="${dFin}" class="time-display"></span>
+              </div>
+            </div>
+            
+            <label>Motivo:</label>
+            <select name="vehiculo_${i}_justificacion_${jIndex}">
+              <option value="">Seleccione motivo</option>
+              <option value="faltante_producto" ${justificacion.motivo === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
+              <option value="liberacion_calidad" ${justificacion.motivo === 'liberacion_calidad' ? 'selected' : ''}>Liberacion de calidad</option>
+              <option value="Daños" ${justificacion.motivo === 'Daños' ? 'selected' : ''}>Daños (electricos, muelle, montacargas, etc.)</option>
+              <option value="otro" ${justificacion.motivo === 'otro' ? 'selected' : ''}>Otro</option>
+            </select>
+            <input type="text" name="vehiculo_${i}_otro_justificacion_${jIndex}" placeholder="Especifique la incidencia" class="otro-input" value="${justificacion.otro_motivo}">
+          `;
+          
+          div.appendChild(botonEliminar);
+          justificacionesContenedor.appendChild(div);
+          
+          // Configurar eventos
+          const motivoSelect = div.querySelector(`select[name="vehiculo_${i}_justificacion_${jIndex}"]`);
+          if (motivoSelect) {
+            motivoSelect.addEventListener('change', function() {
+              const otroInput = div.querySelector('.otro-input');
+              if (otroInput) {
+                if (this.value === 'otro') {
+                  otroInput.style.display = 'block';
+                } else {
+                  otroInput.style.display = 'none';
+                  otroInput.value = '';
+                }
+              }
+            });
+          }
+        });
       }
     }
 
