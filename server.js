@@ -1,11 +1,6 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
-const nodemailer = require('nodemailer');
-const PDFDocument = require('pdfkit');
-const fs = require('fs');
-const path = require('path');
-
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -19,10 +14,6 @@ console.log('PORT:', process.env.MYSQLPORT || '❌ NO DEFINIDO');
 console.log('USER:', process.env.MYSQLUSER || '❌ NO DEFINIDO');
 console.log('PASSWORD:', process.env.MYSQLPASSWORD ? '✅ DEFINIDO (oculto)' : '❌ NO DEFINIDO');
 console.log('DATABASE:', process.env.MYSQLDATABASE || '❌ NO DEFINIDO');
-console.log('OUTLOOK_EMAIL:', process.env.OUTLOOK_EMAIL || '❌ NO DEFINIDO');
-console.log('EMAIL_DESTINO:', process.env.EMAIL_DESTINO || '❌ NO DEFINIDO');
-console.log('OUTLOOK_SMTP:', process.env.OUTLOOK_SMTP || '❌ NO DEFINIDO');
-console.log('OUTLOOK_PORT:', process.env.OUTLOOK_PORT || '❌ NO DEFINIDO');
 console.log('=======================================');
 
 // Conexión a MySQL
@@ -37,186 +28,11 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-// ✅ CONFIGURACIÓN DE NODEMAILER (OUTLOOK SMTP)
-const transporter = nodemailer.createTransport({
-  host: process.env.OUTLOOK_SMTP,
-  port: parseInt(process.env.OUTLOOK_PORT),
-  secure: false,
-  auth: {
-    user: process.env.OUTLOOK_EMAIL,
-    pass: process.env.OUTLOOK_PASSWORD
-  },
-  tls: {
-    rejectUnauthorized: false
-  }
-});
-
-// ✅ VERIFICAR CONEXIÓN SMTP AL INICIAR
-transporter.verify((error, success) => {
-  if (error) {
-    console.error('❌ Error de conexión SMTP:', error.message);
-  } else {
-    console.log('✅ Servidor SMTP listo para enviar correos');
-  }
-});
-
-// ✅ FUNCIÓN PARA GENERAR PDF
-function generarPDF(datos, registroId) {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ margin: 50 });
-    const filePath = path.join(__dirname, `registro_${registroId}.pdf`);
-    const stream = fs.createWriteStream(filePath);
-    
-    doc.pipe(stream);
-    
-    doc.fontSize(20).text('REPORTE DE OPERACIÓN - PEPSICO', { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(12).text(`Registro ID: ${registroId}`, { align: 'center' });
-    doc.text(`Fecha: ${datos.fecha}`, { align: 'center' });
-    doc.text(`Lugar: ${datos.lugar}`, { align: 'center' });
-    doc.moveDown();
-    
-    doc.fontSize(16).text('INFORMACIÓN GENERAL', { underline: true });
-    doc.fontSize(11);
-    doc.text(`Turno: ${datos.turno}`);
-    doc.text(`Líder Asignado: ${datos.lider_asignado}`);
-    doc.text(`Coordinador: ${datos.coordinador} ${datos.coordinador_otro ? '(' + datos.coordinador_otro + ')' : ''}`);
-    doc.text(`Líder Pepsico: ${datos.lider_pepsico} ${datos.lider_pepsico_otro ? '(' + datos.lider_pepsico_otro + ')' : ''}`);
-    doc.text(`Total Personas: ${datos.total_personas}`);
-    doc.text(`Total Cajas: ${datos.cajas_totales}`);
-    doc.text(`Responsable: ${datos.respo_diligen}`);
-    doc.moveDown();
-    
-    doc.fontSize(16).text('VEHÍCULOS REGISTRADOS', { underline: true });
-    doc.fontSize(11);
-    
-    if (datos.datos_vehiculos && datos.datos_vehiculos.length > 0) {
-      datos.datos_vehiculos.forEach((vehiculo, index) => {
-        doc.moveDown();
-        doc.fontSize(13).text(`Vehículo #${index + 1}`, { underline: true });
-        doc.fontSize(11);
-        doc.text(`Placa: ${vehiculo.placa}`);
-        doc.text(`Tipo: ${vehiculo.tipo_vehi}`);
-        doc.text(`Motivo: ${vehiculo.motivo}`);
-        doc.text(`Muelle: ${vehiculo.muelle}`);
-        doc.text(`Inicio: ${vehiculo.inicio} - Fin: ${vehiculo.fin}`);
-        doc.text(`Cajas: ${vehiculo.cajas}`);
-        doc.text(`Personas: ${vehiculo.personas}`);
-        if (vehiculo.tipo_carga) doc.text(`Tipo Carga: ${vehiculo.tipo_carga}`);
-        
-        if (vehiculo.destino) doc.text(`Destino: ${vehiculo.destino}`);
-        if (vehiculo.origen) doc.text(`Origen: ${vehiculo.origen}`);
-        
-        if (vehiculo.justificaciones && vehiculo.justificaciones.length > 0) {
-          doc.moveDown();
-          doc.fontSize(12).text('Justificaciones:', { underline: true });
-          vehiculo.justificaciones.forEach((just, jIndex) => {
-            doc.fontSize(11).text(`  ${jIndex + 1}. ${just.justificacion} - ${just.tiempo_muerto_inicio} a ${just.tiempo_muerto_final}`);
-            if (just.otro_justificacion) doc.text(`     Detalle: ${just.otro_justificacion}`);
-          });
-        }
-        
-        if (vehiculo.novedades && vehiculo.novedades.length > 0) {
-          doc.moveDown();
-          doc.fontSize(12).text('Novedades:', { underline: true });
-          vehiculo.novedades.forEach((nov, nIndex) => {
-            doc.fontSize(11).text(`  ${nIndex + 1}. ${nov.tipo}: ${nov.descripcion}`);
-          });
-        }
-        
-        doc.moveDown();
-        doc.text('────────────────────────────────────────', { align: 'center' });
-      });
-    }
-    
-    doc.moveDown();
-    doc.fontSize(16).text('PARADAS DE OPERACIÓN', { underline: true });
-    doc.fontSize(11);
-    
-    if (datos.datos_paradas_operacion && datos.datos_paradas_operacion.length > 0) {
-      datos.datos_paradas_operacion.forEach((parada, index) => {
-        doc.text(`${index + 1}. ${parada.motivo} - ${parada.inicio} a ${parada.fin}`);
-        if (parada.otro_motivo) doc.text(`   Detalle: ${parada.otro_motivo}`);
-      });
-    }
-    
-    doc.moveDown(2);
-    doc.fontSize(10).text('Generado automáticamente por Sistema Pepsico Funza', { align: 'center' });
-    doc.text(`Fecha de generación: ${new Date().toLocaleString('es-CO')}`, { align: 'center' });
-    
-    doc.end();
-    
-    stream.on('finish', () => {
-      resolve(filePath);
-    });
-    
-    stream.on('error', (error) => {
-      reject(error);
-    });
-  });
-}
-
-// ✅ FUNCIÓN PARA ENVIAR CORREO CON PDF (CON TIMEOUT)
-async function enviarCorreoConPDF(datos, registroId, pdfPath) {
-  const mailOptions = {
-    from: process.env.OUTLOOK_EMAIL,
-    to: process.env.EMAIL_DESTINO,
-    subject: `📋 Reporte de Operación - ${datos.lugar} - ${datos.fecha} (ID: ${registroId})`,
-    text: `
-Nuevo registro de operación generado:
-
-📍 Lugar: ${datos.lugar}
-📅 Fecha: ${datos.fecha}
-🔄 Turno: ${datos.turno}
-👥 Total Personas: ${datos.total_personas}
-📦 Total Cajas: ${datos.cajas_totales}
-🚛 Vehículos: ${datos.datos_vehiculos ? datos.datos_vehiculos.length : 0}
-🛑 Paradas: ${datos.datos_paradas_operacion ? datos.datos_paradas_operacion.length : 0}
-
-El reporte completo está adjunto en PDF.
-
-────────────────────────────────
-Sistema Pepsico Funza
-Generado automáticamente
-    `,
-    attachments: [
-      {
-        filename: `registro_${registroId}_${datos.fecha}.pdf`,
-        path: pdfPath
-      }
-    ]
-  };
-  
-  try {
-    console.log('📧 Enviando correo desde:', process.env.OUTLOOK_EMAIL);
-    console.log('📧 Enviando correo a:', process.env.EMAIL_DESTINO);
-    
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Correo enviado:', info.messageId);
-    
-    // Eliminar archivo PDF después de enviar
-    try {
-      fs.unlinkSync(pdfPath);
-      console.log('🗑️ PDF eliminado:', pdfPath);
-    } catch (unlinkError) {
-      console.warn('⚠️ No se pudo eliminar el PDF:', unlinkError.message);
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('❌ Error al enviar correo:', error.message);
-    console.error('❌ Error details:', error);
-    return false;
-  }
-}
-
 // Endpoint para recibir datos del formulario
 app.post('/api/registro', async (req, res) => {
   let connection;
   
   try {
-    console.log('📥 Recibiendo petición de registro...');
-    
     // Obtener conexión para transacción
     connection = await pool.getConnection();
     await connection.beginTransaction();
@@ -237,14 +53,6 @@ app.post('/api/registro', async (req, res) => {
       datos_paradas_operacion
     } = req.body;
 
-    console.log('📊 Datos recibidos:', {
-      fecha,
-      lugar,
-      turno,
-      vehiculos: datos_vehiculos ? datos_vehiculos.length : 0,
-      paradas: datos_paradas_operacion ? datos_paradas_operacion.length : 0
-    });
-
     // ✅ Obtener respo_diligen y limpiar puntos
     let respo_diligen_limpio = respo_diligen || '';
     respo_diligen_limpio = respo_diligen_limpio.replace(/\./g, '');
@@ -261,7 +69,6 @@ app.post('/api/registro', async (req, res) => {
     );
     
     const registroId = registroResult.insertId;
-    console.log('✅ Registro creado con ID:', registroId);
     
     // 2. Insertar vehículos Y sus detalles de inspección
     for (let i = 0; i < datos_vehiculos.length; i++) {
@@ -271,6 +78,7 @@ app.post('/api/registro', async (req, res) => {
         ? JSON.stringify(vehiculo.nombres_personal) 
         : null;
       
+      // ✅ Depuración: Verificar qué llega al servidor
       console.log('📥 Vehículo recibido:', {
         placa: vehiculo.placa,
         tipo_operacion: vehiculo.tipo_operacion,
@@ -279,7 +87,7 @@ app.post('/api/registro', async (req, res) => {
         tiene_novedades: vehiculo.hasOwnProperty('novedades')
       });
 
-      // ✅ INSERTAR VEHÍCULO (CON tipo_carga)
+      // ✅ INSERTAR VEHÍCULO (SIN CAMPOS DE JUSTIFICACIÓN - AHORA EN TABLA SEPARADA)
       const [vehiculoResult] = await connection.query(
         `INSERT INTO vehiculos (
           registro_id, inicio, fin, motivo, otro_motivo, tipo_carga, muelle, otro_muelle_num,
@@ -292,7 +100,7 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.fin || '',
           vehiculo.motivo || '',
           vehiculo.otro_motivo || '',
-          vehiculo.tipo_carga || '',
+          vehiculo.tipo_carga || '',  // ✅ NUEVO CAMPO AGREGADO
           vehiculo.muelle || '',
           vehiculo.otro_muelle_num || '',
           vehiculo.placa || '',
@@ -311,9 +119,8 @@ app.post('/api/registro', async (req, res) => {
       );
       
       const vehiculoId = vehiculoResult.insertId;
-      console.log('✅ Vehículo', i + 1, 'guardado con ID:', vehiculoId);
       
-      // ✅ Insertar justificaciones por vehículo (TABLA SEPARADA)
+      // ✅ NUEVO: Insertar justificaciones por vehículo (TABLA SEPARADA)
       if (vehiculo.justificaciones && Array.isArray(vehiculo.justificaciones)) {
         for (const justificacion of vehiculo.justificaciones) {
           await connection.query(
@@ -370,7 +177,6 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.aprobado || null
         ]
       );
-      console.log('✅ Detalles de inspección guardados');
       
       // ✅ Insertar productos escaneados por vehículo
       if (vehiculo.productos_escaneados && Array.isArray(vehiculo.productos_escaneados)) {
@@ -409,31 +215,10 @@ app.post('/api/registro', async (req, res) => {
         ]
       );
     }
-    console.log('✅ Paradas de operación guardadas');
     
-    // ✅ Confirmar transacción
+    // Confirmar transacción
     await connection.commit();
     connection.release();
-    console.log('✅ Transacción confirmada en MySQL');
-
-    // ✅ ENVIAR CORREO (DESPUÉS DE GUARDAR EN BD)
-    try {
-      console.log('📧 Generando PDF para envío por correo...');
-      const pdfPath = await generarPDF(req.body, registroId);
-      console.log('✅ PDF generado:', pdfPath);
-      
-      console.log('📧 Enviando correo a:', process.env.EMAIL_DESTINO);
-      const correoEnviado = await enviarCorreoConPDF(req.body, registroId, pdfPath);
-      
-      if (correoEnviado) {
-        console.log('✅ Correo enviado exitosamente');
-      } else {
-        console.warn('⚠️ Error al enviar correo, pero los datos se guardaron en BD');
-      }
-    } catch (error) {
-      console.error('❌ Error al generar/enviar PDF:', error.message);
-      // No fallar la petición si el correo falla (los datos ya están en BD)
-    }
 
     res.json({
       success: true,
@@ -447,8 +232,7 @@ app.post('/api/registro', async (req, res) => {
       connection.release();
     }
     
-    console.error('❌ Error al guardar:', error);
-    console.error('❌ Error stack:', error.stack);
+    console.error('Error al guardar:', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -469,9 +253,7 @@ app.get('/health', async (req, res) => {
         host: process.env.MYSQLHOST ? '✅ Definido' : '❌ NO DEFINIDO',
         port: process.env.MYSQLPORT || '3306 (default)',
         user: process.env.MYSQLUSER || '❌ NO DEFINIDO',
-        database: process.env.MYSQLDATABASE || '❌ NO DEFINIDO',
-        outlook: process.env.OUTLOOK_EMAIL ? '✅ Configurado' : '❌ NO DEFINIDO',
-        email_to: process.env.EMAIL_DESTINO || '❌ NO DEFINIDO'
+        database: process.env.MYSQLDATABASE || '❌ NO DEFINIDO'
       }
     });
   } catch (error) {
