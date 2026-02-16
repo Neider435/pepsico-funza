@@ -2259,6 +2259,73 @@ document.addEventListener('click', function(event) {
     }
   });
 });
+// ✅ FUNCIÓN PARA MOSTRAR NOTIFICACIÓN TEMPORAL (toast-style)
+function mostrarNotificacion(mensaje, tipo = 'info') {
+  // Eliminar notificación previa si existe
+  const existing = document.getElementById('notificacion-toast');
+  if (existing) existing.remove();
+
+  // Crear contenedor
+  const toast = document.createElement('div');
+  toast.id = 'notificacion-toast';
+  toast.style.position = 'fixed';
+  toast.style.bottom = '20px';
+  toast.style.right = '20px';
+  toast.style.zIndex = '9999';
+  toast.style.padding = '12px 20px';
+  toast.style.borderRadius = '8px';
+  toast.style.fontSize = '1em';
+  toast.style.fontWeight = '500';
+  toast.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+  toast.style.cursor = 'default';
+  toast.style.maxWidth = '350px';
+  toast.style.textAlign = 'center';
+  toast.style.transition = 'opacity 0.3s, transform 0.3s';
+
+  // Estilos por tipo
+  switch (tipo) {
+    case 'success':
+      toast.style.background = '#d4edda';
+      toast.style.color = '#155724';
+      toast.style.borderLeft = '4px solid #28a745';
+      break;
+    case 'error':
+      toast.style.background = '#f8d7da';
+      toast.style.color = '#721c24';
+      toast.style.borderLeft = '4px solid #dc3545';
+      break;
+    case 'warning':
+      toast.style.background = '#fff3cd';
+      toast.style.color = '#856404';
+      toast.style.borderLeft = '4px solid #ffc107';
+      break;
+    default:
+      toast.style.background = '#cce5ff';
+      toast.style.color = '#0c5460';
+      toast.style.borderLeft = '4px solid #007bff';
+  }
+
+  toast.innerHTML = `
+    <span>${mensaje}</span>
+  `;
+  
+  document.body.appendChild(toast);
+
+  // Desaparecer después de 3 segundos
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(100%)';
+    setTimeout(() => {
+      if (toast.parentNode) toast.parentNode.removeChild(toast);
+    }, 300);
+  }, 3000);
+
+  // Animación de entrada
+  setTimeout(() => {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
+  }, 10);
+}
 
 // ✅ FUNCIÓN PARA SUBIR FOTO A IMGBB (misma que fotos de vehículo)
 // ✅ FUNCIÓN CORREGIDA PARA SUBIR FOTO A IMGBB
@@ -2280,17 +2347,21 @@ async function subirFotoImgBB(file, nombrePersonalizado) {
     });
     
     const result = await response.json();
-    if (result.success) {
-      console.log('✅ Foto subida exitosamente a ImgBB');
-      return result.data.url;
-    } else {
-      console.warn('❌ Error al subir a ImgBB:', result.error?.message || 'Error desconocido');
-      return null;
-    }
+    // ✅ En la parte donde se procesa la respuesta de ImgBB:
+if (result.success) {
+  console.log('✅ Foto subida exitosamente a ImgBB');
+  mostrarNotificacion(`📸 Foto guardada: ${nombrePersonalizado}`, 'success');
+  return result.data.url;
+} else {
+  console.warn('❌ Error al subir a ImgBB:', result.error.message);
+  mostrarNotificacion(`⚠️ No se pudo subir la foto. Se guardará localmente.`, 'warning');
+  return null;
+}
   } catch (error) {
-    console.warn('❌ Error de conexión con ImgBB:', error.message);
-    return null;
-  }
+  console.warn('❌ Error de conexión con ImgBB:', error.message);
+  mostrarNotificacion(`⚠️ Error al subir la foto. Verifica tu conexión o inténtalo más tarde.`, 'error');
+  return null;
+}
 }
 
 
@@ -2828,20 +2899,25 @@ document.addEventListener('click', function(event) {
   fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData })
     .then(response => response.json())
     .then(data => {
-      if (data.success) {
-        const vIdx = nombrePersonalizado.split('.').pop().replace('vehiculo_', '');
-        const urlInput = document.getElementById(`foto_url_${vIdx}`);
-        if (urlInput) urlInput.value = data.data.url;
-        alert(`✅ Foto subida: ${nombrePersonalizado}`);
-        guardarProgreso();
-      } else {
-        throw new Error(data.error.message || 'Error al subir la foto');
-      }
-    })
-    .catch(error => {
-      alert("❌ No se pudo subir la foto.");
-      console.error(error);
-    });
+  if (data.success) {
+    const vIdx = nombrePersonalizado.split('.').pop().replace('vehiculo_', '');
+    const urlInput = document.getElementById(`foto_url_${vIdx}`);
+    if (urlInput) urlInput.value = data.data.url;
+    
+    // ✅ Mostrar notificación
+    mostrarNotificacion(`✅ Foto del vehículo guardada`, 'success');
+    
+    guardarProgreso();
+  } else {
+    throw new Error(data.error.message || 'Error al subir la foto');
+  }
+})
+.catch(error => {
+  alert("❌ No se pudo subir la foto.");
+  console.error(error);
+  // ✅ Notificación de error
+  mostrarNotificacion(`❌ Fallo al subir foto: ${error.message || 'Error desconocido'}`, 'error');
+});
 }
 
         // ============================================
