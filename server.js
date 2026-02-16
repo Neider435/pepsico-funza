@@ -1,247 +1,3660 @@
-const express = require('express');
-const mysql = require('mysql2/promise');
-const cors = require('cors');
-const app = express();
-const port = process.env.PORT || 3000;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro - Pepsico Funza</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            padding: 40px;
+        }
+        
+        .logo-container {
+            position: absolute;
+            top: 50px;
+            left: 30px;
+        }
+        
+        .logo-container img {
+            width: 200px;
+            height: auto;
+        }
+        
+        form {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            width: 550px;
+            margin: auto;
+        }
+        
+        .registro-vehiculo {
+            border: 2px solid #C76E00;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 10px;
+            position: relative;
+        }
+        
+        .parada-group {
+            border: 1px dashed #ced4da;
+            padding: 10px;
+            margin-top: 15px;
+            border-radius: 5px;
+        }
+        
+        .form-group-custom {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .btn-agregar-registro,
+        .btn-agregar-parada-op {
+            background-color: #001855;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        
+        .btn-agregar-registro:hover,
+        .btn-agregar-parada-op:hover {
+            background-color: #0056b3;
+        }
+        
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 15px;
+        }
+        
+        select, input, button {
+            width: 100%;
+            padding: 8px;
+            margin-top: 8px;
+            border-radius: 8px;
+            border: 1px solid #170303;
+        }
+        
+        .time-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+        
+        .time-row > div {
+            flex-grow: 1;
+            position: relative;
+        }
+        
+        .time-display {
+            display: block;
+            margin-top: 5px;
+            font-size: 0.85em;
+            color: #155724;
+            font-weight: bold;
+        }
+        
+        .time-label {
+            font-weight: bold;
+            display: block;
+            margin-top: 5px;
+            color: #007bff;
+        }
+        
+        button[type="submit"] {
+            background-color: #001855;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        
+        .time-input-masked {
+            text-align: center;
+            font-size: 1.1em;
+            letter-spacing: 2px;
+        }
+        
+        .btn-eliminar {
+            background-color: #8B0000 !important;
+            width: auto !important;
+            padding: 5px 10px !important;
+            margin-top: 10px !important;
+            border: none !important;
+            color: white !important;
+        }
+        
+        .btn-eliminar-registro {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #8B0000 !important;
+            color: white !important;
+            border: none !important;
+            padding: 5px 10px !important;
+            cursor: pointer;
+            font-size: 0.8em;
+            width: auto;
+        }
+        
+        .btn-detalles {
+            /* position: absolute; */
+            /* top: 10px; */
+            /* right: 120px; */
+            background-color: #856115 !important;
+            color: white !important;
+            border: none !important;
+            padding: 5px 10px !important;
+            cursor: pointer;
+            font-size: 0.8em;
+            width: auto;
+            border-radius: 5px;
+        }
+        
+        .btn-eliminar:hover {
+            background-color: #c82333 !important;
+        }
+        
+        .btn-detalles:hover {
+            background-color: #0055aa !important;
+        }
+        
+        .otro-input {
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .preview-foto img {
+            max-width: 100%;
+            max-height: 200px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+        
+        .btn-borrar-todo {
+            background-color: #8B0000;
+            color: white;
+            margin-top: 20px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        /* ✅ ESTILOS PARA RESUMEN DE PRODUCTOS ESCANEADOS */
+.resumen-productos-container {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 15px;
+  border: 1px solid #dee2e6;
+}
 
-app.use(cors());
-app.use(express.json());
+.resumen-productos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #001855;
+}
 
-// ===== LOGS DE VARIABLES DE ENTORNO =====
-console.log('=== VARIABLES DE ENTORNO AL INICIAR ===');
-console.log('HOST:', process.env.MYSQLHOST || '❌ NO DEFINIDO');
-console.log('PORT:', process.env.MYSQLPORT || '❌ NO DEFINIDO');
-console.log('USER:', process.env.MYSQLUSER || '❌ NO DEFINIDO');
-console.log('PASSWORD:', process.env.MYSQLPASSWORD ? '✅ DEFINIDO (oculto)' : '❌ NO DEFINIDO');
-console.log('DATABASE:', process.env.MYSQLDATABASE || '❌ NO DEFINIDO');
-console.log('=======================================');
+.resumen-productos-title {
+  color: #C76E00;
+  font-weight: bold;
+  font-size: 1.1em;
+}
 
-// Conexión a MySQL
-const pool = mysql.createPool({
-  host: process.env.MYSQLHOST,
-  user: process.env.MYSQLUSER,
-  password: process.env.MYSQLPASSWORD,
-  database: process.env.MYSQLDATABASE,
-  port: process.env.MYSQLPORT,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});
+.total-cajas-badge {
+  background: #001855;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-weight: bold;
+  font-size: 1.2em;
+}
 
-// Endpoint para recibir datos del formulario
-app.post('/api/registro', async (req, res) => {
-  let connection;
+.productos-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  max-height: 250px;
+  overflow-y: auto;
+  display: block;
+}
+
+.productos-table th {
+  background: #001855;
+  color: white;
+  padding: 10px 8px;
+  text-align: left;
+  font-size: 0.85em;
+  position: sticky;
+  top: 0;
+}
+
+.productos-table td {
+  padding: 8px;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 0.9em;
+}
+
+.productos-table tr:hover {
+  background-color: #f1f3f5;
+}
+
+.producto-referencia {
+  font-family: 'Courier New', monospace;
+  font-size: 0.85em;
+  color: #495057;
+}
+
+.producto-cantidad {
+  font-weight: bold;
+  color: #C76E00;
+  text-align: center;
+}
+
+.no-productos {
+  text-align: center;
+  color: #6c757d;
+  padding: 20px;
+  font-style: italic;
+}
+
+.btn-limpiar-escaneo {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  font-size: 0.85em;
+  cursor: pointer;
+  margin-top: 10px;
+  display: block;
+  width: 100%;
+}
+
+.btn-limpiar-escaneo:hover {
+  background: #c82333;
+  transform: scale(1.02);
+  transition: all 0.2s;
+}
+    </style>
+
+</head>
+<body>
+    <div class="logo-container">
+        <img src="prueba.png" alt="Logo de la Empresa">
+    </div>
+    
+    <h2 style="text-align:center;">FORMULARIO - PEPSICO</h2>
+    
+    <form name="formulario-pepsico">
+        <input type="hidden" name="form-name" value="formulario-pepsico" />
+        
+        <label for="lugar">Lugar de operación:</label>
+        <select name="lugar" id="lugar" required onchange="actualizarCampos(); filtrarCoordinadores(); actualizarMuellesPorLugar();">
+            <option value="">Seleccione una opción</option>
+            <option value="Funza">Pepsico Funza</option>
+            <option value="SantoDomingo">Santo Domingo</option> 
+        </select>
+        
+        <!-- ✅ CAMPO RESPONSABLE DE DILIGENCIAR -->
+        <label for="responsable" style="margin-top: 15px;">Responsable de Diligenciar:</label>
+        <input type="text" name="respo_diligen" id="responsable" placeholder="Cédula"
+              oninput="formatearCedula(this)"
+              maxlength="14">
+
+        <label for="lider">Líder Asignado:</label>
+        <input type="text" name="lider_asignado" id="lider" placeholder="Primer Nombre y Primer Apellido">
+        
+        <!-- ✅ COORDINADOR Y LÍDER PEPSICO EN LA MISMA LÍNEA -->
+        <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 15px;">
+          <!-- Coordinador Asignado -->
+          <div style="flex: 1;">
+            <label for="coordinador" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Coordinador Asignado:</label>
+            <select name="coordinador" id="coordinador" required onchange="manejarOtroCoordinador()"
+                    style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+              <option value="">Seleccione coordinador</option>
+              <!-- Opciones para Funza -->
+              <option value="Jeison Aranda" data-lugar="Funza">Jeison Aranda</option>
+              <option value="Julian Espitia" data-lugar="Funza">Julian Espitia</option>
+              <!-- Opciones para Santo Domingo -->
+              <option value="Olga Valdez" data-lugar="SantoDomingo">Olga Valdez</option>
+              <option value="Arnold Ospina" data-lugar="SantoDomingo">Arnold Ospina</option>
+              <option value="Jeison Aranda" data-lugar="SantoDomingo">Jeison Aranda</option>
+              <option value="Leonor Nariño" data-lugar="SantoDomingo">Leonor Nariño</option>
+              <option value="Javier Torres" data-lugar="SantoDomingo">Javier Torres</option>
+              <option value="Ingrid Lisarazo" data-lugar="SantoDomingo">Ingrid Lisarazo</option>
+              <option value="otro">Otro</option>
+            </select>
+            <input type="text" name="coordinador_otro" id="coordinador_otro" class="otro-input" placeholder="Especifique el coordinador"
+                  style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
+          </div>
+          
+          <!-- Líder De Pepsico -->
+          <div style="flex: 1;">
+            <label for="lider_pepsico" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Líder De Pepsico:</label>
+            <select name="lider_pepsico" id="lider_pepsico" required onchange="manejarOtroLiderPepsico()"
+                    style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+              <option value="">Seleccione un líder</option>
+              <option value="Alejandro Ariza">Alejandro Ariza</option>
+              <option value="Alejandro Monroy">Alejandro Monroy</option>
+              <option value="Carlos Ruiz">Carlos Ruiz</option>
+              <option value="Carlos Valencia">Carlos Valencia</option>
+              <option value="otro">Otro</option>
+            </select>
+            <input type="text" name="lider_pepsico_otro" id="lider_pepsico_otro" class="otro-input" placeholder="Especifique el líder de Pepsico"
+                  style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
+          </div>
+        </div>
+        <!-- ✅ FECHA Y TURNO EN LA MISMA LÍNEA -->
+        <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 15px;">
+          <div style="flex: 1;">
+            <label for="fecha" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Fecha:</label>
+            <input type="date" name="fecha" id="fecha" required
+                  style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+          </div>
+          
+          <div style="flex: 1;">
+            <label for="turno" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Turno Asignado:</label>
+            <select name="turno" id="turno" required
+                    style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+              <option value="">Seleccione un turno</option>
+              <option value="Manana">Mañana</option>
+              <option value="Tarde">Tarde</option>
+              <option value="Noche">Noche</option>
+            </select>
+          </div>
+        </div>
+        
+        <hr style="margin-top: 25px; border-style: dotted;">
+        
+        <!-- SECCIÓN: REGISTRO DE VEHÍCULOS -->
+        <h3 style="text-align:center; font-size:1.3em; color:#C76E00;">REGISTRO DE VEHÍCULOS</h3>
+        <div id="vehiculos-contenedor"></div>
+        <button type="button" class="btn-agregar-registro" onclick="agregarRegistroVehiculo()">
+            + Registrar Nuevo Vehículo
+        </button>
+        
+        <hr style="margin-top: 25px; border-style: dotted;">
+        
+        <!-- SECCIÓN: PARADAS DE OPERACIÓN -->
+        <!-- ✅ BOTÓN PARA ABRIR PARADAS DE OPERACIÓN -->
+<button type="button" onclick="abrirParadasOperacion()"
+        style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 15px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+    🛑 Paradas de Operación
+</button>
+
+<!-- ✅ CONTENEDOR OCULTO PARA PARADAS (se sincroniza con el overlay) -->
+<div id="operacion-contenedor" style="display: none;"></div>
+
+<!-- ✅ OVERLAY/MODAL DE PARADAS DE OPERACIÓN -->
+<div id="overlay-paradas-operacion" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center; padding: 20px;">
+  <div style="background: white; padding: 25px; border-radius: 10px; width: 95%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
+    <h4 style="text-align: center; color: #C76E00; margin-top: 0;">PARADAS DE OPERACIÓN</h4>
+    <hr style="margin: 15px 0; border-style: dashed;">
+    
+    <div id="paradas-operacion-contenedor" style="margin-bottom: 20px;"></div>
+    
+    <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px; padding-top: 15px; border-top: 2px solid #001855;">
+      <button type="button" onclick="agregarParadaOperacionOverlay()"
+              style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; border: none; padding: 10px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; flex: 1;">
+        ➕ Agregar Parada
+      </button>
+      
+      <button type="button" onclick="cerrarParadasOperacion()"
+              style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 10px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; flex: 1;">
+        ✅ Aceptar
+      </button>
+    </div>
+  </div>
+</div>
+        
+        <hr style="margin-top: 25px; border-style: dotted;">
+        
+        <!-- SECCIÓN: TOTALES DE TURNO -->
+        <h3 style="text-align:center; font-size:1.1em; color:#296097;">TOTALES DE TURNO</h3>
+        
+        <!-- ✅ TOTAL PERSONAS Y TOTAL CAJAS EN LA MISMA LÍNEA -->
+        <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 15px;">
+          <!-- Total Personas En El Turno -->
+          <div style="flex: 1;">
+            <label for="total_personas" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Total Personas En El Turno:</label>
+            <input type="number" name="total_personas" id="total_personas" min="1" required
+                  placeholder="Total de empleados en el turno"
+                  style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+            <div id="nombres-contenedor" style="margin-top: 15px;"></div>
+          </div>
+          
+          <!-- Total Cajas Movidas -->
+          <div style="flex: 1;">
+            <label for="cajas_totales" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Total Cajas Movidas:</label>
+            <input type="number" name="cajas_totales" id="cajas_totales" min="0" required
+                  placeholder="Cantidad total de cajas movidas"
+                  oninput="actualizarTotalCajas()"
+                  style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+          </div>
+        </div>
+
+        <!-- ✅ CAMPOS HIDDEN (sin cambios) -->
+        <input type="hidden" name="datos_vehiculos" id="datos_vehiculos" value="">
+        <input type="hidden" name="datos_paradas_operacion" id="datos_paradas_operacion" value="">
+
+        <!-- ✅ BOTONES ENVIAR Y BORRAR TODO (sin cambios) -->
+        <div style="display: flex; gap: 10px;">
+            <button type="submit" style="flex: 3; padding: 12px; background: #001855; color: white; border: none; border-radius: 5px; font-weight: bold; font-size: 1.1em; cursor: pointer;">Enviar</button>
+            <button type="button" class="btn-borrar-todo" style="flex: 1; padding: 12px; background: #dc3545; color: white; border: none; border-radius: 5px; font-weight: bold; font-size: 1em; cursor: pointer;" onclick="limpiarTodo()">🗑️ Borrar Todo</button>
+        </div>
+        
+    </form>
+
+    <script>
+        let vehiculosData = [];
+        function obtenerMuellesPorLugar(lugar) {
+  if (lugar === 'SantoDomingo') {
+    // Muelles del 1 al 10 para Santo Domingo
+    return [
+      { value: '1', label: '1' },
+      { value: '2', label: '2' },
+      { value: '3', label: '3' },
+      { value: '4', label: '4' },
+      { value: '5', label: '5' },
+      { value: '6', label: '6' },
+      { value: '7', label: '7' },
+      { value: 'otro', label: 'Otro' }
+    ];
+  } else {
+    // Muelles actuales para Pepsico Funza
+    return [
+      { value: '3', label: '3' },
+      { value: '11', label: '11' },
+      { value: '12', label: '12' },
+      { value: '13', label: '13' },
+      { value: '14', label: '14' },
+      { value: '17', label: '17' },
+      { value: '18', label: '18' },
+      { value: '19', label: '19' },
+      { value: '20', label: '20' },
+      { value: 'otro', label: 'Otro' }
+    ];
+  }
+}
+
+// ✅ ABRIR OVERLAY DE PARADAS DE OPERACIÓN
+function abrirParadasOperacion() {
+  const overlay = document.getElementById('overlay-paradas-operacion');
+  const contenedorOverlay = document.getElementById('paradas-operacion-contenedor');
+  const contenedorOculto = document.getElementById('operacion-contenedor');
   
-  try {
-    // Obtener conexión para transacción
-    connection = await pool.getConnection();
-    await connection.beginTransaction();
+  if (!overlay || !contenedorOverlay || !contenedorOculto) {
+    console.error('Error: Elementos del overlay no encontrados');
+    return;
+  }
+  
+  // Limpiar contenedor del overlay
+  contenedorOverlay.innerHTML = '';
+  
+  // Copiar paradas del contenedor oculto al overlay
+  const paradasOcultas = contenedorOculto.querySelectorAll('.parada-group');
+  paradasOcultas.forEach((paradaOculta, index) => {
+    // ✅ Crear nueva parada manualmente (no clonar) para mantener eventos
+    const div = document.createElement('div');
+    div.className = 'parada-group';
+    div.dataset.index = index;
     
-    const {
-      fecha,
-      lugar,
-      lider_asignado,
-      coordinador,
-      coordinador_otro,
-      lider_pepsico,
-      lider_pepsico_otro,
-      turno,
-      total_personas,
-      cajas_totales,
-      datos_vehiculos,
-      datos_paradas_operacion
-    } = req.body;
-
-    // ✅ Obtener respo_diligen y limpiar puntos
-    let respo_diligen = req.body.respo_diligen || '';
-    respo_diligen = respo_diligen.replace(/\./g, '');
-    const [registroResult] = await connection.query(
-      `INSERT INTO registros (
-        fecha, lugar, lider_asignado, coordinador, coordinador_otro,
-        lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales, respo_diligen
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        fecha, lugar, lider_asignado, coordinador, coordinador_otro,
-        lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales, respo_diligen
-      ]
-    )
+    const botonEliminar = document.createElement('button');
+    botonEliminar.type = 'button';
+    botonEliminar.className = 'btn-eliminar';
+    botonEliminar.textContent = 'Eliminar';
+    botonEliminar.style.marginTop = '10px';
+    botonEliminar.style.background = '#dc3545';
+    botonEliminar.style.color = 'white';
+    botonEliminar.style.border = 'none';
+    botonEliminar.style.padding = '5px 10px';
+    botonEliminar.style.borderRadius = '3px';
+    botonEliminar.style.cursor = 'pointer';
+    botonEliminar.onclick = function() {
+      div.remove();
+      actualizarNumerosParadasOverlay();
+      guardarProgreso();
+    };
     
-    const registroId = registroResult.insertId;
+    const dInicio = `operacion-inicio-${index}-overlay`;
+    const dFin = `operacion-fin-${index}-overlay`;
     
-    // 2. Insertar vehículos Y sus detalles de inspección
-    for (let i = 0; i < datos_vehiculos.length; i++) {
-      const vehiculo = datos_vehiculos[i];
+    // ✅ Obtener valores del contenedor oculto
+    const inicio = paradaOculta.querySelector(`input[name="parada_inicio_operacion_${index}"]`)?.value || '';
+    const fin = paradaOculta.querySelector(`input[name="parada_fin_operacion_${index}"]`)?.value || '';
+    const motivo = paradaOculta.querySelector(`select[name="parada_motivo_operacion_${index}"]`)?.value || '';
+    const otro_motivo = paradaOculta.querySelector(`input[name="parada_otro_motivo_operacion_${index}"]`)?.value || '';
+    
+    div.innerHTML = `
+      <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #<span class="numero-parada">${index + 1}</span> (Operación)</p>
       
-      const nombresJSON = vehiculo.nombres_personal && Array.isArray(vehiculo.nombres_personal) && vehiculo.nombres_personal.length > 0 
-        ? JSON.stringify(vehiculo.nombres_personal) 
-        : null;
+      <div class="time-row">
+        <div>
+          <label class="time-label">Hora Inicio (HH:MM):</label>
+          <input type="tel" name="parada_inicio_operacion_${index}_overlay" class="time-input-masked"
+              placeholder="HH:MM" maxlength="5" value="${inicio}"
+              onblur="applyTimeMask(this, '${dInicio}')">
+          <span id="${dInicio}" class="time-display"></span>
+        </div>
+        <div>
+          <label class="time-label">Hora Final (HH:MM):</label>
+          <input type="tel" name="parada_fin_operacion_${index}_overlay" class="time-input-masked"
+              placeholder="HH:MM" maxlength="5" value="${fin}"
+              onblur="applyTimeMask(this, '${dFin}')">
+          <span id="${dFin}" class="time-display"></span>
+        </div>
+      </div>
       
-      // Insertar vehículo
-      // ✅ Depuración: Verificar qué llega al servidor
-      console.log('📥 Vehículo recibido:', {
-        placa: vehiculo.placa,
-        tipo_operacion: vehiculo.tipo_operacion,
-        tipo_operacion_tipo: typeof vehiculo.tipo_operacion,
-        tiene_tipo_operacion: vehiculo.hasOwnProperty('tipo_operacion')
+      <label style="margin-top:5px;">Motivo:</label>
+      <select name="parada_motivo_operacion_${index}_overlay" id="motivo-overlay-${index}">
+        <option value="">Seleccione</option>
+        <option value="pausas_activas" ${motivo === 'pausas_activas' ? 'selected' : ''}>Pausas Activas y/o Charla</option>
+        <option value="liberacion_calidad" ${motivo === 'liberacion_calidad' ? 'selected' : ''}>Liberacion De Calidad</option>
+        <option value="desayuno_almuerzo_cena" ${motivo === 'desayuno_almuerzo_cena' ? 'selected' : ''}>Desayuno/Almuerzo/Cena</option>
+        <option value="aseo" ${motivo === 'aseo' ? 'selected' : ''}>Aseo</option>
+        <option value="faltante_insumos" ${motivo === 'faltante_insumos' ? 'selected' : ''}>Faltante (Canastillas, vinipel, estibas, etc)</option>
+        <option value="danos_equipo" ${motivo === 'danos_equipo' ? 'selected' : ''}>Daños (Electricos, montacargas, etc)</option>
+        <option value="otro" ${motivo === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      <input type="text" name="parada_otro_motivo_operacion_${index}_overlay" id="otro-motivo-overlay-${index}" placeholder="Especifique" class="otro-input" value="${otro_motivo}" style="${motivo === 'otro' ? 'display: block;' : 'display: none;'}">
+    `;
+    
+    div.appendChild(botonEliminar);
+    contenedorOverlay.appendChild(div);
+    
+    // ✅ Configurar evento onchange para mostrar/ocultar "otro motivo"
+    const motivoSelect = div.querySelector(`#motivo-overlay-${index}`);
+    const otroMotivoInput = div.querySelector(`#otro-motivo-overlay-${index}`);
+    
+    if (motivoSelect && otroMotivoInput) {
+      motivoSelect.addEventListener('change', function() {
+        if (this.value === 'otro') {
+          otroMotivoInput.style.display = 'block';
+          otroMotivoInput.required = true;
+        } else {
+          otroMotivoInput.style.display = 'none';
+          otroMotivoInput.required = false;
+          otroMotivoInput.value = '';
+        }
+        guardarProgreso();
       });
+    }
+    
+    // ✅ Configurar eventos de tiempo
+    const inputsTiempo = div.querySelectorAll('.time-input-masked');
+    inputsTiempo.forEach(input => {
+      input.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '').substring(0, 5);
+      });
+    });
+  });
+  
+  // Si no hay paradas, agregar la primera vacía
+  if (contenedorOverlay.children.length === 0) {
+    agregarParadaOperacionOverlay();
+  }
+  
+  // Mostrar overlay
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
 
-      const [vehiculoResult] = await connection.query(
-        `INSERT INTO vehiculos (
-          registro_id, inicio, fin, motivo, otro_motivo, muelle, otro_muelle_num,
-          placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, otro_origen, personas, cajas,
-          justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_final, 
-          foto_url, nombres_personal, tipo_operacion
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          registroId,
-          vehiculo.inicio || '',
-          vehiculo.fin || '',
-          vehiculo.motivo || '',
-          vehiculo.otro_motivo || '',
-          vehiculo.muelle || '',
-          vehiculo.otro_muelle_num || '',
-          vehiculo.placa || '',
-          vehiculo.tipo_vehi || '',
-          vehiculo.otro_tipo || '',
-          vehiculo.destino || '',
-          vehiculo.otro_destino || '',
-          vehiculo.origen || '',
-          vehiculo.otro_origen || '',
-          vehiculo.personas || '',
-          vehiculo.cajas || '',
-          vehiculo.justificacion || '',
-          vehiculo.otro_justificacion || '',
-          vehiculo.tiempo_muerto_inicio || '',
-          vehiculo.tiempo_muerto_final || '',
-          vehiculo.foto_url || '',
-          nombresJSON,
-          vehiculo.tipo_operacion || ''  // ✅ CORREGIDO: valor por defecto
-        ]
-    );
+// ✅ CERRAR OVERLAY DE PARADAS DE OPERACIÓN
+function cerrarParadasOperacion() {
+  const contenedorOculto = document.getElementById('operacion-contenedor');
+  const contenedorOverlay = document.getElementById('paradas-operacion-contenedor');
+  const overlay = document.getElementById('overlay-paradas-operacion');
+  
+  if (!contenedorOculto || !contenedorOverlay || !overlay) return;
+  
+  // Limpiar contenedor oculto
+  contenedorOculto.innerHTML = '';
+  
+  // Copiar paradas del overlay al contenedor oculto
+  const paradasOverlay = contenedorOverlay.querySelectorAll('.parada-group');
+  paradasOverlay.forEach((paradaOverlay, index) => {
+    // ✅ Crear nueva parada manualmente
+    const div = document.createElement('div');
+    div.className = 'parada-group';
+    div.dataset.index = index;
+    
+    const botonEliminar = document.createElement('button');
+    botonEliminar.type = 'button';
+    botonEliminar.className = 'btn-eliminar';
+    botonEliminar.textContent = 'Eliminar';
+    botonEliminar.onclick = function() {
+      div.remove();
+      const paradas = contenedorOculto.querySelectorAll('.parada-group');
+      paradas.forEach((p, i) => {
+        const span = p.querySelector('.numero-parada');
+        if (span) span.textContent = i + 1;
+      });
+      guardarProgreso();
+    };
+    
+    const dInicio = `operacion-inicio-${index}`;
+    const dFin = `operacion-fin-${index}`;
+    
+    // ✅ Obtener valores del overlay
+    const inicio = paradaOverlay.querySelector(`input[name="parada_inicio_operacion_${index}_overlay"]`)?.value || '';
+    const fin = paradaOverlay.querySelector(`input[name="parada_fin_operacion_${index}_overlay"]`)?.value || '';
+    const motivo = paradaOverlay.querySelector(`select[name="parada_motivo_operacion_${index}_overlay"]`)?.value || '';
+    const otro_motivo = paradaOverlay.querySelector(`input[name="parada_otro_motivo_operacion_${index}_overlay"]`)?.value || '';
+    
+    div.innerHTML = `
+      <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #<span class="numero-parada">${index + 1}</span> (Operación)</p>
       
-      const vehiculoId = vehiculoResult.insertId;
-      // ✅ NUEVO: Insertar novedades por vehículo
-  if (vehiculo.novedades && Array.isArray(vehiculo.novedades)) {
-    for (const novedad of vehiculo.novedades) {
-      await connection.query(
-        `INSERT INTO novedades (
-          vehiculo_id, registro_id, tipo_novedad, descripcion, foto_url
-        ) VALUES (?, ?, ?, ?, ?)`,
-        [
-          vehiculoId,
-          registroId,
-          novedad.tipo || '',
-          novedad.descripcion || '',
-          novedad.foto_url || ''
-        ]
-      );
+      <div class="time-row">
+        <div>
+          <label class="time-label">Hora Inicio (HH:MM):</label>
+          <input type="tel" name="parada_inicio_operacion_${index}" class="time-input-masked"
+              placeholder="HH:MM" maxlength="5" value="${inicio}"
+              onblur="applyTimeMask(this, '${dInicio}')">
+          <span id="${dInicio}" class="time-display"></span>
+        </div>
+        <div>
+          <label class="time-label">Hora Final (HH:MM):</label>
+          <input type="tel" name="parada_fin_operacion_${index}" class="time-input-masked"
+              placeholder="HH:MM" maxlength="5" value="${fin}"
+              onblur="applyTimeMask(this, '${dFin}')">
+          <span id="${dFin}" class="time-display"></span>
+        </div>
+      </div>
+      
+      <label style="margin-top:5px;">Motivo:</label>
+      <select name="parada_motivo_operacion_${index}" id="motivo-${index}">
+        <option value="">Seleccione</option>
+        <option value="pausas_activas" ${motivo === 'pausas_activas' ? 'selected' : ''}>Pausas Activas y/o Charla</option>
+        <option value="liberacion_calidad" ${motivo === 'liberacion_calidad' ? 'selected' : ''}>Liberacion De Calidad</option>
+        <option value="desayuno_almuerzo_cena" ${motivo === 'desayuno_almuerzo_cena' ? 'selected' : ''}>Desayuno/Almuerzo/Cena</option>
+        <option value="aseo" ${motivo === 'aseo' ? 'selected' : ''}>Aseo</option>
+        <option value="faltante_insumos" ${motivo === 'faltante_insumos' ? 'selected' : ''}>Faltante (Canastillas, vinipel, estibas, etc)</option>
+        <option value="danos_equipo" ${motivo === 'danos_equipo' ? 'selected' : ''}>Daños (Electricos, montacargas, etc)</option>
+        <option value="otro" ${motivo === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      <input type="text" name="parada_otro_motivo_operacion_${index}" id="otro-motivo-${index}" placeholder="Especifique" class="otro-input" value="${otro_motivo}" style="${motivo === 'otro' ? 'display: block;' : 'display: none;'}">
+    `;
+    
+    div.appendChild(botonEliminar);
+    contenedorOculto.appendChild(div);
+    
+    // ✅ Configurar evento onchange para el contenedor oculto
+    const motivoSelect = div.querySelector(`#motivo-${index}`);
+    const otroMotivoInput = div.querySelector(`#otro-motivo-${index}`);
+    
+    if (motivoSelect && otroMotivoInput) {
+      motivoSelect.addEventListener('change', function() {
+        if (this.value === 'otro') {
+          otroMotivoInput.style.display = 'block';
+          otroMotivoInput.required = true;
+        } else {
+          otroMotivoInput.style.display = 'none';
+          otroMotivoInput.required = false;
+          otroMotivoInput.value = '';
+        }
+        guardarProgreso();
+      });
+    }
+    
+    // ✅ Configurar eventos de tiempo
+    const inputsTiempo = div.querySelectorAll('.time-input-masked');
+    inputsTiempo.forEach(input => {
+      input.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '').substring(0, 5);
+      });
+    });
+  });
+  
+  // Ocultar overlay
+  overlay.style.display = 'none';
+  document.body.style.overflow = 'auto';
+  
+  guardarProgreso();
+}
+
+// ✅ ACTUALIZAR NÚMEROS DE PARADAS EN EL OVERLAY
+function actualizarNumerosParadasOverlay() {
+  const contenedor = document.getElementById('paradas-operacion-contenedor');
+  if (!contenedor) return;
+  
+  const paradas = contenedor.querySelectorAll('.parada-group');
+  paradas.forEach((parada, index) => {
+    const span = parada.querySelector('.numero-parada');
+    if (span) span.textContent = index + 1;
+  });
+}
+
+// ✅ AGREGAR PARADA EN EL OVERLAY
+function agregarParadaOperacionOverlay() {
+  const index = document.getElementById('paradas-operacion-contenedor')?.children.length || 0;
+  const contenedor = document.getElementById('paradas-operacion-contenedor');
+  if (!contenedor) return;
+  
+  const div = document.createElement('div');
+  div.className = 'parada-group';
+  div.dataset.index = index;
+  
+  const botonEliminar = document.createElement('button');
+  botonEliminar.type = 'button';
+  botonEliminar.className = 'btn-eliminar';
+  botonEliminar.textContent = 'Eliminar';
+  botonEliminar.style.marginTop = '10px';
+  botonEliminar.style.background = '#dc3545';
+  botonEliminar.style.color = 'white';
+  botonEliminar.style.border = 'none';
+  botonEliminar.style.padding = '5px 10px';
+  botonEliminar.style.borderRadius = '3px';
+  botonEliminar.style.cursor = 'pointer';
+  botonEliminar.onclick = function() {
+    div.remove();
+    actualizarNumerosParadasOverlay();
+    guardarProgreso();
+  };
+  
+  const dInicio = `operacion-inicio-${index}-overlay`;
+  const dFin = `operacion-fin-${index}-overlay`;
+  
+  div.innerHTML = `
+    <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #<span class="numero-parada">${index + 1}</span> (Operación)</p>
+    
+    <div class="time-row">
+      <div>
+        <label class="time-label">Hora Inicio (HH:MM):</label>
+        <input type="tel" name="parada_inicio_operacion_${index}_overlay" class="time-input-masked"
+            placeholder="HH:MM" maxlength="5"
+            onblur="applyTimeMask(this, '${dInicio}')">
+        <span id="${dInicio}" class="time-display"></span>
+      </div>
+      <div>
+        <label class="time-label">Hora Final (HH:MM):</label>
+        <input type="tel" name="parada_fin_operacion_${index}_overlay" class="time-input-masked"
+            placeholder="HH:MM" maxlength="5"
+            onblur="applyTimeMask(this, '${dFin}')">
+        <span id="${dFin}" class="time-display"></span>
+      </div>
+    </div>
+    
+    <label style="margin-top:5px;">Motivo:</label>
+    <select name="parada_motivo_operacion_${index}_overlay" id="motivo-overlay-${index}">
+      <option value="">Seleccione</option>
+      <option value="pausas_activas">Pausas Activas y/o Charla</option>
+      <option value="liberacion_calidad">Liberacion De Calidad</option>
+      <option value="desayuno_almuerzo_cena">Desayuno/Almuerzo/Cena</option>
+      <option value="aseo">Aseo</option>
+      <option value="faltante_insumos">Faltante (Canastillas, vinipel, estibas, etc)</option>
+      <option value="danos_equipo">Daños (Electricos, montacargas, etc)</option>
+      <option value="otro">Otro</option>
+    </select>
+    <input type="text" name="parada_otro_motivo_operacion_${index}_overlay" id="otro-motivo-overlay-${index}" placeholder="Especifique" class="otro-input" style="display: none;">
+  `;
+  
+  div.appendChild(botonEliminar);
+  contenedor.appendChild(div);
+  
+  // ✅ Configurar evento onchange para mostrar/ocultar "otro motivo"
+  const motivoSelect = div.querySelector(`#motivo-overlay-${index}`);
+  const otroMotivoInput = div.querySelector(`#otro-motivo-overlay-${index}`);
+  
+  if (motivoSelect && otroMotivoInput) {
+    motivoSelect.addEventListener('change', function() {
+      if (this.value === 'otro') {
+        otroMotivoInput.style.display = 'block';
+        otroMotivoInput.required = true;
+      } else {
+        otroMotivoInput.style.display = 'none';
+        otroMotivoInput.required = false;
+        otroMotivoInput.value = '';
+      }
+      guardarProgreso();
+    });
+  }
+  
+  // ✅ Configurar eventos de tiempo
+  const inputsTiempo = div.querySelectorAll('.time-input-masked');
+  inputsTiempo.forEach(input => {
+    input.addEventListener('input', function() {
+      this.value = this.value.replace(/[^0-9]/g, '').substring(0, 5);
+    });
+  });
+  
+  actualizarNumerosParadasOverlay();
+}
+
+// ✅ AGREGAR CAMPO DE PARADA EN EL OVERLAY
+function agregarCampoParadaOverlay(tipo, index) {
+  const contenedor = document.getElementById('paradas-operacion-contenedor');
+  if (!contenedor) return;
+  
+  const div = document.createElement('div');
+  div.className = 'parada-group';
+  div.dataset.index = index;
+  
+  const botonEliminar = document.createElement('button');
+  botonEliminar.type = 'button';
+  botonEliminar.className = 'btn-eliminar';
+  botonEliminar.textContent = 'Eliminar';
+  botonEliminar.style.marginTop = '10px';
+  botonEliminar.style.background = '#dc3545';
+  botonEliminar.style.color = 'white';
+  botonEliminar.style.border = 'none';
+  botonEliminar.style.padding = '5px 10px';
+  botonEliminar.style.borderRadius = '3px';
+  botonEliminar.style.cursor = 'pointer';
+  botonEliminar.onclick = function() {
+    div.remove();
+    actualizarNumerosParadasOverlay();
+    guardarProgreso();
+  };
+  
+  const dInicio = `operacion-inicio-${index}-overlay`;
+  const dFin = `operacion-fin-${index}-overlay`;
+  
+  div.innerHTML = `
+    <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #<span class="numero-parada">${index + 1}</span> (Operación)</p>
+    
+    <div class="time-row">
+      <div>
+        <label class="time-label">Hora Inicio (HH:MM):</label>
+        <input type="tel" name="parada_inicio_operacion_${index}_overlay" class="time-input-masked"
+            placeholder="HH:MM" maxlength="5"
+            onblur="applyTimeMask(this, '${dInicio}')">
+        <span id="${dInicio}" class="time-display"></span>
+      </div>
+      <div>
+        <label class="time-label">Hora Final (HH:MM):</label>
+        <input type="tel" name="parada_fin_operacion_${index}_overlay" class="time-input-masked"
+            placeholder="HH:MM" maxlength="5"
+            onblur="applyTimeMask(this, '${dFin}')">
+        <span id="${dFin}" class="time-display"></span>
+      </div>
+    </div>
+    
+    <label style="margin-top:5px;">Motivo:</label>
+    <select name="parada_motivo_operacion_${index}_overlay">
+      <option value="">Seleccione</option>
+      <option value="pausas_activas">Pausas Activas y/o Charla</option>
+      <option value="liberacion_calidad">Liberacion De Calidad</option>
+      <option value="desayuno_almuerzo_cena">Desayuno/Almuerzo/Cena</option>
+      <option value="aseo">Aseo</option>
+      <option value="faltante_insumos">Faltante (Canastillas, vinipel, estibas, etc)</option>
+      <option value="danos_equipo">Daños (Electricos, montacargas, etc)</option>
+      <option value="otro">Otro</option>
+    </select>
+    <input type="text" name="parada_otro_motivo_operacion_${index}_overlay" placeholder="Especifique" class="otro-input">
+  `;
+  
+  div.appendChild(botonEliminar);
+  contenedor.appendChild(div);
+  
+  // Configurar eventos
+  const motivoSelect = div.querySelector(`select[name="parada_motivo_operacion_${index}_overlay"]`);
+  if (motivoSelect) {
+    motivoSelect.addEventListener('change', function() {
+      const otroInput = div.querySelector('.otro-input');
+      if (otroInput) {
+        if (this.value === 'otro') {
+          otroInput.style.display = 'block';
+        } else {
+          otroInput.style.display = 'none';
+          otroInput.value = '';
+        }
+      }
+    });
+  }
+  
+  // Configurar eventos de tiempo
+  const inputsTiempo = div.querySelectorAll('.time-input-masked');
+  inputsTiempo.forEach(input => {
+    input.addEventListener('input', function() {
+      this.value = this.value.replace(/[^0-9]/g, '').substring(0, 5);
+    });
+  });
+}
+
+// ✅ CERRAR OVERLAY AL HACER CLIC FUERA
+document.addEventListener('click', function(event) {
+  const overlay = document.getElementById('overlay-paradas-operacion');
+  if (overlay && overlay.style.display === 'flex') {
+    const contenido = overlay.querySelector('div');
+    if (contenido && !contenido.contains(event.target) && event.target === overlay) {
+      cerrarParadasOperacion();
     }
   }
+});
+
+// ✅ FORMATEAR CÉDULA COLOMBIANA (XXX.XXX.XXX o X.XXX.XXX.XXX)
+function formatearCedula(input) {
+  // Eliminar todo excepto números
+  let valor = input.value.replace(/\D/g, '');
+  
+  // Limitar a 10 dígitos
+  if (valor.length > 10) {
+    valor = valor.substring(0, 10);
+  }
+  
+  // Formatear con puntos cada 3 dígitos desde la derecha
+  let partes = [];
+  while (valor.length > 0) {
+    partes.unshift(valor.substring(Math.max(0, valor.length - 3), valor.length));
+    valor = valor.substring(0, Math.max(0, valor.length - 3));
+  }
+  
+  input.value = partes.join('.');
+}
+
+// ✅ NUEVA FUNCIÓN: Actualizar muelles de todos los vehículos
+function actualizarMuellesPorLugar() {
+  const lugar = document.getElementById('lugar').value;
+  const muelles = obtenerMuellesPorLugar(lugar);
+  const contenedor = document.getElementById('vehiculos-contenedor');
+  const registros = contenedor.querySelectorAll('.registro-vehiculo');
+  
+  registros.forEach((registro, index) => {
+    const muelleSelect = registro.querySelector(`#muelle-select-${index}`);
+    const otroMuelleInput = registro.querySelector(`#otro_muelle_${index}`);
+    if (muelleSelect) {
+      const valorActual = muelleSelect.value;
+      muelleSelect.innerHTML = '<option value="">Seleccione</option>';
+      muelles.forEach(muelle => {
+        const option = document.createElement('option');
+        option.value = muelle.value;
+        option.textContent = muelle.label;
+        if (muelle.value === valorActual) {
+          option.selected = true;
+        }
+        muelleSelect.appendChild(option);
+      });
+      manejarOtroMuelle(index);
+    }
+  });
+  
+  // ✅ ACTUALIZAR TIPO DE OPERACIÓN CUANDO CAMBIE EL LUGAR
+  actualizarTipoOperacionPorLugar();
+  
+  guardarProgreso();
+}
+
+// ✅ NUEVA FUNCIÓN: Manejar campo "otro" para muelles
+function manejarOtroMuelle(vIndex) {
+  const muelleSelect = document.querySelector(`#muelle-select-${vIndex}`);
+  const otroInput = document.querySelector(`#otro_muelle_${vIndex}`);
+  
+  if (!muelleSelect || !otroInput) return;
+  
+  if (muelleSelect.value === 'otro') {
+    otroInput.style.display = 'block';
+    otroInput.required = true;
+  } else {
+    otroInput.style.display = 'none';
+    otroInput.required = false;
+    otroInput.value = '';
+  }
+  
+  guardarProgreso();
+}
+
+        
+
+        // ============================================
+        // FUNCIONES PARA NOMBRES DEL PERSONAL
+        // ============================================
+
+        // ✅ FUNCIÓN PARA GENERAR CAMPOS DE NOMBRES POR VEHÍCULO (NUEVO)
+        function generarCamposNombresVehiculo(vIndex) {
+  const totalInput = document.querySelector(`input[name="vehiculo_${vIndex}_personas"]`);
+  if (!totalInput) return;
+  
+  const total = parseInt(totalInput.value) || 0;
+  const container = document.getElementById(`nombres-personal-${vIndex}`);
+  if (!container) return;
+  
+  container.innerHTML = '';
+  
+  if (total > 0) {
+    const label = document.createElement('label');
+    label.textContent = 'Cédulas de los Colaboradores:';
+    label.style.display = 'block';
+    label.style.fontWeight = 'bold';
+    label.style.marginTop = '15px';
+    label.style.color = '#333';
+    container.appendChild(label);
+  }
+  
+  for (let i = 1; i <= total; i++) {
+    const div = document.createElement('div');
+    div.style.marginBottom = '15px';
+    div.style.padding = '10px';
+    div.style.backgroundColor = '#f8f9fa';
+    div.style.borderRadius = '8px';
+    
+    const label = document.createElement('label');
+    label.textContent = `Cédula colaborador ${i}:`;
+    label.style.display = 'block';
+    label.style.fontWeight = 'bold';
+    label.style.marginBottom = '8px';
+    label.style.fontSize = '0.95em';
+    label.style.color = '#555';
+    label.htmlFor = `vehiculo_${vIndex}_nombre_persona_${i}`;
+    
+    const input = document.createElement('input');
+    input.type = 'text';  // ✅ 'text' para poder usar maxlength y validación personalizada
+    input.inputmode = 'numeric';  // ✅ Teclado numérico en móviles
+    input.id = `vehiculo_${vIndex}_nombre_persona_${i}`;  // ✅ CORREGIDO: usar 'i' en lugar de 'idx'
+    input.name = `vehiculo_${vIndex}_nombre_persona_${i}`;  // ✅ CORREGIDO: usar 'i' en lugar de 'idx'
+    input.placeholder = `Ingrese cédula (máx. 10 dígitos)`;
+    input.value = '';  // ✅ CORREGIDO: valor vacío inicial (no 'nombre')
+    input.required = true;
+    input.maxLength = 10;  // ✅ Limitar a máximo 10 caracteres
+    input.style.width = '100%';
+    input.style.padding = '10px';
+    input.style.border = '2px solid #001855';
+    input.style.borderRadius = '8px';
+    input.style.boxSizing = 'border-box';
+    input.style.fontSize = '1.1em';
+    input.style.fontFamily = 'Arial, sans-serif';
+
+    // ✅ Limitar a solo números y máximo 10 dígitos
+    input.oninput = function() {
+      // Eliminar todo excepto números
+      this.value = this.value.replace(/\D/g, '');
       
-      // ✅ INSERTAR DETALLES DE INSPECCIÓN usando los campos del mismo objeto vehiculo
-      await connection.query(
-        `INSERT INTO detalles_vehiculos (
-          vehiculo_id, interior_camion, estado_carpa, olores_extraños, objetos_extraños,
-          evidencias_plagas, estado_suelo, aprobado
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          vehiculoId,
-          vehiculo.interior_camion || null,
-          vehiculo.estado_carpa || null,
-          vehiculo.olores_extranos || null,
-          vehiculo.objetos_extranos || null,
-          vehiculo.evidencias_plagas || null,
-          vehiculo.estado_suelo || null,
-          vehiculo.aprobado || null
-        ]
-      );
+      // Limitar a máximo 10 dígitos
+      if (this.value.length > 10) {
+        this.value = this.value.substring(0, 10);
+      }
       
-      // ✅ NUEVO: Insertar productos escaneados por vehículo (AHORA DENTRO DEL BUCLE)
-      if (vehiculo.productos_escaneados && Array.isArray(vehiculo.productos_escaneados)) {
-        for (const producto of vehiculo.productos_escaneados) {
-          await connection.query(
-            `INSERT INTO num_producto (
-              vehiculo_id, registro_id, codigo_producto, referencia, nombre_producto, cantidad_cajas
-            ) VALUES (?, ?, ?, ?, ?, ?)`,
-            [
-              vehiculoId,
-              registroId,
-              producto.codigo || '',
-              producto.referencia || '',
-              producto.nombre || '',
-              producto.cantidad || 0
-            ]
-          );
+      guardarProgreso();
+    };
+    
+    // ✅ Formatear visualmente con puntos cada 3 dígitos (opcional, solo visual)
+    input.onblur = function() {
+      if (this.value.length === 10) {
+        const sinPuntos = this.value.replace(/\./g, '');
+        const conPuntos = sinPuntos.replace(/(\d{3})(\d{3})(\d{4})/, '$1.$2.$3');
+        this.value = conPuntos;
+      }
+    };
+    
+    // ✅ Eliminar puntos al enfocar para editar
+    input.onfocus = function() {
+      this.value = this.value.replace(/\./g, '');
+    };
+    
+    div.appendChild(label);
+    div.appendChild(input);
+    container.appendChild(div);
+  }
+  
+  guardarProgreso();
+}
+        // ============================================
+        // FUNCIONES DE VALIDACIÓN DE HORAS
+        // ============================================
+
+        function horaAMinutos(horaStr) {
+            if (!horaStr || !horaStr.includes(':')) return null;
+            const [h, m] = horaStr.split(':').map(Number);
+            if (isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) return null;
+            return h * 60 + m;
+        }
+
+        function rangosSeSolapan(inicio1, fin1, inicio2, fin2) {
+            const i1 = horaAMinutos(inicio1);
+            const f1 = horaAMinutos(fin1);
+            const i2 = horaAMinutos(inicio2);
+            const f2 = horaAMinutos(fin2);
+            
+            if (i1 === null || f1 === null || i2 === null || f2 === null) return false;
+            return i1 < f2 && i2 < f1;
+        }
+
+        // ============================================
+        // VALIDACIÓN DE SOLAPAMIENTOS
+        // ============================================
+
+        function validarSolapamientoVehiculos() {
+            const agrupados = {};
+            
+            for (let idx = 0; idx < vehiculosData.length; idx++) {
+                const data = vehiculosData[idx];
+                if (!data.muelle && data.muelle !== 'otro') continue;
+                
+                const muelle = data.muelle === 'otro' ? (data.otro_muelle_num || '') : data.muelle;
+                if (!muelle || !data.inicio || !data.fin) continue;
+                
+                if (!agrupados[muelle]) agrupados[muelle] = [];
+                agrupados[muelle].push({ inicio: data.inicio, fin: data.fin, idx });
+            }
+            
+            for (const muelle in agrupados) {
+                const regs = agrupados[muelle];
+                for (let i = 0; i < regs.length; i++) {
+                    for (let j = i + 1; j < regs.length; j++) {
+                        if (rangosSeSolapan(regs[i].inicio, regs[i].fin, regs[j].inicio, regs[j].fin)) {
+                            alert(`¡Conflicto en muelle ${muelle}! Vehículos #${regs[i].idx + 1} y #${regs[j].idx + 1} se superponen en el mismo horario.`);
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        function validarSolapamientoParadas() {
+            const paradas = [];
+            const cont = document.getElementById('operacion-contenedor');
+            const grupos = cont.querySelectorAll('.parada-group');
+            
+            grupos.forEach((grupo, idx) => {
+                const inicioInput = grupo.querySelector(`input[name^="parada_inicio_operacion_"]`);
+                const finInput = grupo.querySelector(`input[name^="parada_fin_operacion_"]`);
+                if (inicioInput && finInput && inicioInput.value && finInput.value) {
+                    paradas.push({ inicio: inicioInput.value, fin: finInput.value, idx });
+                }
+            });
+            
+            for (let i = 0; i < paradas.length; i++) {
+                for (let j = i + 1; j < paradas.length; j++) {
+                    if (rangosSeSolapan(paradas[i].inicio, paradas[i].fin, paradas[j].inicio, paradas[j].fin)) {
+                        alert(`¡Las paradas de operación #${i + 1} y #${j + 1} se superponen!`);
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        // ============================================
+        // GESTIÓN DE VEHÍCULOS
+        // ============================================
+
+        function eliminarRegistroVehiculo(index) {
+            if (vehiculosData.length <= 1) {
+                alert("Debe haber al menos un vehículo.");
+                return;
+            }
+            
+            sincronizarVehiculosDesdeDOM();
+            vehiculosData.splice(index, 1);
+            reindexarVehiculos();
+            actualizarTotalCajas();
+            guardarProgreso();
+        }
+
+        function reindexarVehiculos() {
+            const contenedor = document.getElementById('vehiculos-contenedor');
+            contenedor.innerHTML = '';
+            
+            for (let i = 0; i < vehiculosData.length; i++) {
+                crearVehiculoHTML(contenedor, i, vehiculosData[i]);
+            }
+        }
+
+        function agregarRegistroVehiculo() {
+            const vIndex = vehiculosData.length;
+            vehiculosData.push({});
+            
+            const contenedor = document.getElementById('vehiculos-contenedor');
+            crearVehiculoHTML(contenedor, vIndex, {});
+            
+            actualizarTotalCajas();
+            guardarProgreso();
+        }
+        
+
+        function sincronizarVehiculosDesdeDOM() {
+  const contenedor = document.getElementById('vehiculos-contenedor');
+  const registros = contenedor.querySelectorAll('.registro-vehiculo');
+  
+  for (let i = 0; i < registros.length; i++) {
+    const reg = registros[i];
+    if (vehiculosData[i] === undefined) vehiculosData[i] = {};
+    
+    const getValue = name => {
+      const el = reg.querySelector(`[name="${name}"]`);
+      return el ? el.value || '' : '';
+    };
+    
+    // ✅ Obtener datos de nombres del personal
+    const nombresPersonal = [];
+    const nombresContainer = reg.querySelector(`#nombres-personal-${i}`);
+    if (nombresContainer) {
+      const inputsNombres = nombresContainer.querySelectorAll('input[type="text"]');
+      inputsNombres.forEach((input, idx) => {
+        nombresPersonal.push(input.value || '');
+      });
+    }
+    
+    // ✅ CAPTURAR DATOS DEL OVERLAY DE INSPECCIÓN (CORREGIDO)
+    const interiorCamion = document.getElementById(`interior_camion_${i}`)?.value || '';
+    const estadoCarpa = document.getElementById(`estado_carpa_${i}`)?.value || '';
+    const oloresExtranos = document.getElementById(`olores_extranos_${i}`)?.value || '';
+    const objetosExtranos = document.getElementById(`objetos_extranos_${i}`)?.value || '';
+    const evidenciasPlagas = document.getElementById(`evidencias_plagas_${i}`)?.value || '';
+    const estadoSuelo = document.getElementById(`estado_suelo_${i}`)?.value || '';
+    const aprobado = document.getElementById(`aprobado_${i}`)?.value || '';
+    
+    vehiculosData[i] = {
+      inicio: getValue(`vehiculo_${i}_inicio`),
+      fin: getValue(`vehiculo_${i}_fin`),
+      motivo: getValue(`vehiculo_${i}_motivo`),
+      otro_motivo: getValue(`vehiculo_${i}_otro_motivo`),
+      muelle: getValue(`vehiculo_${i}_muelle`),
+      otro_muelle_num: getValue(`vehiculo_${i}_otro_muelle_num`),
+      placa: getValue(`vehiculo_${i}_placa`),
+      tipo_vehi: getValue(`vehiculo_${i}_tipo_vehi`),
+      otro_tipo: getValue(`vehiculo_${i}_otro_tipo`),
+      destino: getValue(`vehiculo_${i}_destino`),
+      otro_destino: getValue(`vehiculo_${i}_otro_destino`),
+      origen: getValue(`vehiculo_${i}_origen`),
+      otro_origen: getValue(`vehiculo_${i}_otro_origen`),
+      personas: getValue(`vehiculo_${i}_personas`),
+      nombres_personal: nombresPersonal,
+      cajas: getValue(`vehiculo_${i}_cajas`),
+      justificacion: getValue(`vehiculo_${i}_justificacion`),
+      otro_justificacion: getValue(`vehiculo_${i}_otro_justificacion`),
+      tiempo_muerto_inicio: getValue(`vehiculo_${i}_tiempo_muerto_inicio`),
+      tiempo_muerto_final: getValue(`vehiculo_${i}_tiempo_muerto_final`),
+      foto_url: getValue(`vehiculo_${i}_foto_url`),
+      tipo_operacion: getValue(`vehiculo_${i}_tipo_operacion`) || '',
+      // ✅ DATOS DE INSPECCIÓN DEL OVERLAY
+      interior_camion: interiorCamion,
+      estado_carpa: estadoCarpa,
+      olores_extranos: oloresExtranos,
+      objetos_extranos: objetosExtranos,
+      evidencias_plagas: evidenciasPlagas,
+      estado_suelo: estadoSuelo,
+      aprobado: aprobado
+    };
+  }
+  
+  // ✅ Depuración
+  console.log('📊 Datos de vehículos sincronizados:');
+  vehiculosData.forEach((v, i) => {
+    console.log(`Vehículo ${i}:`, {
+      placa: v.placa,
+      tipo_operacion: v.tipo_operacion,
+      interior_camion: v.interior_camion,
+      estado_carpa: v.estado_carpa,
+      aprobado: v.aprobado
+    });
+  });
+}
+
+        // ============================================
+        // MANEJO DE CAMPOS "OTRO"
+        // ============================================
+
+        function manejarOtroLiderPepsico() {
+            const otroInput = document.getElementById('lider_pepsico_otro');
+            if (document.getElementById('lider_pepsico').value === 'otro') {
+                otroInput.style.display = 'block';
+                otroInput.required = true;
+            } else {
+                otroInput.style.display = 'none';
+                otroInput.required = false;
+                otroInput.value = '';
+            }
+            guardarProgreso();
+        }
+
+        function manejarOtroCampo(select) {
+            const otro = select.nextElementSibling;
+            if (!otro || !otro.classList.contains('otro-input')) return;
+            
+            if (select.value === 'otro') {
+                otro.style.display = 'block';
+                otro.required = true;
+            } else {
+                otro.style.display = 'none';
+                otro.required = false;
+                otro.value = '';
+            }
+            guardarProgreso();
+        }
+
+        function manejarOtroCoordinador() {
+            const otroInput = document.getElementById('coordinador_otro');
+            if (document.getElementById('coordinador').value === 'otro') {
+                otroInput.style.display = 'block';
+                otroInput.required = true;
+            } else {
+                otroInput.style.display = 'none';
+                otroInput.required = false;
+                otroInput.value = '';
+            }
+            guardarProgreso();
+        }
+
+        // ============================================
+        // FUNCIONES DE VISUALIZACIÓN CONDICIONAL
+        // ============================================
+
+        function alternarDestinoRemitente(selectMotivo, vIndex) {
+  const motivo = selectMotivo.value;
+  const destinoGroup = document.getElementById(`destino-group-${vIndex}`);
+  const remitenteGroup = document.getElementById(`remitente-group-${vIndex}`);
+  
+  // ✅ Mostrar/ocultar Destino y Origen según el motivo
+  if (destinoGroup) destinoGroup.style.display = motivo === 'cargue' ? 'block' : 'none';
+  if (remitenteGroup) remitenteGroup.style.display = motivo === 'descargue' ? 'block' : 'none';
+  
+  // ✅ Mostrar/ocultar el contenedor completo de Destino/Origen
+  const container = document.getElementById(`conditional-destino-origen-${vIndex}`);
+  if (container) {
+    container.style.display = (motivo === 'cargue' || motivo === 'descargue') ? 'block' : 'none';
+  }
+  
+  // ✅ Manejar campos "otro" si existen
+  const destinoSelect = document.getElementById(`destino-select-${vIndex}`);
+  const remitenteSelect = document.getElementById(`remitente-select-${vIndex}`);
+  
+  if (destinoSelect) {
+    const otroDestinoInput = document.getElementById(`otro_destino_${vIndex}`);
+    if (otroDestinoInput) {
+      if (destinoSelect.value === 'otro') {
+        otroDestinoInput.style.display = 'block';
+      } else {
+        otroDestinoInput.style.display = 'none';
+        otroDestinoInput.value = '';
+      }
+    }
+  }
+  
+  if (remitenteSelect) {
+    const otroOrigenInput = document.getElementById(`otro_origen_${vIndex}`);
+    if (otroOrigenInput) {
+      if (remitenteSelect.value === 'otro') {
+        otroOrigenInput.style.display = 'block';
+      } else {
+        otroOrigenInput.style.display = 'none';
+        otroOrigenInput.value = '';
+      }
+    }
+  }
+  
+  guardarProgreso();
+}
+
+        function mostrarTiempoMuerto(select, vIndex) {
+            const div = document.getElementById(`tiempo-muerto-${vIndex}`);
+            if (select.value !== "") {
+                div.style.display = 'flex';
+            } else {
+                div.style.display = 'none';
+                const inicio = document.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_inicio"]`);
+                const fin = document.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_final"]`);
+                if (inicio) inicio.value = '';
+                if (fin) fin.value = '';
+            }
+            guardarProgreso();
+        }
+
+        // ✅ NUEVA FUNCIÓN: Mostrar/Ocultar Tipo de Operación basado en lugar
+function actualizarTipoOperacionPorLugar() {
+  const lugar = document.getElementById('lugar').value;
+  const contenedor = document.getElementById('vehiculos-contenedor');
+  const registros = contenedor.querySelectorAll('.registro-vehiculo');
+  
+  registros.forEach((registro, index) => {
+    const containerMotivoTipo = document.getElementById(`motivo-tipo-operacion-container-${index}`);
+    const lineaMotivoTipo = document.getElementById(`motivo-tipo-linea-${index}`);
+    const motivoSolo = document.getElementById(`motivo-solo-${index}`);
+    const tipoOperacionGroup = document.getElementById(`tipo-operacion-group-${index}`);
+    
+    if (containerMotivoTipo && lineaMotivoTipo && motivoSolo) {
+      if (lugar === 'SantoDomingo') {
+        // ✅ Mostrar en una sola línea para Santo Domingo
+        lineaMotivoTipo.style.display = 'flex';
+        motivoSolo.style.display = 'none';
+        
+        // Limpiar valor si se oculta
+        if (tipoOperacionGroup) {
+          const tipoOperacionSelect = document.getElementById(`tipo-operacion-${index}`);
+          if (tipoOperacionSelect) {
+            // No limpiar, mantener el valor
+          }
+        }
+      } else {
+        // ✅ Mostrar diseño original para otros lugares
+        lineaMotivoTipo.style.display = 'none';
+        motivoSolo.style.display = 'block';
+        
+        // Limpiar valor de tipo de operación
+        if (tipoOperacionGroup) {
+          const tipoOperacionSelect = document.getElementById(`tipo-operacion-${index}`);
+          if (tipoOperacionSelect) {
+            tipoOperacionSelect.value = '';
+          }
+        }
+      }
+    }
+  });
+  
+  guardarProgreso();
+}
+        // ============================================
+        // CREACIÓN DE HTML PARA VEHÍCULOS
+        // ============================================
+
+        function crearVehiculoHTML(contenedor, vIndex, datos = {}) {
+            const inicioId = `cargue-inicio-${vIndex}`;
+            const finId = `cargue-fin-${vIndex}`;
+            const fotoInputId = `foto_vehiculo_${vIndex}`;
+            const previewFotoId = `preview_foto_${vIndex}`;
+            const motivoSelectId = `motivo-cargue-descargue-${vIndex}`;
+            
+            const registro = document.createElement('div');
+            registro.className = 'registro-vehiculo';
+            registro.dataset.index = vIndex;
+            
+            
+            const html = `
+                <button type="button" class="btn-eliminar-registro" onclick="eliminarRegistroVehiculo(${vIndex})">
+                    Eliminar Vehículo #${vIndex + 1}
+                </button>
+                
+                <hr style="margin-top:25px; border-style:dashed;">
+                
+                <h4 style="text-align:center; color:#C76E00;">VEHÍCULO #${vIndex + 1}</h4>
+                <h5 style="text-align:center; color:#C76E00;">PARADA DE CARGUE/DESCARGUE</h5>
+                
+                <div class="parada-group">
+                    <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #1 (Cargue/Descargue)</p>
+                    
+                    <div class="time-row">
+                        <div>
+                            <label class="time-label">Hora Inicio (HH:MM):</label>
+                            <input type="tel" name="vehiculo_${vIndex}_inicio" class="time-input-masked" required
+                                placeholder="HH:MM" maxlength="5" value="${datos.inicio || ''}"
+                                onblur="applyTimeMask(this, '${inicioId}');">
+                            <span id="${inicioId}" class="time-display"></span>
+                        </div>
+                        <div>
+                            <label class="time-label">Hora Final (HH:MM):</label>
+                            <input type="tel" name="vehiculo_${vIndex}_fin" class="time-input-masked" required
+                                placeholder="HH:MM" maxlength="5" value="${datos.fin || ''}"
+                                onblur="applyTimeMask(this, '${finId}');">
+                            <span id="${finId}" class="time-display"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- ✅ MOTIVO Y TIPO DE OPERACIÓN EN UNA SOLA LÍNEA (solo para Santo Domingo) -->
+<div id="motivo-tipo-operacion-container-${vIndex}" style="margin-bottom: 15px;">
+  <!-- Para Santo Domingo: en una sola línea -->
+  <div id="motivo-tipo-linea-${vIndex}" style="display: none; display: flex; gap: 20px; align-items: flex-start;">
+    <!-- Motivo -->
+    <div style="flex: 1;">
+      <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Motivo:</label>
+      <select id="${motivoSelectId}" name="vehiculo_${vIndex}_motivo" required
+              style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;"
+              onchange="alternarDestinoRemitente(this, ${vIndex}); manejarOtroCampo(this);">
+        <option value="">Seleccione</option>
+        <option value="cargue" ${datos.motivo === 'cargue' ? 'selected' : ''}>Cargue</option>
+        <option value="descargue" ${datos.motivo === 'descargue' ? 'selected' : ''}>Descargue</option>
+        <option value="otro" ${datos.motivo === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      <input type="text" name="vehiculo_${vIndex}_otro_motivo" placeholder="Especifique otro motivo" class="otro-input" 
+             value="${datos.otro_motivo || ''}"
+             style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
+    </div>
+    
+    <!-- Tipo de Operación -->
+    <div style="flex: 1;">
+      <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Tipo de Operación:</label>
+      <select id="tipo-operacion-${vIndex}" name="vehiculo_${vIndex}_tipo_operacion"
+              style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione tipo</option>
+        <option value="3PD" ${datos.tipo_operacion === '3PD' ? 'selected' : ''}>3PD</option>
+        <option value="MQ" ${datos.tipo_operacion === 'MQ' ? 'selected' : ''}>MQ</option>
+      </select>
+    </div>
+  </div>
+  
+  <!-- Para otros lugares: diseño original -->
+  <div id="motivo-solo-${vIndex}" style="display: block;">
+    <label style="margin-top:5px; display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Motivo:</label>
+    <select id="${motivoSelectId}" name="vehiculo_${vIndex}_motivo" required
+            onchange="alternarDestinoRemitente(this, ${vIndex}); manejarOtroCampo(this);">
+      <option value="">Seleccione</option>
+      <option value="cargue" ${datos.motivo === 'cargue' ? 'selected' : ''}>Cargue</option>
+      <option value="descargue" ${datos.motivo === 'descargue' ? 'selected' : ''}>Descargue</option>
+      <option value="otro" ${datos.motivo === 'otro' ? 'selected' : ''}>Otro</option>
+    </select>
+    <input type="text" name="vehiculo_${vIndex}_otro_motivo" placeholder="Especifique otro motivo" class="otro-input" value="${datos.otro_motivo || ''}">
+  </div>
+</div>
+                </div>
+                
+                <hr style="margin-top:25px; border-style:dashed;">
+
+                <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 15px;">
+                  <!-- Muelle -->
+                  <div style="flex: 1;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Muelle:</label>
+                    <select name="vehiculo_${vIndex}_muelle" id="muelle-select-${vIndex}" required onchange="manejarOtroMuelle(${vIndex})"
+                            style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+                      <option value="">Seleccione</option>
+                      <!-- Los muelles se generarán dinámicamente -->
+                    </select>
+                    <input type="number" name="vehiculo_${vIndex}_otro_muelle_num" id="otro_muelle_${vIndex}" class="otro-input" 
+                          placeholder="N° muelle" min="1" max="999" value="${datos.otro_muelle_num || ''}"
+                          style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
+                  </div>
+                  
+                  <!-- Placa -->
+                  <div style="flex: 1;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Placa:</label>
+                    <input type="text" name="vehiculo_${vIndex}_placa" required 
+                          placeholder="ABC123, 123ABC o A12345" maxlength="6"
+                          value="${datos.placa || ''}"
+                          oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0,6); guardarProgreso();"
+                          style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+                  </div>
+                </div>
+                <!-- ✅ TIPO DE VEHÍCULO Y DESTINO/ORIGEN EN UNA SOLA LÍNEA -->
+<div style="display: flex; gap: 20px; margin-bottom: 15px;">
+  <!-- TIPO DE VEHÍCULO (siempre visible) -->
+  <div style="flex: 1;">
+    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Tipo De Vehículo:</label>
+    <select name="vehiculo_${vIndex}_tipo_vehi" required id="tipo_vehi_${vIndex}"
+            style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+      <option value="">Seleccione</option>
+      <option value="Van extralargo" ${datos.tipo_vehi === 'Van extralargo' ? 'selected' : ''}>Van extralargo</option>
+      <option value="Camion sencillo furgonado" ${datos.tipo_vehi === 'Camion sencillo furgonado' ? 'selected' : ''}>Camión sencillo furgonado</option>
+      <option value="Camabaja furgonado" ${datos.tipo_vehi === 'Camabaja furgonado' ? 'selected' : ''}>Camabaja furgonado</option>
+      <option value="Tractomula furgonado" ${datos.tipo_vehi === 'Tractomula furgonado' ? 'selected' : ''}>Tractomula furgonado</option>
+      <option value="Exportacion 35" ${datos.tipo_vehi === 'Exportacion 35' ? 'selected' : ''}>Exportacion 35</option>
+      <option value="Exportacion 40" ${datos.tipo_vehi === 'Exportacion 40' ? 'selected' : ''}>Exportacion 40</option>
+      <option value="Cama baja con topes" ${datos.tipo_vehi === 'Cama baja con topes' ? 'selected' : ''}>Cama baja con topes</option>
+      <option value="Camion sencillo carpado" ${datos.tipo_vehi === 'Camion sencillo carpado' ? 'selected' : ''}>Camión Sencillo Carpado</option>
+      <option value="Camabaja estandar" ${datos.tipo_vehi === 'Camabaja estandar' ? 'selected' : ''}>Camabaja estandar</option>
+      <option value="otro" ${datos.tipo_vehi === 'otro' ? 'selected' : ''}>Otro</option>
+    </select>
+    <input type="text" name="vehiculo_${vIndex}_otro_tipo" id="otro_tipo_${vIndex}" class="otro-input" 
+           placeholder="Especifique tipo" value="${datos.otro_tipo || ''}"
+           style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
+  </div>
+  
+  <!-- DESTINO/ORIGEN (condicional según motivo) -->
+  <div style="flex: 1;" id="conditional-destino-origen-${vIndex}">
+    <!-- DESTINO (visible solo si motivo = cargue) -->
+    <div class="form-group-custom" id="destino-group-${vIndex}" style="${(datos.motivo === 'cargue') ? 'display:block;' : 'display:none;'}">
+      <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; margin-top:0;">Destino:</label>
+      <select id="destino-select-${vIndex}" name="vehiculo_${vIndex}_destino"
+              style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione Destino</option>
+        <option value="BARRANQUILLA" ${datos.destino === 'BARRANQUILLA' ? 'selected' : ''}>BARRANQUILLA</option>
+        <option value="CALI" ${datos.destino === 'CALI' ? 'selected' : ''}>CALI</option>
+        <option value="BUCARAMANGA" ${datos.destino === 'BUCARAMANGA' ? 'selected' : ''}>BUCARAMANGA</option>
+        <option value="MEDELLIN" ${datos.destino === 'MEDELLIN' ? 'selected' : ''}>MEDELLIN</option>
+        <option value="MONTERIA" ${datos.destino === 'MONTERIA' ? 'selected' : ''}>MONTERIA</option>
+        <option value="GUARNE" ${datos.destino === 'GUARNE' ? 'selected' : ''}>GUARNE</option>
+        <option value="PEREIRA" ${datos.destino === 'PEREIRA' ? 'selected' : ''}>PEREIRA</option>
+        <option value="PERU" ${datos.destino === 'PERU' ? 'selected' : ''}>PERU</option>
+        <option value="ECUADOR" ${datos.destino === 'ECUADOR' ? 'selected' : ''}>ECUADOR</option>
+        <option value="FUNZA" ${datos.destino === 'FUNZA' ? 'selected' : ''}>FUNZA</option>
+        <option value="BOLIVIA" ${datos.destino === 'BOLIVIA' ? 'selected' : ''}>BOLIVIA</option>
+        <option value="SANTO DOMINGO" ${datos.destino === 'SANTO DOMINGO' ? 'selected' : ''}>SANTO DOMINGO</option>
+        <option value="LOCALES" ${datos.destino === 'LOCALES' ? 'selected' : ''}>LOCALES</option>
+        <option value="INNOVA" ${datos.destino === 'INNOVA' ? 'selected' : ''}>INNOVA</option>
+        <option value="CUCUTA" ${datos.destino === 'CUCUTA' ? 'selected' : ''}>CUCUTA</option>
+        <option value="LA ESTANCIA" ${datos.destino === 'LA ESTANCIA' ? 'selected' : ''}>LA ESTANCIA</option>
+        <option value="CIUDAD BOLIVAR" ${datos.destino === 'CIUDAD BOLIVAR' ? 'selected' : ''}>CIUDAD BOLIVAR</option>
+        <option value="VILLAVICENCIO" ${datos.destino === 'VILLAVICENCIO' ? 'selected' : ''}>VILLAVICENCIO</option>
+        <option value="ACACIAS" ${datos.destino === 'ACACIAS' ? 'selected' : ''}>ACACIAS</option>
+        <option value="otro" ${datos.destino === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      <input type="text" name="vehiculo_${vIndex}_otro_destino" id="otro_destino_${vIndex}" class="otro-input" 
+             placeholder="Especifique otro destino" value="${datos.otro_destino || ''}"
+             style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
+    </div>
+    
+    <!-- ORIGEN (visible solo si motivo = descargue) -->
+    <div class="form-group-custom" id="remitente-group-${vIndex}" style="${(datos.motivo === 'descargue') ? 'display:block;' : 'display:none;'}">
+      <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; margin-top:0;">Origen / Remitente:</label>
+      <select id="remitente-select-${vIndex}" name="vehiculo_${vIndex}_origen"
+              style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione Origen</option>
+        <option value="BARRANQUILLA" ${datos.origen === 'BARRANQUILLA' ? 'selected' : ''}>BARRANQUILLA</option>
+        <option value="CALI" ${datos.origen === 'CALI' ? 'selected' : ''}>CALI</option>
+        <option value="BUCARAMANGA" ${datos.origen === 'BUCARAMANGA' ? 'selected' : ''}>BUCARAMANGA</option>
+        <option value="MEDELLIN" ${datos.origen === 'MEDELLIN' ? 'selected' : ''}>MEDELLIN</option>
+        <option value="MONTERIA" ${datos.origen === 'MONTERIA' ? 'selected' : ''}>MONTERIA</option>
+        <option value="GUARNE" ${datos.origen === 'GUARNE' ? 'selected' : ''}>GUARNE</option>
+        <option value="PEREIRA" ${datos.origen === 'PEREIRA' ? 'selected' : ''}>PEREIRA</option>
+        <option value="PERU" ${datos.origen === 'PERU' ? 'selected' : ''}>PERU</option>
+        <option value="ECUADOR" ${datos.origen === 'ECUADOR' ? 'selected' : ''}>ECUADOR</option>
+        <option value="FUNZA" ${datos.origen === 'FUNZA' ? 'selected' : ''}>FUNZA</option>
+        <option value="BOLIVIA" ${datos.origen === 'BOLIVIA' ? 'selected' : ''}>BOLIVIA</option>
+        <option value="SANTO DOMINGO" ${datos.origen === 'SANTO DOMINGO' ? 'selected' : ''}>SANTO DOMINGO</option>
+        <option value="LOCALES" ${datos.origen === 'LOCALES' ? 'selected' : ''}>LOCALES</option>
+        <option value="INNOVA" ${datos.origen === 'INNOVA' ? 'selected' : ''}>INNOVA</option>
+        <option value="CUCUTA" ${datos.origen === 'CUCUTA' ? 'selected' : ''}>CUCUTA</option>
+        <option value="LA ESTANCIA" ${datos.origen === 'LA ESTANCIA' ? 'selected' : ''}>LA ESTANCIA</option>
+        <option value="CIUDAD BOLIVAR" ${datos.origen === 'CIUDAD BOLIVAR' ? 'selected' : ''}>CIUDAD BOLIVAR</option>
+        <option value="VILLAVICENCIO" ${datos.origen === 'VILLAVICENCIO' ? 'selected' : ''}>VILLAVICENCIO</option>
+        <option value="ACACIAS" ${datos.origen === 'ACACIAS' ? 'selected' : ''}>ACACIAS</option>
+        <option value="otro" ${datos.origen === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      <input type="text" name="vehiculo_${vIndex}_otro_origen" id="otro_origen_${vIndex}" class="otro-input" 
+             placeholder="Especifique otro origen" value="${datos.otro_origen || ''}"
+             style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
+    </div>
+  </div>
+</div>
+                
+                <label>Numero De Personas en Actividad:</label>
+                <input type="number" name="vehiculo_${vIndex}_personas" min="1" required value="${datos.personas || ''}" oninput="generarCamposNombresVehiculo(${vIndex}); guardarProgreso()">
+                
+                <!-- ✅ Contenedor para nombres del personal (NUEVO) -->
+                <div id="nombres-personal-${vIndex}" style="margin-top: 15px;"></div>
+                
+               <!-- ✅ CAMPO DE CAJAS MOVIDAS (SOLO LECTURA - SE ACTUALIZA AUTOMÁTICAMENTE) -->
+<label>Cajas Movidas:</label>
+<input type="number" name="vehiculo_${vIndex}_cajas" class="cajas-input-js" min="0" readonly
+value="${datos.cajas || '0'}"
+style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
+<!-- ✅ ÁREA DE PICKING CON BOTÓN -->
+<div style="background: #e7f3ff; padding: 15px; border-radius: 8px; margin-top: 15px; border: 2px solid #001855;">
+  <h5 style="margin-top: 0; color: #001855; font-size: 0.95em;">📦 Picking de Productos</h5>
+  
+  <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
+  <div style="display: flex; gap: 10px; align-items: center;">
+    <input type="text" id="codigo-picking-${vIndex}" placeholder="EAN o código especial"
+       style="flex: 3; padding: 10px 12px; border: 2px solid #001855; border-radius: 5px; font-size: 1.1em; font-family: Arial, sans-serif;"
+       onkeypress="if(event.key === 'Enter') agregarProductoPicking(${vIndex})"
+       oninput="validarCodigoPicking(this)">
+           
+    <button type="button" onclick="agregarProductoPicking(${vIndex})"
+            style="flex: 1; background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 100px; border-radius: 5px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 0.95em;">
+      ➕ Agregar
+    </button>
+  </div>
+  
+    <!-- ✅ Botón de borrar debajo del campo EAN -->
+    <button type="button" onclick="document.getElementById('codigo-picking-${vIndex}').value = ''; document.getElementById('codigo-picking-${vIndex}').focus();"
+            style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 0.85em; width: 100px; transform: translateX(0px);">
+    🗑️ Borrar
+    </button>
+</div>
+  
+  <div id="feedback-picking-${vIndex}" style="min-height: 30px; margin-top: 8px;"></div>
+</div>
+
+<!-- ✅ RESUMEN DE PRODUCTOS ESCANEADOS -->
+<div id="resumen-productos-${vIndex}" style="margin-top: 20px; margin-bottom: 15px;"></div>
+                
+                <!-- ✅ BOTÓN PARA ABRIR JUSTIFICACIONES -->
+<button type="button" onclick="abrirJustificacionesVehiculo(${vIndex})"
+        style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 15px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+    📋 Justificaciones de Retraso
+</button>
+
+<!-- ✅ CONTENEDOR OCULTO PARA JUSTIFICACIONES (se sincroniza con el overlay) -->
+<div id="justificaciones-contenedor-${vIndex}" style="display: none;"></div>
+
+<!-- ✅ OVERLAY/MODAL DE JUSTIFICACIONES -->
+<div id="overlay-justificaciones-${vIndex}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center; padding: 20px;">
+  <div style="background: white; padding: 25px; border-radius: 10px; width: 95%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
+    <h4 style="text-align: center; color: #C76E00; margin-top: 0;">JUSTIFICACIONES DE RETRASO - VEHÍCULO #${vIndex + 1}</h4>
+    <hr style="margin: 15px 0; border-style: dashed;">
+    
+    <!-- CONTENEDOR DE JUSTIFICACIONES -->
+    <div id="justificaciones-overlay-contenedor-${vIndex}" style="margin-bottom: 20px;"></div>
+    
+    <!-- BOTONES DE ACCIÓN -->
+    <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px; padding-top: 15px; border-top: 2px solid #001855;">
+      <button type="button" onclick="agregarJustificacionOverlay(${vIndex})"
+              style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; border: none; padding: 10px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; flex: 1;">
+        ➕ Agregar Justificación
+      </button>
+      
+      <button type="button" onclick="cerrarJustificacionesVehiculo(${vIndex})"
+              style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 10px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; flex: 1;">
+        ✅ Aceptar
+      </button>
+    </div>
+  </div>
+</div>
+                
+                <label>Foto De vehiculo:</label>
+                <input type="file" name="vehiculo_${vIndex}_foto" id="${fotoInputId}" accept="image/*" capture="environment">
+                <div class="preview-foto" id="${previewFotoId}"></div>
+                <input type="hidden" name="vehiculo_${vIndex}_foto_url" id="foto_url_${vIndex}" value="${datos.foto_url || ''}">
+                
+                <p style="font-size:0.85em; color:#6c757d; margin-top:5px;">
+                    📸 <strong>La foto se sube automáticamente.</strong> No necesita hacer nada más.
+                </p>
+
+                <!-- ✅ BOTÓN PARA ABRIR INSPECCIÓN -->
+<button type="button" onclick="abrirInspeccionVehiculo(${vIndex})"
+        style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 15px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+    🔍 Inspección de Vehículo
+</button>
+
+<!-- ✅ OVERLAY/MODAL DE INSPECCIÓN (sin required) -->
+<!-- ✅ OVERLAY/MODAL DE INSPECCIÓN (con validación visual) -->
+<div id="overlay-inspeccion-${vIndex}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center;">
+  <div style="background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+    <h4 style="text-align: center; color: #C76E00; margin-top: 0;">INSPECCIÓN DE VEHÍCULO #${vIndex + 1}</h4>
+    <hr style="margin: 15px 0; border-style: dashed;">
+    
+    <!-- INTERIOR CAMIÓN -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">INTERIOR CAMIÓN:</label>
+        <select name="vehiculo_${vIndex}_interior_camion" id="interior_camion_${vIndex}" onchange="validarInspeccion(${vIndex})"
+                style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione</option>
+        <option value="BUENO" ${datos.interior_camion === 'BUENO' ? 'selected' : ''}>BUENO</option>
+        <option value="MALO" ${datos.interior_camion === 'MALO' ? 'selected' : ''}>MALO</option>
+        </select>
+    </div>
+
+    <!-- ESTADO DE LA CARPA -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">ESTADO DE LA CARPA:</label>
+        <select name="vehiculo_${vIndex}_estado_carpa" id="estado_carpa_${vIndex}" onchange="validarInspeccion(${vIndex})"
+                style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione</option>
+        <option value="BUENO" ${datos.estado_carpa === 'BUENO' ? 'selected' : ''}>BUENO</option>
+        <option value="MALO" ${datos.estado_carpa === 'MALO' ? 'selected' : ''}>MALO</option>
+        <option value="N/A" ${datos.estado_carpa === 'N/A' ? 'selected' : ''}>N/A</option>
+        </select>
+    </div>
+
+    <!-- OLORES EXTRAÑOS -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">OLORES EXTRAÑOS:</label>
+        <select name="vehiculo_${vIndex}_olores_extranos" id="olores_extranos_${vIndex}" onchange="validarInspeccion(${vIndex})"
+                style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione</option>
+        <option value="SI" ${datos.olores_extranos === 'SI' ? 'selected' : ''}>SI</option>
+        <option value="NO" ${datos.olores_extranos === 'NO' ? 'selected' : ''}>NO</option>
+        </select>
+    </div>
+
+    <!-- OBJETOS EXTRAÑOS -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">OBJETOS EXTRAÑOS:</label>
+        <select name="vehiculo_${vIndex}_objetos_extranos" id="objetos_extranos_${vIndex}" onchange="validarInspeccion(${vIndex})"
+                style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione</option>
+        <option value="SI" ${datos.objetos_extranos === 'SI' ? 'selected' : ''}>SI</option>
+        <option value="NO" ${datos.objetos_extranos === 'NO' ? 'selected' : ''}>NO</option>
+        </select>
+    </div>
+
+    <!-- EVIDENCIAS DE PLAGAS -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">EVIDENCIAS DE PLAGAS:</label>
+        <select name="vehiculo_${vIndex}_evidencias_plagas" id="evidencias_plagas_${vIndex}" onchange="validarInspeccion(${vIndex})"
+                style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione</option>
+        <option value="SI" ${datos.evidencias_plagas === 'SI' ? 'selected' : ''}>SI</option>
+        <option value="NO" ${datos.evidencias_plagas === 'NO' ? 'selected' : ''}>NO</option>
+        </select>
+    </div>
+
+    <!-- ESTADO DEL SUELO -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">ESTADO DEL SUELO:</label>
+        <select name="vehiculo_${vIndex}_estado_suelo" id="estado_suelo_${vIndex}" onchange="validarInspeccion(${vIndex})"
+                style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione</option>
+        <option value="BUENO" ${datos.estado_suelo === 'BUENO' ? 'selected' : ''}>BUENO</option>
+        <option value="MALO" ${datos.estado_suelo === 'MALO' ? 'selected' : ''}>MALO</option>
+        </select>
+    </div>
+
+    <!-- APROBADO -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">APROBADO:</label>
+        <select name="vehiculo_${vIndex}_aprobado" id="aprobado_${vIndex}" onchange="validarInspeccion(${vIndex})"
+                style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione</option>
+        <option value="SI" ${datos.aprobado === 'SI' ? 'selected' : ''}>SI</option>
+        <option value="NO" ${datos.aprobado === 'NO' ? 'selected' : ''}>NO</option>
+        </select>
+    </div>
+
+    <!-- BOTÓN ACEPTAR -->
+    <div style="text-align: center; margin-top: 25px;">
+      <button type="button" onclick="cerrarInspeccionVehiculo(${vIndex})"
+              id="btn-aceptar-${vIndex}"
+              style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 40px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1.1em; transition: all 0.3s ease;">
+        ✅ Aceptar
+      </button>
+    </div>
+  </div>
+</div>
+            `;
+            
+            registro.innerHTML = html;
+            contenedor.appendChild(registro);
+
+            
+            
+            
+             // ✅ MOSTRAR/OCULTAR "Tipo de Operación" basado en lugar (Santo Domingo)
+  const lugar = document.getElementById('lugar').value;
+  const containerMotivoTipo = document.getElementById(`motivo-tipo-operacion-container-${vIndex}`);
+  const lineaMotivoTipo = document.getElementById(`motivo-tipo-linea-${vIndex}`);
+  const motivoSolo = document.getElementById(`motivo-solo-${vIndex}`);
+  
+  if (containerMotivoTipo && lineaMotivoTipo && motivoSolo) {
+    if (lugar === 'SantoDomingo') {
+      lineaMotivoTipo.style.display = 'flex';
+      motivoSolo.style.display = 'none';
+    } else {
+      lineaMotivoTipo.style.display = 'none';
+      motivoSolo.style.display = 'block';
+    }
+  }
+            
+            const origenSelect = document.getElementById(`remitente-select-${vIndex}`);
+if (origenSelect) {
+  origenSelect.addEventListener('change', () => manejarOtroOrigen(vIndex));
+  // Llamar inmediatamente para mostrar/ocultar "otro" si ya está seleccionado
+  manejarOtroOrigen(vIndex);
+}
+            function manejarOtroOrigen(vIndex) {
+  const origenSelect = document.querySelector(`#remitente-select-${vIndex}`);
+  const otroInput = document.querySelector(`#otro_origen_${vIndex}`);
+  
+  if (!origenSelect || !otroInput) return;
+  
+  if (origenSelect.value === 'otro') {
+    otroInput.style.display = 'block';
+    otroInput.required = true;
+  } else {
+    otroInput.style.display = 'none';
+    otroInput.required = false;
+    otroInput.value = '';
+  }
+  
+  guardarProgreso();
+}
+            
+            const motivoSelect = document.getElementById(motivoSelectId);
+            motivoSelect.addEventListener('change', () => {
+                alternarDestinoRemitente(motivoSelect, vIndex);
+                manejarOtroCampo(motivoSelect);
+                guardarProgreso();
+            });
+
+            // ✅ Inicializar visibilidad según el valor guardado
+            alternarDestinoRemitente(motivoSelect, vIndex);
+            
+            const selects = registro.querySelectorAll('select');
+            selects.forEach(sel => {
+                const otro = sel.nextElementSibling;
+                if (otro && otro.classList.contains('otro-input')) {
+                    if (sel.value === 'otro') otro.style.display = 'block';
+                    sel.addEventListener('change', () => manejarOtroCampo(sel));
+                }
+            });
+            
+            alternarDestinoRemitente(motivoSelect, vIndex);
+            
+            const justificacionSelect = registro.querySelector(`select[name="vehiculo_${vIndex}_justificacion"]`);
+            if (justificacionSelect) {
+                justificacionSelect.addEventListener('change', () => mostrarTiempoMuerto(justificacionSelect, vIndex));
+            }
+            
+            // ✅ Cargar nombres del personal si existen (NUEVO)
+            if (datos.nombres_personal && datos.nombres_personal.length > 0) {
+                const nombresContainer = document.getElementById(`nombres-personal-${vIndex}`);
+                if (nombresContainer) {
+                    datos.nombres_personal.forEach((nombre, idx) => {
+                        const div = document.createElement('div');
+                        div.style.marginBottom = '10px';
+                        
+                        const label = document.createElement('label');
+                        label.textContent = `Nombre del Colaborador # ${idx + 1}:`;
+                        label.style.display = 'block';
+                        label.style.fontWeight = 'bold';
+                        label.style.marginBottom = '5px';
+                        label.style.fontSize = '0.9em';
+                        label.htmlFor = `vehiculo_${vIndex}_nombre_persona_${idx + 1}`;
+                        
+                        const input = document.createElement('input');
+input.type = 'text';  // ✅ Cambiar a 'text' para poder usar maxlength
+input.inputmode = 'numeric';  // ✅ Teclado numérico en móviles
+input.id = `vehiculo_${vIndex}_nombre_persona_${idx + 1}`;
+input.name = `vehiculo_${vIndex}_nombre_persona_${idx + 1}`;
+input.placeholder = `Cédula del colaborador ${idx + 1}`;
+input.value = nombre;
+input.required = true;
+input.maxLength = 10;  // ✅ Limitar a máximo 10 caracteres
+input.style.width = '100%';
+input.style.padding = '8px';
+input.style.border = '1px solid #170303';
+input.style.borderRadius = '8px';
+input.style.boxSizing = 'border-box';
+
+// ✅ Limitar a solo números y máximo 10 caracteres
+input.oninput = function() {
+  // Eliminar todo excepto números
+  this.value = this.value.replace(/\D/g, '');
+  
+  // Limitar a máximo 10 dígitos
+  if (this.value.length > 10) {
+    this.value = this.value.substring(0, 10);
+  }
+  
+  guardarProgreso();
+};
+                        
+                        div.appendChild(label);
+                        div.appendChild(input);
+                        nombresContainer.appendChild(div);
+                    });
+                }
+            }
+            
+            // ✅ Generar campos si hay valor en total personas (NUEVO)
+            // ✅ Generar campos si hay valor en total personas (CORREGIDO)
+            const totalPersonas = datos.personas;
+            if (totalPersonas && parseInt(totalPersonas) > 0 && (!datos.nombres_personal || datos.nombres_personal.length === 0)) {
+                generarCamposNombresVehiculo(vIndex);
+            }
+            
+            document.getElementById(fotoInputId).addEventListener('change', function() {
+                let fechaInput = document.getElementById('fecha').value;
+                if (!fechaInput) fechaInput = new Date().toISOString().split('T')[0];
+                
+                const [yyyy, mm, dd] = fechaInput.split('-');
+                const fechaFormateada = `${dd}.${mm}.${yyyy}`;
+                const tipoVehiculo = (datos.tipo_vehi || 'vehiculo').replace(/ /g, '_');
+                const nombrePersonalizado = `${fechaFormateada}.${tipoVehiculo}.vehiculo_${vIndex}`;
+                
+                setupFotoPreview(fotoInputId, previewFotoId, nombrePersonalizado);
+            });
+        }
+
+        // ✅ ABRIR OVERLAY DE JUSTIFICACIONES
+function abrirJustificacionesVehiculo(vIndex) {
+  const overlay = document.getElementById(`overlay-justificaciones-${vIndex}`);
+  const contenedorOverlay = document.getElementById(`justificaciones-overlay-contenedor-${vIndex}`);
+  const contenedorOculto = document.getElementById(`justificaciones-contenedor-${vIndex}`);
+  
+  if (!overlay || !contenedorOverlay || !contenedorOculto) {
+    console.error('Error: Elementos del overlay no encontrados');
+    return;
+  }
+  
+  // Limpiar contenedor del overlay
+  contenedorOverlay.innerHTML = '';
+  
+  // Copiar justificaciones del contenedor oculto al overlay
+  const justificacionesOcultas = contenedorOculto.querySelectorAll('.justificacion-group');
+  justificacionesOcultas.forEach((justificacionOculta, index) => {
+    crearJustificacionOverlay(vIndex, index, justificacionOculta);
+  });
+  
+  // Si no hay justificaciones, agregar la primera vacía
+  if (contenedorOverlay.children.length === 0) {
+    agregarJustificacionOverlay(vIndex);
+  }
+  
+  // Mostrar overlay
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+// ✅ CERRAR OVERLAY DE JUSTIFICACIONES
+function cerrarJustificacionesVehiculo(vIndex) {
+  const contenedorOculto = document.getElementById(`justificaciones-contenedor-${vIndex}`);
+  const contenedorOverlay = document.getElementById(`justificaciones-overlay-contenedor-${vIndex}`);
+  const overlay = document.getElementById(`overlay-justificaciones-${vIndex}`);
+  
+  if (!contenedorOculto || !contenedorOverlay || !overlay) return;
+  
+  // Limpiar contenedor oculto
+  contenedorOculto.innerHTML = '';
+  
+  // Copiar justificaciones del overlay al contenedor oculto
+  const justificacionesOverlay = contenedorOverlay.querySelectorAll('.justificacion-group');
+  justificacionesOverlay.forEach((justificacionOverlay, index) => {
+    const nuevaJustificacion = justificacionOverlay.cloneNode(true);
+    
+    // Restaurar IDs originales
+    const inputs = nuevaJustificacion.querySelectorAll('input, select');
+    inputs.forEach(input => {
+      if (input.id) {
+        input.id = input.id.replace(/-\d+-overlay$/, `-${index}`);
+      }
+      if (input.name) {
+        input.name = input.name.replace(/_\d+_overlay$/, `_${index}`);
+      }
+    });
+    
+    // Restaurar botón eliminar original
+    const botonEliminar = nuevaJustificacion.querySelector('.btn-eliminar');
+    if (botonEliminar) {
+      botonEliminar.onclick = function() {
+        nuevaJustificacion.remove();
+        guardarProgreso();
+      };
+    }
+    
+    contenedorOculto.appendChild(nuevaJustificacion);
+  });
+  
+  // Ocultar overlay
+  overlay.style.display = 'none';
+  document.body.style.overflow = 'auto';
+  
+  guardarProgreso();
+}
+
+// ✅ AGREGAR JUSTIFICACIÓN EN EL OVERLAY
+function agregarJustificacionOverlay(vIndex) {
+  const index = document.getElementById(`justificaciones-overlay-contenedor-${vIndex}`)?.children.length || 0;
+  crearJustificacionOverlay(vIndex, index);
+}
+
+// ✅ CREAR JUSTIFICACIÓN EN EL OVERLAY
+function crearJustificacionOverlay(vIndex, index, datosElemento = null) {
+  const contenedor = document.getElementById(`justificaciones-overlay-contenedor-${vIndex}`);
+  if (!contenedor) return;
+  
+  const div = document.createElement('div');
+  div.className = 'justificacion-group';
+  div.dataset.index = index;
+  div.style.border = '2px solid #001855';
+  div.style.borderRadius = '8px';
+  div.style.padding = '15px';
+  div.style.marginBottom = '15px';
+  div.style.position = 'relative';
+  
+  // ✅ Botón eliminar (arriba a la derecha)
+  const botonEliminar = document.createElement('button');
+  botonEliminar.type = 'button';
+  botonEliminar.className = 'btn-eliminar';
+  botonEliminar.innerHTML = '🗑️';
+  botonEliminar.style.position = 'absolute';
+  botonEliminar.style.top = '5px';
+  botonEliminar.style.right = '5px';
+  botonEliminar.style.background = '#dc3545';
+  botonEliminar.style.color = 'white';
+  botonEliminar.style.border = 'none';
+  botonEliminar.style.padding = '5px 10px';
+  botonEliminar.style.borderRadius = '3px';
+  botonEliminar.style.cursor = 'pointer';
+  botonEliminar.style.fontSize = '1em';
+  botonEliminar.onclick = function() {
+    div.remove();
+    guardarProgreso();
+  };
+  
+  // ✅ Obtener valores si existe un elemento de datos
+  let justificacion = '';
+  let otro_justificacion = '';
+  let tiempo_muerto_inicio = '';
+  let tiempo_muerto_final = '';
+  
+  if (datosElemento) {
+    justificacion = datosElemento.querySelector(`select[name="vehiculo_${vIndex}_justificacion_${index}"]`)?.value || '';
+    otro_justificacion = datosElemento.querySelector(`input[name="vehiculo_${vIndex}_otro_justificacion_${index}"]`)?.value || '';
+    tiempo_muerto_inicio = datosElemento.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_inicio_${index}"]`)?.value || '';
+    tiempo_muerto_final = datosElemento.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_final_${index}"]`)?.value || '';
+  }
+  
+  const dInicio = `muerto-inicio-${vIndex}-${index}-overlay`;
+  const dFin = `muerto-final-${vIndex}-${index}-overlay`;
+  
+  div.innerHTML = `
+    <div style="margin-top: 20px;">
+      <!-- Campos de tiempo muerto -->
+      <div class="time-row" style="display: flex; gap: 15px; margin-bottom: 15px;">
+        <div style="flex: 1;">
+          <label class="time-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Tiempo Muerto Inicio:</label>
+          <input type="tel" name="vehiculo_${vIndex}_tiempo_muerto_inicio_${index}_overlay" class="time-input-masked"
+              placeholder="HH:MM" maxlength="5" value="${tiempo_muerto_inicio}"
+              onblur="applyTimeMask(this, '${dInicio}')" style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+          <span id="${dInicio}" class="time-display"></span>
+        </div>
+        <div style="flex: 1;">
+          <label class="time-label" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Tiempo Muerto Final:</label>
+          <input type="tel" name="vehiculo_${vIndex}_tiempo_muerto_final_${index}_overlay" class="time-input-masked"
+              placeholder="HH:MM" maxlength="5" value="${tiempo_muerto_final}"
+              onblur="applyTimeMask(this, '${dFin}')" style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+          <span id="${dFin}" class="time-display"></span>
+        </div>
+      </div>
+      
+      <!-- Motivo -->
+      <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; margin-top: 10px;">Motivo:</label>
+      <select name="vehiculo_${vIndex}_justificacion_${index}_overlay" id="justificacion-overlay-${vIndex}-${index}" style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione motivo</option>
+        <option value="faltante_producto" ${justificacion === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
+        <option value="liberacion_calidad" ${justificacion === 'liberacion_calidad' ? 'selected' : ''}>Liberacion de calidad</option>
+        <option value="Daños" ${justificacion === 'Daños' ? 'selected' : ''}>Daños (electricos, muelle, montacargas, etc.)</option>
+        <option value="otro" ${justificacion === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      
+      <!-- Otro motivo -->
+      <input type="text" name="vehiculo_${vIndex}_otro_justificacion_${index}_overlay" id="otro-justificacion-overlay-${vIndex}-${index}" 
+             placeholder="Especifique la incidencia" class="otro-input" value="${otro_justificacion}"
+             style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: ${justificacion === 'otro' ? 'block' : 'none'};">
+    </div>
+  `;
+  
+  div.appendChild(botonEliminar);
+  contenedor.appendChild(div);
+  
+  // ✅ Configurar evento onchange para mostrar/ocultar "otro motivo"
+  const justificacionSelect = div.querySelector(`#justificacion-overlay-${vIndex}-${index}`);
+  const otroJustificacionInput = div.querySelector(`#otro-justificacion-overlay-${vIndex}-${index}`);
+  
+  if (justificacionSelect && otroJustificacionInput) {
+    justificacionSelect.addEventListener('change', function() {
+      if (this.value === 'otro') {
+        otroJustificacionInput.style.display = 'block';
+        otroJustificacionInput.required = true;
+      } else {
+        otroJustificacionInput.style.display = 'none';
+        otroJustificacionInput.required = false;
+        otroJustificacionInput.value = '';
+      }
+      guardarProgreso();
+    });
+  }
+  
+  // ✅ Configurar eventos de tiempo
+  const inputsTiempo = div.querySelectorAll('.time-input-masked');
+  inputsTiempo.forEach(input => {
+    input.addEventListener('input', function() {
+      this.value = this.value.replace(/[^0-9]/g, '').substring(0, 5);
+    });
+  });
+}
+
+// ✅ CERRAR OVERLAY AL HACER CLIC FUERA
+document.addEventListener('click', function(event) {
+  // Buscar todos los overlays de justificaciones
+  const overlays = document.querySelectorAll('[id^="overlay-justificaciones-"]');
+  overlays.forEach(overlay => {
+    if (overlay.style.display === 'flex') {
+      const contenido = overlay.querySelector('div');
+      if (contenido && !contenido.contains(event.target) && event.target === overlay) {
+        // Extraer vIndex del ID del overlay
+        const vIndex = overlay.id.match(/\d+/)[0];
+        cerrarJustificacionesVehiculo(parseInt(vIndex));
+      }
+    }
+  });
+});
+
+        // ✅ ABRIR OVERLAY DE INSPECCIÓN
+// ✅ ABRIR OVERLAY DE INSPECCIÓN
+function abrirInspeccionVehiculo(vIndex) {
+    const overlay = document.getElementById(`overlay-inspeccion-${vIndex}`);
+    if (overlay) {
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        
+        // ✅ Resaltar campos vacíos
+        setTimeout(() => {
+            const campos = [
+                `interior_camion_${vIndex}`,
+                `estado_carpa_${vIndex}`,
+                `olores_extranos_${vIndex}`,
+                `objetos_extranos_${vIndex}`,
+                `evidencias_plagas_${vIndex}`,
+                `estado_suelo_${vIndex}`,
+                `aprobado_${vIndex}`
+            ];
+            
+            campos.forEach(id => {
+                const campo = document.getElementById(id);
+                if (campo && !campo.value) {
+                    campo.style.borderColor = '#dc3545';
+                    campo.style.boxShadow = '0 0 0 2px rgba(220, 53, 69, 0.25)';
+                }
+            });
+        }, 100);
+    }
+}
+// ✅ CERRAR OVERLAY DE INSPECCIÓN
+function cerrarInspeccionVehiculo(vIndex) {
+    const overlay = document.getElementById(`overlay-inspeccion-${vIndex}`);
+    if (overlay) {
+        // ✅ Quitar resaltado de campos
+        const campos = [
+            `interior_camion_${vIndex}`,
+            `estado_carpa_${vIndex}`,
+            `olores_extranos_${vIndex}`,
+            `objetos_extranos_${vIndex}`,
+            `evidencias_plagas_${vIndex}`,
+            `estado_suelo_${vIndex}`,
+            `aprobado_${vIndex}`
+        ];
+        
+        campos.forEach(id => {
+            const campo = document.getElementById(id);
+            if (campo) {
+                campo.style.borderColor = '';
+                campo.style.boxShadow = '';
+            }
+        });
+        
+        overlay.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+}
+
+// ✅ VALIDAR INSPECCIÓN Y CAMBIAR COLOR DEL BOTÓN
+function validarInspeccion(vIndex) {
+  const campos = [
+    `interior_camion_${vIndex}`,
+    `estado_carpa_${vIndex}`,
+    `olores_extranos_${vIndex}`,
+    `objetos_extranos_${vIndex}`,
+    `evidencias_plagas_${vIndex}`,
+    `estado_suelo_${vIndex}`,
+    `aprobado_${vIndex}`
+  ];
+  
+  let todosCompletos = true;
+  campos.forEach(id => {
+    const campo = document.getElementById(id);
+    if (!campo || !campo.value) {
+      todosCompletos = false;
+    }
+  });
+  
+  // ✅ CAMBIAR COLOR DEL BOTÓN
+  const btnAceptar = document.getElementById(`btn-aceptar-${vIndex}`);
+  if (todosCompletos) {
+    btnAceptar.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+    btnAceptar.style.cursor = 'pointer';
+    btnAceptar.disabled = false;
+  } else {
+    btnAceptar.style.background = 'linear-gradient(135deg, #001855 0%, #003380 100%)';
+    btnAceptar.style.cursor = 'not-allowed';
+    btnAceptar.disabled = true;
+  }
+}
+
+// ✅ VALIDAR AL ABRIR EL OVERLAY
+function abrirInspeccionVehiculo(vIndex) {
+  const overlay = document.getElementById(`overlay-inspeccion-${vIndex}`);
+  if (overlay) {
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // ✅ Validar inmediatamente al abrir
+    setTimeout(() => {
+      validarInspeccion(vIndex);
+    }, 100);
+  }
+}
+
+// ✅ CERRAR OVERLAY DE INSPECCIÓN
+function cerrarInspeccionVehiculo(vIndex) {
+  const overlay = document.getElementById(`overlay-inspeccion-${vIndex}`);
+  if (overlay) {
+    overlay.style.display = 'none';
+    // Restaurar scroll del body
+    document.body.style.overflow = 'auto';
+  }
+}
+
+// ✅ CERRAR OVERLAY AL HACER CLIC FUERA DEL CONTENIDO
+document.addEventListener('click', function(event) {
+  if (event.target.classList.contains('overlay-inspeccion') || event.target.id.startsWith('overlay-inspeccion-')) {
+    const overlay = event.target;
+    overlay.style.display = 'none';
+    document.body.style.overflow = 'auto';
+  }
+});
+
+        // ============================================
+        // GESTIÓN DE PARADAS DE OPERACIÓN
+        // ============================================
+
+        function agregarCampoParada(tipo, datos = {}) {
+  const contenedor = document.getElementById('operacion-contenedor');
+  const index = contenedor.children.length;
+  
+  const div = document.createElement('div');
+  div.className = 'parada-group';
+  div.dataset.index = index;
+  
+  const botonEliminar = document.createElement('button');
+  botonEliminar.type = 'button';
+  botonEliminar.className = 'btn-eliminar';
+  botonEliminar.textContent = 'Eliminar';
+  botonEliminar.onclick = function() {
+    div.remove();
+    const paradas = contenedor.getElementsByClassName('parada-group');
+    for (let i = 0; i < paradas.length; i++) {
+      const span = paradas[i].querySelector('.numero-parada');
+      if (span) span.textContent = i + 1;
+    }
+    guardarProgreso();
+  };
+  
+  const dInicio = `operacion-inicio-${index}`;
+  const dFin = `operacion-fin-${index}`;
+  
+  div.innerHTML = `
+    <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #<span class="numero-parada">${index + 1}</span> (Operación)</p>
+    
+    <div class="time-row">
+      <div>
+        <label class="time-label">Hora Inicio (HH:MM):</label>
+        <input type="tel" name="parada_inicio_operacion_${index}" class="time-input-masked"
+            placeholder="HH:MM" maxlength="5" value="${datos.inicio || ''}"
+            onblur="applyTimeMask(this, '${dInicio}')">
+        <span id="${dInicio}" class="time-display"></span>
+      </div>
+      <div>
+        <label class="time-label">Hora Final (HH:MM):</label>
+        <input type="tel" name="parada_fin_operacion_${index}" class="time-input-masked"
+            placeholder="HH:MM" maxlength="5" value="${datos.fin || ''}"
+            onblur="applyTimeMask(this, '${dFin}')">
+        <span id="${dFin}" class="time-display"></span>
+      </div>
+    </div>
+    
+    <label style="margin-top:5px;">Motivo:</label>
+    <select name="parada_motivo_operacion_${index}">
+      <option value="">Seleccione</option>
+      <option value="pausas_activas" ${datos.motivo === 'pausas_activas' ? 'selected' : ''}>Pausas Activas y/o Charla</option>
+      <option value="liberacion_calidad" ${datos.motivo === 'liberacion_calidad' ? 'selected' : ''}>Liberacion De Calidad</option>
+      <option value="desayuno_almuerzo_cena" ${datos.motivo === 'desayuno_almuerzo_cena' ? 'selected' : ''}>Desayuno/Almuerzo/Cena</option>
+      <option value="aseo" ${datos.motivo === 'aseo' ? 'selected' : ''}>Aseo</option>
+      <option value="faltante_insumos" ${datos.motivo === 'faltante_insumos' ? 'selected' : ''}>Faltante (Canastillas, vinipel, estibas, etc)</option>
+      <option value="danos_equipo" ${datos.motivo === 'danos_equipo' ? 'selected' : ''}>Daños (Electricos, montacargas, etc)</option>
+      <option value="otro" ${datos.motivo === 'otro' ? 'selected' : ''}>Otro</option>
+    </select>
+    <input type="text" name="parada_otro_motivo_operacion_${index}" placeholder="Especifique" class="otro-input" value="${datos.otro_motivo || ''}">
+  `;
+  
+  div.appendChild(botonEliminar);
+  contenedor.appendChild(div);
+  
+  // ✅ Configurar eventos después de añadir al DOM
+  const motivoSelect = div.querySelector(`select[name="parada_motigo_operacion_${index}"]`);
+  if (motivoSelect) {
+    motivoSelect.addEventListener('change', () => manejarOtroCampo(motivoSelect));
+    // ✅ Mostrar campo "otro" si ya está seleccionado
+    if (motivoSelect.value === 'otro') {
+      const otroInput = div.querySelector('.otro-input');
+      if (otroInput) otroInput.style.display = 'block';
+    }
+  }
+}
+
+        // ============================================
+        // MANEJO DE FOTOS
+        // ============================================
+
+        function setupFotoPreview(inputId, previewId, nombrePersonalizado) {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            
+            if (!input || !preview) return;
+            
+            const file = input.files[0];
+            if (!file || !file.type.match('image.*') || file.size > 5 * 1024 * 1024) {
+                input.value = '';
+                preview.innerHTML = '';
+                if (file && !file.type.match('image.*')) alert('Solo imágenes (JPG/PNG).');
+                if (file && file.size > 5 * 1024 * 1024) alert('Máx. 5 MB.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = e => preview.innerHTML = `<img src="${e.target.result}" alt="Vista previa">`;
+            reader.readAsDataURL(file);
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('key', 'e1d938a9ff4815f178c880552cd33a34');
+            formData.append('name', nombrePersonalizado);
+            
+            fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const vIdx = nombrePersonalizado.split('.').pop().replace('vehiculo_', '');
+                        const urlInput = document.getElementById(`foto_url_${vIdx}`);
+                        if (urlInput) urlInput.value = data.data.url;
+                        alert(`✅ Foto subida: ${nombrePersonalizado}`);
+                        guardarProgreso();
+                    } else {
+                        throw new Error(data.error.message || 'Error al subir la foto');
+                    }
+                })
+                .catch(error => {
+                    alert("❌ No se pudo subir la foto.");
+                    console.error(error);
+                });
+        }
+
+        // ============================================
+// FILTRAR COORDINADORES POR LUGAR
+// ============================================
+function filtrarCoordinadores() {
+  const lugar = document.getElementById('lugar').value;
+  const coordinadorSelect = document.getElementById('coordinador');
+  const opciones = coordinadorSelect.querySelectorAll('option');
+  
+  // Mostrar/Ocultar opciones según el lugar
+  opciones.forEach(opcion => {
+    const dataLugar = opcion.getAttribute('data-lugar');
+    
+    if (dataLugar) {
+      if (lugar === '') {
+        opcion.style.display = 'none'; // Ocultar todas si no hay lugar seleccionado
+      } else if (dataLugar === lugar || lugar === '') {
+        opcion.style.display = 'block';
+      } else {
+        opcion.style.display = 'none';
+      }
+    } else if (opcion.value === 'otro' || opcion.value === '') {
+      opcion.style.display = 'block'; // Siempre mostrar "Seleccione" y "Otro"
+    }
+  });
+  
+  // Resetear selección si el coordinador actual no corresponde al lugar
+  const coordinadorSeleccionado = coordinadorSelect.value;
+  const opcionSeleccionada = Array.from(opciones).find(opt => 
+    opt.value === coordinadorSeleccionado && opt.style.display !== 'none'
+  );
+  
+  if (!opcionSeleccionada) {
+    coordinadorSelect.value = ''; // Limpiar si no es válido
+  }
+  
+  manejarOtroCoordinador(); // Actualizar campo "otro"
+  guardarProgreso();
+}
+
+// Modificar actualizarCampos para incluir filtrado
+function actualizarCampos() {
+  const lugar = document.getElementById("lugar").value;
+  const turno = document.getElementById("turno");
+  const liderPepsico = document.getElementById("lider_pepsico");
+  const fechaInput = document.getElementById("fecha");
+  const coordSelect = document.getElementById("coordinador");
+  
+  if (lugar === "Funza") {
+    if (!coordSelect.value || coordSelect.value === '') {
+      coordSelect.value = "Julian Espitia";
+      manejarOtroCoordinador();
+    }
+    const h = new Date().getHours();
+    if (!turno.value) {
+      turno.value = (h >= 6 && h < 14) ? "Manana" : (h >= 14 && h < 22) ? "Tarde" : "Noche";
+    }
+    if (!liderPepsico.value) {
+      liderPepsico.value = "Alejandro Monroy";
+      manejarOtroLiderPepsico();
+    }
+  } else if (lugar === "SantoDomingo") {
+    // No establecer valores por defecto para Santo Domingo
+    if (!turno.value) {
+      const h = new Date().getHours();
+      turno.value = (h >= 6 && h < 14) ? "Manana" : (h >= 14 && h < 22) ? "Tarde" : "Noche";
+    }
+  }
+  
+  if (!fechaInput.value) {
+    fechaInput.value = new Date().toISOString().split('T')[0];
+  }
+  
+  actualizarTotalCajas();
+  guardarProgreso();
+  actualizarMuellesPorLugar();
+}
+
+        // ============================================
+        // MÁSCARA DE TIEMPO
+        // ============================================
+
+        function applyTimeMask(input, displayId) {
+            let value = input.value.replace(/[^0-9]/g, '');
+            
+            if (value.length === 1 && value > '2') value = '0' + value;
+            if (value.length === 2 && value > '23') value = '23';
+            if (value.length === 3 && value[2] > '5') value = value.substring(0,2) + '5';
+            
+            if (value.length >= 4) {
+                value = value.substring(0,4).padStart(4,'0');
+                let m = value.substring(2,4);
+                if (m > '59') m = '59';
+                value = value.substring(0,2) + m;
+            }
+            
+            let formatted = value.length >= 2 ? value.substring(0,2) + ':' + (value.length > 2 ? value.substring(2,4) : '00') : '';
+            input.value = formatted;
+            
+            const parent = input.closest('.time-row');
+            if(parent) {
+                const inputs = parent.querySelectorAll('input');
+                if(inputs.length === 2) {
+                    const hInicio = inputs[0].value;
+                    const hFin = inputs[1].value;
+                    if(hInicio.length === 5 && hFin.length === 5) {
+                        if(horaAMinutos(hFin) < horaAMinutos(hInicio)) {
+                            alert("❌ Error de Seguridad: La Hora Final no puede ser menor que la Hora Inicio.");
+                            input.value = "";
+                            const display = document.getElementById(displayId);
+                            if(display) display.innerHTML = "";
+                            return;
+                        }
+                    }
+                }
+            }
+            
+            convertirHoraMilitar(input, displayId);
+            guardarProgreso();
+        }
+
+        function convertirHoraMilitar(input, displayId) {
+            const value = input.value;
+            const display = document.getElementById(displayId);
+            
+            if (!display) return;
+            
+            if (value.length === 5 && value.includes(':')) {
+                const [h, m] = value.split(':').map(Number);
+                if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+                    const ampm = h >= 12 ? 'P.M.' : 'A.M.';
+                    const h12 = (h % 12) || 12;
+                    display.style.color = '#155724';
+                    display.innerHTML = `Hora Normal: ${String(h12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`;
+                    return;
+                }
+            }
+            
+            display.style.color = value.length > 0 && value.length < 5 ? '#dc3545' : '#155724';
+            display.innerHTML = value.length > 0 && value.length < 5 ? '❌ Formato incompleto. HH:MM' : '';
+        }
+
+        // ============================================
+        // ACTUALIZACIÓN DE TOTALES
+        // ============================================
+
+        function actualizarTotalCajas() {
+            const camposCajas = document.querySelectorAll('.cajas-input-js');
+            const totalCajasInput = document.getElementById('cajas_totales');
+            let total = 0;
+            
+            camposCajas.forEach(input => {
+                const valor = parseInt(input.value, 10);
+                if (!isNaN(valor)) total += valor;
+            });
+            
+            if(totalCajasInput) totalCajasInput.value = total;
+        }
+        // ============================================
+// ✅ SISTEMA DE PICKING POR RADIOFRECUENCIA
+// ============================================
+
+// Estructura para almacenar productos escaneados por vehículo
+let productosEscaneadosPorVehiculo = {};
+
+// Cargar base de datos de productos desde JSON
+async function cargarBaseDatosProductos() {
+  try {
+    console.log('⏳ Cargando base de datos de productos...');
+    
+    const response = await fetch('productos.json');
+    const data = await response.json();
+    
+    window.baseDatosProductos = data;
+    console.log('✅ Base de datos de productos cargada:', Object.keys(data).length, 'productos');
+  } catch (error) {
+    console.warn('⚠️ No se pudo cargar productos.json, usando base de datos fallback');
+    window.baseDatosProductos = {
+      "300033638": { nombre: "DORITOS MQUES 4X1 BX10X38G+GTX2GACHKSCHO", referencia: "300033638" },
+      "300034010": { nombre: "CHOKIS CHISPAS 40GX1X80 ENF", referencia: "300034010" },
+      "300054027": { nombre: "MMOTO NK PASAS CH 30GX12X12 SP DISPX12", referencia: "300054027" },
+      "300054040": { nombre: "CHOKIS CHISPAS 57GX9X7 DISPX7 TROQ", referencia: "300054040" },
+      "300054062": { nombre: "MARGARITA REC CLAS ALITAS BBQ 250GX9X1", referencia: "300054062" },
+      "300037949": { nombre: "CHEESE TRIS QUESO 50GX72X1 CP", referencia: "300037949" },
+      "300065646": { nombre: "MARGARITA POLLO 105GX18X1 PROMO H2225", referencia: "300065646" }
+    };
+    console.log('✅ Base de datos fallback cargada');
+  }
+}
+
+// Inicializar almacenamiento de productos para un vehículo
+function inicializarProductosEscaneados(vIndex) {
+  if (!productosEscaneadosPorVehiculo[vIndex]) {
+    productosEscaneadosPorVehiculo[vIndex] = {
+      totalCajas: 0,
+      productos: {} // { codigo: { nombre, referencia, cantidad } }
+    };
+  }
+}
+
+
+
+// Mostrar feedback visual al escanear
+// Mostrar resumen de productos escaneados
+function mostrarResumenProductos(vIndex) {
+  const container = document.getElementById(`resumen-productos-${vIndex}`);
+  if (!container) return;
+  
+  inicializarProductosEscaneados(vIndex);
+  const productos = productosEscaneadosPorVehiculo[vIndex].productos;
+  const totalCajas = productosEscaneadosPorVehiculo[vIndex].totalCajas;
+  
+  if (totalCajas === 0) {
+    container.innerHTML = `
+      <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; text-align: center; border: 1px dashed #dee2e6;">
+        <p style="color: #6c757d; margin: 0; font-size: 1.1em;">📦 No hay productos en el picking aún</p>
+        <small style="color: #6c757d;">Comienza a agregar productos usando el campo de arriba</small>
+      </div>
+    `;
+    return;
+  }
+  
+  let html = `
+    <div style="background: #f8f9fa; border-radius: 8px; padding: 15px; border: 2px solid #001855;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h5 style="margin: 0; color: #001855;">📊 Resumen de Picking</h5>
+        <div style="background: #001855; color: white; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 1.1em;">
+          ${totalCajas} cajas
+        </div>
+      </div>
+      
+      <div style="max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 5px;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #001855; color: white;">
+              <th style="padding: 10px 8px; text-align: left; font-size: 0.85em;">Referencia</th>
+              <th style="padding: 10px 8px; text-align: left; font-size: 0.85em;">Producto</th>
+              <th style="padding: 10px 8px; text-align: center; font-size: 0.85em;">Cajas</th>
+              <th style="padding: 10px 8px; text-align: center; font-size: 0.85em;">Borrar</th>
+              <th style="padding: 10px 8px; text-align: center; font-size: 0.85em;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+  `;
+  
+  // Ordenar productos por cantidad descendente
+  const productosOrdenados = Object.entries(productos).sort((a, b) => b[1].cantidad - a[1].cantidad);
+  
+  productosOrdenados.forEach(([codigo, prod]) => {
+    html += `
+      <tr style="border-bottom: 1px solid #e9ecef;">
+        <td style="padding: 8px; font-family: 'Courier New', monospace; font-size: 0.85em; color: #495057;">${prod.referencia}</td>
+        <td style="padding: 8px; font-size: 0.9em;">${prod.nombre}</td>
+        <td style="padding: 8px; text-align: center; font-weight: bold; color: #C76E00;">${prod.cantidad}</td>
+        <td style="padding: 8px; text-align: center;">
+          <!-- ✅ Input para cantidad a borrar -->
+          <input type="number" id="borrar-cantidad-${vIndex}-${codigo}" 
+                 min="1" max="${prod.cantidad}" value="1"
+                 style="width: 60px; padding: 4px; text-align: center; border: 2px solid #001855; border-radius: 4px; font-weight: bold;"
+                 onblur="validarCantidadBorrar(${vIndex}, '${codigo}')">
+        </td>
+        <td style="padding: 8px; text-align: center;">
+          <!-- ✅ Botón para borrar cantidad específica -->
+          <button type="button" onclick="borrarCantidadPicking(${vIndex}, '${codigo}', parseInt(document.getElementById('borrar-cantidad-${vIndex}-${codigo}').value))"
+                  style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85em; white-space: nowrap;"
+                  title="Borrar cantidad especificada">
+            🗑️ Borrar
+          </button>
+          
+          <!-- ✅ Botón para borrar todo -->
+          <button type="button" onclick="borrarCantidadPicking(${vIndex}, '${codigo}', ${prod.cantidad})"
+                  style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; padding: 4px 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.75em; margin-top: 4px; display: block; width: 100%;"
+                  title="Borrar todo">
+            Todo
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+  
+  html += `
+          </tbody>
+        </table>
+      </div>
+      
+      <button type="button" onclick="limpiarEscaneoVehiculo(${vIndex})" 
+              style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 5px; font-weight: bold; margin-top: 12px; width: 100%; cursor: pointer;">
+        🗑️ Limpiar Todo el Picking
+      </button>
+    </div>
+  `;
+  
+  container.innerHTML = html;
+}
+
+// ✅ FUNCIÓN CORREGIDA: Validar cantidad a borrar
+function validarCantidadBorrar(vIndex, codigo) {
+  const input = document.getElementById(`borrar-cantidad-${vIndex}-${codigo}`);
+  if (!input) return;
+  
+  const valorRaw = input.value.trim();
+  
+  // Permitir campo vacío temporalmente
+  if (valorRaw === '') {
+    return;
+  }
+  
+  const valor = parseInt(valorRaw);
+  const max = parseInt(input.max) || 1;
+  
+  // Validar solo si hay un valor numérico
+  if (!isNaN(valor)) {
+    if (valor < 1) {
+      input.value = 1;
+    } else if (valor > max) {
+      input.value = max;
+    }
+  } else {
+    // Si no es un número válido, restaurar al último valor válido
+    input.value = 1;
+  }
+}
+
+// Eliminar producto específico del picking
+
+function eliminarProductoPicking(vIndex, codigo) {
+  // ✅ Verificar que exista el vehículo y el producto
+  if (!productosEscaneadosPorVehiculo[vIndex] || !productosEscaneadosPorVehiculo[vIndex].productos[codigo]) {
+    console.warn('Producto no encontrado para eliminar');
+    return;
+  }
+  
+  const producto = productosEscaneadosPorVehiculo[vIndex].productos[codigo];
+  
+  // ✅ PEDIR CONFIRMACIÓN AL USUARIO (VERIFICACIÓN)
+  const confirmar = confirm(`⚠️ ¿Estás seguro de eliminar TODAS las ${producto.cantidad} cajas de:\n\n${producto.nombre}?\n\nEsta acción no se puede deshacer.`);
+  
+  if (!confirmar) {
+    console.log('Eliminación cancelada por el usuario');
+    return;
+  }
+  
+  // ✅ Eliminar producto
+  const cantidadEliminada = producto.cantidad;
+  delete productosEscaneadosPorVehiculo[vIndex].productos[codigo];
+  
+  // ✅ Actualizar total de cajas
+  productosEscaneadosPorVehiculo[vIndex].totalCajas -= cantidadEliminada;
+  
+  // ✅ Actualizar campo de cajas movidas
+  const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
+  if (cajasInput) {
+    cajasInput.value = productosEscaneadosPorVehiculo[vIndex].totalCajas;
+  }
+  
+  // ✅ Actualizar total general
+  actualizarTotalCajas();
+  
+  // ✅ Guardar progreso
+  guardarProgreso();
+  
+  // ✅ Mostrar feedback
+  mostrarFeedbackPicking(`✅ ${producto.nombre.substring(0, 30)}${producto.nombre.length > 30 ? '...' : ''} eliminado`, vIndex, 'success');
+  
+  // ✅ Actualizar resumen
+  mostrarResumenProductos(vIndex);
+  
+  console.log(`📦 Producto eliminado V${vIndex}: ${codigo}`);
+}
+
+// ✅ FUNCIÓN FALTANTE: Limpiar todo el picking de un vehículo
+
+function limpiarEscaneoVehiculo(vIndex) {
+  // ✅ PEDIR CONFIRMACIÓN AL USUARIO (VERIFICACIÓN)
+  const confirmar = confirm(`⚠️ ¿Estás seguro de LIMPIAR TODO el picking del vehículo ${vIndex + 1}?\n\nSe eliminarán TODOS los productos escaneados.\n\nEsta acción no se puede deshacer.`);
+  
+  if (!confirmar) {
+    console.log('Limpieza de picking cancelada por el usuario');
+    return;
+  }
+  
+  // ✅ Limpiar productos escaneados
+  productosEscaneadosPorVehiculo[vIndex] = {
+    productos: {},
+    totalCajas: 0
+  };
+  
+  // ✅ Limpiar campo de cajas
+  const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
+  if (cajasInput) {
+    cajasInput.value = '';
+  }
+  
+  // ✅ Actualizar total general
+  actualizarTotalCajas();
+  
+  // ✅ Guardar progreso
+  guardarProgreso();
+  
+  // ✅ Mostrar feedback
+  mostrarFeedbackPicking('✅ Picking limpiado completamente', vIndex, 'success');
+  
+  // ✅ Actualizar resumen
+  mostrarResumenProductos(vIndex);
+  
+  console.log(`🧹 Picking limpiado para vehículo V${vIndex}`);
+}
+
+// Guardar productos escaneados en localStorage
+function guardarProductosEscaneados() {
+  localStorage.setItem('productos_escaneados_rf', JSON.stringify(productosEscaneadosPorVehiculo));
+}
+
+// Cargar productos escaneados desde localStorage
+function cargarProductosEscaneados() {
+  const saved = localStorage.getItem('productos_escaneados_rf');
+  if (saved) {
+    try {
+      productosEscaneadosPorVehiculo = JSON.parse(saved);
+      console.log('✅ Productos escaneados cargados desde localStorage');
+      
+      // Actualizar resúmenes de todos los vehículos existentes
+      Object.keys(productosEscaneadosPorVehiculo).forEach(vIndex => {
+        mostrarResumenProductos(parseInt(vIndex));
+      });
+    } catch (e) {
+      console.error('❌ Error al cargar productos escaneados:', e);
+      productosEscaneadosPorVehiculo = {};
+    }
+  }
+}
+
+function borrarCantidadPicking(vIndex, codigo, cantidadABorrar) {
+  // ✅ Verificar que exista el vehículo y el producto
+  if (!productosEscaneadosPorVehiculo[vIndex] || !productosEscaneadosPorVehiculo[vIndex].productos[codigo]) {
+    console.warn('Producto no encontrado para borrar');
+    return;
+  }
+  
+  const producto = productosEscaneadosPorVehiculo[vIndex].productos[codigo];
+  const cantidadActual = producto.cantidad;
+  
+  // ✅ Obtener valor del input (con fallback a 1 si es inválido)
+  if (isNaN(cantidadABorrar) || cantidadABorrar === null || cantidadABorrar === undefined || cantidadABorrar === '') {
+    cantidadABorrar = 1;
+  }
+  
+  // ✅ Verificar que no se borre más de lo que hay
+  if (cantidadABorrar > cantidadActual) {
+    alert(`⚠️ No puedes borrar ${cantidadABorrar} unidades. Solo hay ${cantidadActual} disponibles.`);
+    return;
+  }
+  
+  // ✅ Verificar que la cantidad sea mayor a 0
+  if (cantidadABorrar <= 0) {
+    alert(`⚠️ La cantidad a borrar debe ser mayor a 0.`);
+    return;
+  }
+  
+  // ✅ PEDIR CONFIRMACIÓN AL USUARIO (VERIFICACIÓN)
+  const productoNombre = producto.nombre.substring(0, 40) + (producto.nombre.length > 40 ? '...' : '');
+  const mensaje = cantidadABorrar === cantidadActual 
+    ? `⚠️ ¿Estás seguro de eliminar TODAS las ${cantidadActual} cajas de:\n\n${productoNombre}?\n\nEsta acción no se puede deshacer.`
+    : `⚠️ ¿Estás seguro de eliminar ${cantidadABorrar} caja${cantidadABorrar > 1 ? 's' : ''} de:\n\n${productoNombre}?\n\nQuedarán ${cantidadActual - cantidadABorrar} caja${(cantidadActual - cantidadABorrar) > 1 ? 's' : ''}.`;
+  
+  const confirmar = confirm(mensaje);
+  
+  if (!confirmar) {
+    console.log('Acción de borrado cancelada por el usuario');
+    return;
+  }
+  
+  // ✅ Calcular nueva cantidad
+  const nuevaCantidad = cantidadActual - cantidadABorrar;
+  
+  // ✅ Actualizar cantidad del producto
+  if (nuevaCantidad > 0) {
+    productosEscaneadosPorVehiculo[vIndex].productos[codigo].cantidad = nuevaCantidad;
+  } else {
+    // ✅ Si queda 0, eliminar el producto completamente
+    delete productosEscaneadosPorVehiculo[vIndex].productos[codigo];
+  }
+  
+  // ✅ Actualizar total de cajas
+  productosEscaneadosPorVehiculo[vIndex].totalCajas -= cantidadABorrar;
+  
+  // ✅ Actualizar campo de cajas movidas
+  const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
+  if (cajasInput) {
+    cajasInput.value = productosEscaneadosPorVehiculo[vIndex].totalCajas;
+  }
+  
+  // ✅ Actualizar total general
+  actualizarTotalCajas();
+  
+  // ✅ Guardar progreso
+  guardarProgreso();
+  
+  // ✅ Mostrar feedback
+  const accion = cantidadABorrar === cantidadActual ? 'eliminado completamente' : `reducido en ${cantidadABorrar} unidades`;
+  mostrarFeedbackPicking(`✅ ${producto.nombre.substring(0, 30)}${producto.nombre.length > 30 ? '...' : ''} ${accion}`, vIndex, 'success');
+  
+  // ✅ Actualizar resumen
+  mostrarResumenProductos(vIndex);
+  
+  console.log(`📦 Producto actualizado V${vIndex}: ${codigo} - Nueva cantidad: ${nuevaCantidad}`);
+  
+  // ✅ Enfocar el campo EAN para continuar escaneando
+  setTimeout(() => {
+    const codigoInput = document.getElementById(`codigo-picking-${vIndex}`);
+    if (codigoInput) {
+      codigoInput.focus();
+    }
+  }, 50);
+}
+
+// ============================================
+// ✅ NUEVO: Sistema de Picking con Botón
+// ============================================
+
+// Agregar producto al picking con botón
+function agregarProductoPicking(vIndex) {
+  const codigoInput = document.getElementById(`codigo-picking-${vIndex}`);
+  let codigo = codigoInput.value.trim().toUpperCase();
+  
+  // ✅ ELIMINAR TODOS LOS SALTOS DE LÍNEA (no solo espacios)
+  codigo = codigo.replace(/[\r\n]+/g, '').trim();
+  
+  if (!codigo || codigo.length < 5) {
+    mostrarFeedbackPicking('⚠️ Por favor ingresa un código válido', vIndex, 'warning');
+    // ✅ Mantener foco incluso en advertencia
+    setTimeout(() => codigoInput.focus(), 50);
+    return;
+  }
+  
+  // Buscar producto en base de datos
+  const producto = window.baseDatosProductos[codigo] || 
+                   window.baseDatosProductos[codigo.replace(/\s/g, '')] ||
+                   window.baseDatosProductos[codigo.substring(0, 8)] ||
+                   window.baseDatosProductos[codigo.substring(0, 10)];
+  
+  if (producto) {
+    // Inicializar si no existe
+    inicializarProductosEscaneados(vIndex);
+    
+    // Agregar o incrementar producto
+    if (!productosEscaneadosPorVehiculo[vIndex].productos[codigo]) {
+      productosEscaneadosPorVehiculo[vIndex].productos[codigo] = {
+        nombre: producto.nombre || codigo,
+        referencia: producto.referencia || codigo,
+        cantidad: 0
+      };
+    }
+    
+    // Incrementar cantidad
+    productosEscaneadosPorVehiculo[vIndex].productos[codigo].cantidad++;
+    productosEscaneadosPorVehiculo[vIndex].totalCajas++;
+    
+    // Actualizar campo de cajas movidas
+    const cajasInput = document.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`);
+    if (cajasInput) {
+      cajasInput.value = productosEscaneadosPorVehiculo[vIndex].totalCajas;
+    }
+    
+    // Actualizar total general
+    actualizarTotalCajas();
+    
+    // Guardar progreso
+    guardarProgreso();
+    
+    // Mostrar feedback exitoso
+    mostrarFeedbackPicking(`✅ ${producto.nombre.substring(0, 40)}${producto.nombre.length > 40 ? '...' : ''}`, vIndex, 'success');
+    
+    // ✅ Limpiar y enfocar con delay para asegurar el foco
+    codigoInput.value = '';
+    setTimeout(() => {
+      codigoInput.focus();
+      codigoInput.select(); // ✅ Seleccionar todo el texto (por si hay algo)
+    }, 50);
+    
+    // Actualizar resumen
+    mostrarResumenProductos(vIndex);
+    
+    console.log(`📦 Producto agregado V${vIndex}: ${producto.nombre} - Total cajas: ${productosEscaneadosPorVehiculo[vIndex].totalCajas}`);
+  } else {
+    // Producto no encontrado - Borrar campo automáticamente
+    mostrarFeedbackPicking(`❌ Código no encontrado: ${codigo}`, vIndex, 'error');
+    codigoInput.value = '';
+    // ✅ Enfocar con delay incluso en error
+    setTimeout(() => {
+      codigoInput.focus();
+      codigoInput.select();
+    }, 50);
+  }
+}
+
+// ✅ VALIDACIÓN HÍBRIDA: números (máx 9) o alfanumérico (máx 20)
+function validarCodigoPicking(input) {
+  const valorOriginal = input.value.trim().toUpperCase();
+  
+  // ✅ Permitir letras, números y guiones bajos (para códigos como CORRUGADO)
+  let valorLimpio = valorOriginal.replace(/[^A-Z0-9_]/g, '');
+  
+  // ✅ Detectar si es puramente numérico
+  const esNumerico = /^\d+$/.test(valorLimpio);
+  
+  // ✅ Aplicar límites según el tipo
+  if (esNumerico && valorLimpio.length > 9) {
+    valorLimpio = valorLimpio.substring(0, 9);
+  } else if (valorLimpio.length > 20) {
+    valorLimpio = valorLimpio.substring(0, 20);
+  }
+  
+  input.value = valorLimpio;
+}
+
+// Mostrar feedback de picking
+function mostrarFeedbackPicking(mensaje, vIndex, tipo = 'info') {
+  const container = document.getElementById(`feedback-picking-${vIndex}`);
+  if (!container) return;
+  
+  let colorBg, colorText;
+  switch(tipo) {
+    case 'success':
+      colorBg = '#d4edda';
+      colorText = '#155724';
+      break;
+    case 'error':
+      colorBg = '#f8d7da';
+      colorText = '#721c24';
+      break;
+    case 'warning':
+      colorBg = '#fff3cd';
+      colorText = '#856404';
+      break;
+    default:
+      colorBg = '#d1ecf1';
+      colorText = '#0c5460';
+  }
+  
+  container.innerHTML = `
+    <div style="background: ${colorBg}; color: ${colorText}; padding: 8px 12px; border-radius: 5px; font-size: 0.9em; border-left: 4px solid ${colorText};">
+      ${mensaje}
+    </div>
+  `;
+  
+  // Eliminar feedback después de 3 segundos
+  setTimeout(() => {
+    if (container) container.innerHTML = '';
+  }, 3000);
+}
+
+        function convertirATextoMayusculas() {
+            const textInputs = document.querySelectorAll('input[type="text"], textarea');
+            textInputs.forEach(input => {
+                if (input.value.trim() !== '') input.value = input.value.toUpperCase();
+            });
+        }
+
+        // ============================================
+        // GUARDADO DE PROGRESO
+        // ============================================
+
+        function guardarProgreso() {
+  const form = document.forms['formulario-pepsico'];
+  if (!form) return;
+  
+  const formData = new FormData(form);
+  const data = {};
+  
+  formData.forEach((value, key) => {
+    if (!(value instanceof File) && key !== 'form-name') data[key] = value;
+  });
+  
+  // ✅ CAPTURAR NOMBRES DEL PERSONAL
+  const vehiculos = document.querySelectorAll('.registro-vehiculo');
+  vehiculos.forEach((_, vIndex) => {
+    const totalPersonas = parseInt(document.querySelector(`input[name="vehiculo_${vIndex}_personas"]`)?.value) || 0;
+    for (let p = 1; p <= totalPersonas; p++) {
+      const nombreInput = document.querySelector(`input[name="vehiculo_${vIndex}_nombre_persona_${p}"]`);
+      if (nombreInput) {
+        data[`vehiculo_${vIndex}_nombre_persona_${p}`] = nombreInput.value || '';
+      }
+    }
+    
+    // ✅ CAPTURAR JUSTIFICACIONES POR VEHÍCULO
+    const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${vIndex}`);
+    if (justificacionesContenedor) {
+      const justificaciones = justificacionesContenedor.querySelectorAll('.justificacion-group');
+      const justificacionesData = [];
+      
+      justificaciones.forEach((justificacion, jIndex) => {
+        const motivo = justificacion.querySelector(`select[name="vehiculo_${vIndex}_justificacion_${jIndex}"]`)?.value || '';
+        const otro_motivo = justificacion.querySelector(`input[name="vehiculo_${vIndex}_otro_justificacion_${jIndex}"]`)?.value || '';
+        const tiempo_inicio = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_inicio_${jIndex}"]`)?.value || '';
+        const tiempo_fin = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_final_${jIndex}"]`)?.value || '';
+        
+        justificacionesData.push({
+          motivo: motivo,
+          otro_motivo: otro_motivo,
+          tiempo_inicio: tiempo_inicio,
+          tiempo_fin: tiempo_fin
+        });
+      });
+      
+      data[`_justificaciones_${vIndex}`] = justificacionesData;
+    }
+  });
+  
+  // ✅ GUARDAR PARADAS DE OPERACIÓN
+  const paradasData = [];
+  const paradasContainer = document.getElementById('operacion-contenedor');
+  const paradas = paradasContainer.querySelectorAll('.parada-group');
+  
+  paradas.forEach((parada, index) => {
+    const inicio = parada.querySelector(`input[name="parada_inicio_operacion_${index}"]`)?.value || '';
+    const fin = parada.querySelector(`input[name="parada_fin_operacion_${index}"]`)?.value || '';
+    const motivo = parada.querySelector(`select[name="parada_motivo_operacion_${index}"]`)?.value || '';
+    const otro_motivo = parada.querySelector(`input[name="parada_otro_motivo_operacion_${index}"]`)?.value || '';
+    
+    paradasData.push({
+      inicio: inicio,
+      fin: fin,
+      motivo: motivo,
+      otro_motivo: otro_motivo
+    });
+  });
+  
+  data._numVehiculos = vehiculosData.length;
+  data._paradasDetalle = paradasData;
+  data._productosEscaneados = productosEscaneadosPorVehiculo;
+  
+  localStorage.setItem('pepsico_data', JSON.stringify(data));
+}
+
+        // ============================================
+        // LIMPIEZA TOTAL
+        // ============================================
+        function limpiarTodo() {
+          if (confirm("⚠️ ¿Estás seguro de que quieres borrar TODOS los datos?\n\nEsto incluye:\n- Datos del formulario principal\n- Registros de vehículos\n- Inspecciones de vehículos (detalles.html)\n- Paradas de operación")) {
+            
+            // 1. Eliminar datos principales
+            localStorage.removeItem('pepsico_data');
+
+            
+            // 3. Eliminar otros datos residuales del formulario
+            const clavesResiduales = [
+              'fecha', 'lugar', 'lider', 'coordinador', 'coordinador_otro',
+              'lider_pepsico', 'lider_pepsico_otro', 'turno', 'total_personas',
+              'cajas_totales', 'nombres_personal', 'vehiculosData', 'paradasData'
+            ];
+            
+            clavesResiduales.forEach(clave => localStorage.removeItem(clave));
+            
+            // 4. Recargar la página para limpiar completamente el estado
+            location.reload();
+            
+            // 5. Confirmación visual (opcional)
+            setTimeout(() => {
+              alert('✅ Todos los datos han sido eliminados correctamente.\nLos detalles de inspección también fueron borrados.');
+            }, 100);
+          }
+        }
+        
+        // ============================================
+        // VALIDACIÓN DE PLACAS
+        // ============================================
+
+        function validarPlacas() {
+            const regexPlaca = /^([A-Z]{3}[0-9]{3}|[0-9]{3}[A-Z]{3}|[A-Z]{1}[0-9]{5})$/;
+            const contenedor = document.getElementById('vehiculos-contenedor');
+            const registros = contenedor.querySelectorAll('.registro-vehiculo');
+            
+            for (let i = 0; i < registros.length; i++) {
+                const placaInput = registros[i].querySelector(`input[name="vehiculo_${i}_placa"]`);
+                if (placaInput) {
+                    const valor = placaInput.value.toUpperCase().trim();
+                    if (!regexPlaca.test(valor)) {
+                        alert(`❌ Placa del Vehículo #${i+1} no válida.
+Debe cumplir:
+- 3 letras y 3 números (ABC123)
+- 3 números y 3 letras (123ABC)
+- 1 letra y 5 números (A12345)`);
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        // ============================================
+        // ENVÍO DEL FORMULARIO
+        // ===========================================
+        function enviarFormulario(event) {
+    event.preventDefault();
+    sincronizarVehiculosDesdeDOM();
+    
+    // ✅ VALIDAR INSPECCIÓN DE VEHÍCULOS
+    let inspeccionCompleta = true;
+    let vehiculoConInspeccionPendiente = -1;
+    
+    for (let i = 0; i < vehiculosData.length; i++) {
+        const vehiculo = vehiculosData[i];
+        
+        // Verificar si todos los campos de inspección están completos
+        if (!vehiculo.interior_camion || 
+            !vehiculo.estado_carpa || 
+            !vehiculo.olores_extranos || 
+            !vehiculo.objetos_extranos || 
+            !vehiculo.evidencias_plagas || 
+            !vehiculo.estado_suelo || 
+            !vehiculo.aprobado) {
+            
+            inspeccionCompleta = false;
+            vehiculoConInspeccionPendiente = i;
+            break;
+        }
+    }
+    
+    // ✅ Mostrar error si falta inspección
+    if (!inspeccionCompleta) {
+        alert(`❌ Error: La inspección del Vehículo #${vehiculoConInspeccionPendiente + 1} está incompleta.\n\nPor favor, complete todos los campos de inspección antes de enviar.`);
+        
+        // ✅ Abrir el overlay del vehículo pendiente
+        abrirInspeccionVehiculo(vehiculoConInspeccionPendiente);
+        return;
+    }
+    
+    console.log('📊 Vehículos con nombres del personal:');
+    vehiculosData.forEach((vehiculo, index) => {
+        console.log(`Vehículo ${index}:`, {
+            placa: vehiculo.placa,
+            personas: vehiculo.personas,
+            nombres: vehiculo.nombres_personal
+        });
+    });
+    
+    // Validaciones existentes
+    const camposObligatorios = [
+        { id: 'lugar', nombre: 'Lugar de operación' },
+        { id: 'lider_pepsico', nombre: 'Líder De Pepsico' },
+        { id: 'fecha', nombre: 'Fecha' },
+        { id: 'turno', nombre: 'Turno' },
+        { id: 'total_personas', nombre: 'Total Personas En El Turno' },
+        { id: 'cajas_totales', nombre: 'Total Cajas Movidas' }
+    ];
+    
+    for (const campo of camposObligatorios) {
+        const el = document.getElementById(campo.id);
+        if (el && !el.value.trim()) {
+            alert(`❌ Por favor, complete el campo: "${campo.nombre}".`);
+            return;
+        }
+    }
+    
+    // Validar nombres por vehículo
+    for (let i = 0; i < vehiculosData.length; i++) {
+        const vehiculo = vehiculosData[i];
+        const totalPersonasVeh = parseInt(vehiculo.personas) || 0;
+        if (totalPersonasVeh > 0) {
+            const nombresContainer = document.querySelector(`#nombres-personal-${i}`);
+            if (nombresContainer) {
+                const inputsNombres = nombresContainer.querySelectorAll('input[type="text"]');
+                for (let j = 0; j < inputsNombres.length; j++) {
+                    if (!inputsNombres[j].value.trim()) {
+                        alert(`❌ Por favor, ingrese el nombre del trabajador ${j + 1} del Vehículo #${i + 1}.`);
+                        inputsNombres[j].focus();
+                        return;
+                    }
+                }
+            }
+        }
+    }
+    
+    if (!validarPlacas()) return;
+    if (!validarSolapamientoVehiculos() || !validarSolapamientoParadas()) return;
+    
+    // ✅ Sincronizar productos escaneados con vehiculosData
+    sincronizarVehiculosDesdeDOM();
+    for (let i = 0; i < vehiculosData.length; i++) {
+        if (productosEscaneadosPorVehiculo[i]) {
+            // Convertir a array para enviar
+            const productosArray = Object.entries(productosEscaneadosPorVehiculo[i].productos).map(([codigo, prod]) => ({
+                codigo: codigo,
+                referencia: prod.referencia,
+                nombre: prod.nombre,
+                cantidad: prod.cantidad
+            }));
+            
+            vehiculosData[i].productos_escaneados = productosArray;
+            vehiculosData[i].total_cajas_escaneadas = productosEscaneadosPorVehiculo[i].totalCajas;
+        }
+    }
+    
+    // Preparar datos para enviar
+    const formData = {
+        fecha: document.getElementById('fecha').value,
+        lugar: document.getElementById('lugar').value,
+        lider_asignado: document.getElementById('lider').value.toUpperCase(),
+        coordinador: document.getElementById('coordinador').value,
+        coordinador_otro: document.getElementById('coordinador_otro').value,
+        lider_pepsico: document.getElementById('lider_pepsico').value,
+        lider_pepsico_otro: document.getElementById('lider_pepsico_otro').value,
+        turno: document.getElementById('turno').value,
+        total_personas: document.getElementById('total_personas').value,
+        cajas_totales: document.getElementById('cajas_totales').value,
+        respo_diligen: document.getElementById('responsable').value,
+        datos_vehiculos: vehiculosData.map((v, i) => {
+            // ✅ Verificar que tipo_operacion tenga valor
+            if (v.tipo_operacion === undefined) {
+                console.warn(`⚠️ Vehículo ${i}: tipo_operacion es undefined, corrigiendo a ""`);
+                v.tipo_operacion = '';
+            }
+            return v;
+        }),
+        
+        datos_paradas_operacion: Array.from(
+            document.querySelectorAll('#operacion-contenedor .parada-group')
+        ).map(grupo => {
+            return {
+                inicio: grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '',
+                fin: grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '',
+                motivo: grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '',
+                otro_motivo: grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || ''
+            };
+        })
+    };
+    
+    console.log('📝 Datos que se enviarán a MySQL:');
+    console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
+    
+    // ⚠️ URL DE RAILWAY
+    const RAILWAY_API_URL = 'https://pepsico-funza-production-b0f5.up.railway.app/api/registro';
+    
+    // Mostrar mensaje de carga
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando...';
+    
+    // Enviar a Railway (MySQL)
+    fetch(RAILWAY_API_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(result => {
+        if (result.success) {
+            // ✅ Eliminar datos de localStorage
+            localStorage.removeItem('pepsico_data');
+            
+            // ✅ Redirigir a aceptacion.html
+            window.location.href = 'aceptacion.html';
+        } else {
+            throw new Error(result.error || 'Error desconocido');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('❌ Error al guardar: ' + error.message + '\n\nPor favor, inténtalo de nuevo.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    });
+}
+
+        // ============================================
+        // GENERACIÓN DE CAMPOS DE NOMBRES TOTALES
+        // ============================================
+
+        function generarCamposNombres() {
+            const totalInput = document.getElementById('total_personas');
+            if (!totalInput) return;
+            
+            const total = parseInt(totalInput.value) || 0;
+            const container = document.getElementById('nombres-contenedor');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            guardarProgreso();
+        }
+
+        // ============================================
+        // INICIALIZACIÓN AL CARGAR LA PÁGINA
+        // ============================================
+
+        document.addEventListener('DOMContentLoaded', async function() {
+  const form = document.querySelector('form');
+  const savedData = localStorage.getItem('pepsico_data');
+
+  if (savedData) {
+    const data = JSON.parse(savedData);
+    const nVehiculos = data._numVehiculos || 1;
+
+    // ✅ PASO 1: Establecer lugar primero
+    const lugarGuardado = data.lugar || 'Funza';
+    document.getElementById('lugar').value = lugarGuardado;
+
+    // ✅ PASO 2: Limpiar contenedor ANTES de crear vehículos
+    document.getElementById('vehiculos-contenedor').innerHTML = '';
+    vehiculosData = [];
+
+    // ✅ PASO 3: Crear vehículos
+    for (let i = 0; i < nVehiculos; i++) {
+      const vObj = {
+        inicio: data[`vehiculo_${i}_inicio`] || '',
+        fin: data[`vehiculo_${i}_fin`] || '',
+        motivo: data[`vehiculo_${i}_motivo`] || '',
+        otro_motivo: data[`vehiculo_${i}_otro_motivo`] || '',
+        muelle: data[`vehiculo_${i}_muelle`] || '',
+        otro_muelle_num: data[`vehiculo_${i}_otro_muelle_num`] || '',
+        placa: data[`vehiculo_${i}_placa`] || '',
+        tipo_vehi: data[`vehiculo_${i}_tipo_vehi`] || '',
+        otro_tipo: data[`vehiculo_${i}_otro_tipo`] || '',
+        destino: data[`vehiculo_${i}_destino`] || '',
+        otro_destino: data[`vehiculo_${i}_otro_destino`] || '',
+        origen: data[`vehiculo_${i}_origen`] || '',
+        otro_origen: data[`vehiculo_${i}_otro_origen`] || '',
+        personas: data[`vehiculo_${i}_personas`] || '',
+        nombres_personal: [],
+        cajas: data[`vehiculo_${i}_cajas`] || '',
+        justificacion: data[`vehiculo_${i}_justificacion`] || '',
+        otro_justificacion: data[`vehiculo_${i}_otro_justificacion`] || '',
+        tiempo_muerto_inicio: data[`vehiculo_${i}_tiempo_muerto_inicio`] || '',
+        tiempo_muerto_final: data[`vehiculo_${i}_tiempo_muerto_final`] || '',
+        foto_url: data[`vehiculo_${i}_foto_url`] || '',
+        interior_camion: data[`vehiculo_${i}_interior_camion`] || '',
+        estado_carpa: data[`vehiculo_${i}_estado_carpa`] || '',
+        olores_extranos: data[`vehiculo_${i}_olores_extranos`] || '',
+        objetos_extranos: data[`vehiculo_${i}_objetos_extranos`] || '',
+        evidencias_plagas: data[`vehiculo_${i}_evidencias_plagas`] || '',
+        estado_suelo: data[`vehiculo_${i}_estado_suelo`] || '',
+        aprobado: data[`vehiculo_${i}_aprobado`] || '',
+        tipo_operacion: data[`vehiculo_${i}_tipo_operacion`] || ''
+      };
+
+      // ✅ Cargar nombres del personal desde localStorage
+      for (let j = 1; ; j++) {
+        const nombreKey = `vehiculo_${i}_nombre_persona_${j}`;
+        if (data[nombreKey] !== undefined) {
+          vObj.nombres_personal.push(data[nombreKey]);
+        } else {
+          break;
+        }
+      }
+      vehiculosData.push(vObj);
+      crearVehiculoHTML(document.getElementById('vehiculos-contenedor'), i, vObj);
+      
+      // ✅ Restaurar valor de tipo de operación
+      if (vObj.tipo_operacion) {
+        const tipoOperacionSelect = document.getElementById(`tipo-operacion-${i}`);
+        if (tipoOperacionSelect) {
+          tipoOperacionSelect.value = vObj.tipo_operacion;
         }
       }
       
-    } // <-- CIERRE DEL BUCLE FOR
-    
-    // 3. Insertar paradas de operación
-    for (const parada of datos_paradas_operacion) {
-      await connection.query(
-        `INSERT INTO paradas_operacion (
-          registro_id, inicio, fin, motivo, otro_motivo
-        ) VALUES (?, ?, ?, ?, ?)`,
-        [
-          registroId,
-          parada.inicio,
-          parada.fin,
-          parada.motivo,
-          parada.otro_motivo
-        ]
-      );
-    }
-    
-    // Confirmar transacción
-    await connection.commit();
-    connection.release();
-
-    res.json({
-      success: true,
-      message: 'Registro guardado correctamente con detalles',
-      id: registroId
-    });
-  } catch (error) {
-    // Revertir transacción en caso de error
-    if (connection) {
-      await connection.rollback();
-      connection.release();
-    }
-    
-    console.error('Error al guardar:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-// Health check mejorado
-app.get('/health', async (req, res) => {
-  try {
-    const connection = await pool.getConnection();
-    connection.release();
-    
-    res.json({
-      status: 'ok',
-      message: 'API y base de datos funcionando correctamente',
-      env: {
-        host: process.env.MYSQLHOST ? '✅ Definido' : '❌ NO DEFINIDO',
-        port: process.env.MYSQLPORT || '3306 (default)',
-        user: process.env.MYSQLUSER || '❌ NO DEFINIDO',
-        database: process.env.MYSQLDATABASE || '❌ NO DEFINIDO'
+      // ✅ RESTAURAR JUSTIFICACIONES POR VEHÍCULO
+      const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${i}`);
+      if (justificacionesContenedor && data[`_justificaciones_${i}`]) {
+        justificacionesContenedor.innerHTML = '';
+        
+        data[`_justificaciones_${i}`].forEach((justificacion, jIndex) => {
+          const div = document.createElement('div');
+          div.className = 'justificacion-group';
+          div.dataset.index = jIndex;
+          
+          const botonEliminar = document.createElement('button');
+          botonEliminar.type = 'button';
+          botonEliminar.className = 'btn-eliminar';
+          botonEliminar.textContent = 'Eliminar';
+          botonEliminar.onclick = function() {
+            div.remove();
+            guardarProgreso();
+          };
+          
+          const dInicio = `muerto-inicio-${i}-${jIndex}`;
+          const dFin = `muerto-final-${i}-${jIndex}`;
+          
+          div.innerHTML = `
+            <div class="time-row">
+              <div>
+                <label class="time-label">Tiempo Muerto Inicio:</label>
+                <input type="tel" name="vehiculo_${i}_tiempo_muerto_inicio_${jIndex}" class="time-input-masked"
+                    placeholder="HH:MM" maxlength="5" value="${justificacion.tiempo_inicio}"
+                    onblur="applyTimeMask(this, '${dInicio}')">
+                <span id="${dInicio}" class="time-display"></span>
+              </div>
+              <div>
+                <label class="time-label">Tiempo Muerto Final:</label>
+                <input type="tel" name="vehiculo_${i}_tiempo_muerto_final_${jIndex}" class="time-input-masked"
+                    placeholder="HH:MM" maxlength="5" value="${justificacion.tiempo_fin}"
+                    onblur="applyTimeMask(this, '${dFin}')">
+                <span id="${dFin}" class="time-display"></span>
+              </div>
+            </div>
+            
+            <label>Motivo:</label>
+            <select name="vehiculo_${i}_justificacion_${jIndex}">
+              <option value="">Seleccione motivo</option>
+              <option value="faltante_producto" ${justificacion.motivo === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
+              <option value="liberacion_calidad" ${justificacion.motivo === 'liberacion_calidad' ? 'selected' : ''}>Liberacion de calidad</option>
+              <option value="Daños" ${justificacion.motivo === 'Daños' ? 'selected' : ''}>Daños (electricos, muelle, montacargas, etc.)</option>
+              <option value="otro" ${justificacion.motivo === 'otro' ? 'selected' : ''}>Otro</option>
+            </select>
+            <input type="text" name="vehiculo_${i}_otro_justificacion_${jIndex}" placeholder="Especifique la incidencia" class="otro-input" value="${justificacion.otro_motivo}">
+          `;
+          
+          div.appendChild(botonEliminar);
+          justificacionesContenedor.appendChild(div);
+          
+          // Configurar eventos
+          const motivoSelect = div.querySelector(`select[name="vehiculo_${i}_justificacion_${jIndex}"]`);
+          if (motivoSelect) {
+            motivoSelect.addEventListener('change', function() {
+              const otroInput = div.querySelector('.otro-input');
+              if (otroInput) {
+                if (this.value === 'otro') {
+                  otroInput.style.display = 'block';
+                } else {
+                  otroInput.style.display = 'none';
+                  otroInput.value = '';
+                }
+              }
+            });
+          }
+        });
       }
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'Base de datos NO accesible',
-      error: error.message
-    });
-  }
-});
+    }
 
-app.listen(port, () => {
-  console.log(`Servidor corriendo en puerto ${port}`);
+    // ✅ PASO 4: Poblar muelles DESPUÉS de crear los vehículos
+    actualizarMuellesPorLugar();
+
+    // ✅ PASO 5: Restaurar valores de muelle
+    for (let i = 0; i < nVehiculos; i++) {
+      const muelleSelect = document.getElementById(`muelle-select-${i}`);
+      if (muelleSelect && vehiculosData[i].muelle) {
+        muelleSelect.value = vehiculosData[i].muelle;
+        manejarOtroMuelle(i);
+      }
+    }
+
+    // ✅ RESTAURAR PARADAS DE OPERACIÓN
+    const operacionContenedor = document.getElementById('operacion-contenedor');
+    if (operacionContenedor) {
+      operacionContenedor.innerHTML = '';
+      
+      if (data._paradasDetalle && data._paradasDetalle.length > 0) {
+        data._paradasDetalle.forEach((parada, index) => {
+          agregarCampoParada('operacion', {
+            inicio: parada.inicio,
+            fin: parada.fin,
+            motivo: parada.motivo,
+            otro_motivo: parada.otro_motivo
+          });
+        });
+      }
+    }
+
+    // ✅ RESTAURAR OTROS CAMPOS DEL FORMULARIO
+    for (const key in data) {
+      if (key.startsWith('_') || key.startsWith('vehiculo_') || key.startsWith('parada_')) continue;
+      const el = form.elements[key];
+      if (el) {
+        el.value = data[key];
+        if (el.id === 'coordinador') manejarOtroCoordinador();
+      }
+    }
+
+    actualizarTotalCajas();
+    
+    // ✅ Cargar productos escaneados desde localStorage
+    if (data._productosEscaneados) {
+      productosEscaneadosPorVehiculo = data._productosEscaneados;
+      Object.keys(productosEscaneadosPorVehiculo).forEach(vIndex => {
+        mostrarResumenProductos(parseInt(vIndex));
+      });
+    }
+    
+    await cargarBaseDatosProductos();
+    generarCamposNombres();
+  } else {
+    agregarRegistroVehiculo();
+    agregarCampoParada('operacion');
+    actualizarCampos();
+    actualizarMuellesPorLugar();
+    await cargarBaseDatosProductos();
+    cargarProductosEscaneados();
+  }
+
+  form.addEventListener('submit', enviarFormulario);
+  form.addEventListener('input', guardarProgreso);
+  form.addEventListener('change', guardarProgreso);
+  
+  document.getElementById('lider_pepsico').addEventListener('change', function() {
+    this.dataset.manualChange = 'true';
+  });
 });
+    </script>
+</body>
