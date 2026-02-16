@@ -2191,22 +2191,53 @@ function crearNovedadOverlay(vIndex, index, datosElemento = null) {
   contenedor.appendChild(div);
   
   // ✅ Configurar evento de foto
-  const fotoInput = div.querySelector(`#foto-novedad-${vIndex}-${index}-overlay`);
-  if (fotoInput) {
-    fotoInput.addEventListener('change', function() {
-      const preview = document.getElementById(`preview-foto-novedad-${vIndex}-${index}`);
-      const fotoUrlInput = document.getElementById(`foto-novedad-${vIndex}-${index}-url-overlay`);
+  // ✅ Configurar evento de foto con subida automática
+const fotoInput = div.querySelector(`#foto-novedad-${vIndex}-${index}-overlay`);
+if (fotoInput) {
+  fotoInput.addEventListener('change', async function() {
+    const preview = document.getElementById(`preview-foto-novedad-${vIndex}-${index}`);
+    const fotoUrlInput = document.getElementById(`foto-novedad-${vIndex}-${index}-url-overlay`);
+    
+    if (this.files && this.files[0]) {
+      const file = this.files[0];
       
-      if (this.files && this.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          preview.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; border-radius: 5px; border: 2px solid #001855;">`;
-          fotoUrlInput.value = e.target.result;
-        };
-        reader.readAsDataURL(this.files[0]);
+      // Mostrar preview inmediato
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        preview.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; border-radius: 5px; border: 2px solid #001855;">`;
+        // Guardar URL temporal mientras se sube
+        fotoUrlInput.value = e.target.result;
+      };
+      reader.readAsDataURL(file);
+      
+      // ✅ Subir automáticamente a ImgBB
+      try {
+        // Generar nombre personalizado
+        let fechaInput = document.getElementById('fecha').value;
+        if (!fechaInput) fechaInput = new Date().toISOString().split('T')[0];
+        const [yyyy, mm, dd] = fechaInput.split('-');
+        const fechaFormateada = `${dd}.${mm}.${yyyy}`;
+        const tipoNovedad = div.querySelector(`select[name="vehiculo_${vIndex}_tipo_novedad_${index}_overlay"]`)?.value || 'novedad';
+        const nombrePersonalizado = `${fechaFormateada}.${tipoNovedad}.novedad_${vIndex}_${index}`;
+        
+        const urlSubida = await subirFotoImgBB(file, nombrePersonalizado);
+        if (urlSubida) {
+          fotoUrlInput.value = urlSubida;
+          console.log('✅ Foto de novedad subida correctamente:', urlSubida);
+        } else {
+          console.log('ℹ️ Foto guardada localmente (sin subir a ImgBB)');
+        }
+        
+        // ✅ Guardar progreso después de subir
+        guardarProgreso();
+        
+      } catch (error) {
+        console.error('❌ Error al subir foto de novedad:', error);
+        alert('⚠️ Error al subir la foto. Se guardará localmente.');
       }
-    });
-  }
+    }
+  });
+}
 }
 
 // ✅ CERRAR OVERLAY AL HACER CLIC FUERA
@@ -2225,6 +2256,36 @@ document.addEventListener('click', function(event) {
   });
 });
 
+// ✅ FUNCIÓN PARA SUBIR FOTO A IMGBB (misma que fotos de vehículo)
+async function subirFotoImgBB(file, nombrePersonalizado) {
+  if (!window.imgbbApiKey) {
+    console.warn('⚠️ No hay API key de ImgBB configurada. Guardando localmente.');
+    return null;
+  }
+  
+  const formData = new FormData();
+  formData.append('image', file);
+  formData.append('name', nombrePersonalizado);
+  
+  try {
+    const response = await fetch(`https://api.imgbb.com/1/upload?key=${window.imgbbApiKey}`, {
+      method: 'POST',
+      body: formData
+    });
+    
+    const result = await response.json();
+    if (result.success) {
+      return result.data.url;
+    } else {
+      console.warn('❌ Error al subir a ImgBB:', result.error.message);
+      return null;
+    }
+  } catch (error) {
+    console.warn('❌ Error de conexión con ImgBB:', error.message);
+    return null;
+  }
+}
+
 
 
         // ✅ ABRIR OVERLAY DE JUSTIFICACIONES
@@ -2238,10 +2299,13 @@ function abrirJustificacionesVehiculo(vIndex) {
     return;
   }
   
+  // ✅ Primero guardar progreso para asegurar que los datos estén actualizados
+  guardarProgreso();
+  
   // Limpiar contenedor del overlay
   contenedorOverlay.innerHTML = '';
   
-  // Copiar justificaciones del contenedor oculto al overlay
+  // ✅ Copiar justificaciones del contenedor oculto al overlay
   const justificacionesOcultas = contenedorOculto.querySelectorAll('.justificacion-group');
   justificacionesOcultas.forEach((justificacionOculta, index) => {
     crearJustificacionOverlay(vIndex, index, justificacionOculta);
@@ -2257,6 +2321,40 @@ function abrirJustificacionesVehiculo(vIndex) {
   document.body.style.overflow = 'hidden';
 }
 
+// ✅ ABRIR OVERLAY DE NOVEDADES
+function abrirNovedadesVehiculo(vIndex) {
+  const overlay = document.getElementById(`overlay-novedades-${vIndex}`);
+  const contenedorOverlay = document.getElementById(`novedades-overlay-contenedor-${vIndex}`);
+  const contenedorOculto = document.getElementById(`novedades-contenedor-${vIndex}`);
+  
+  if (!overlay || !contenedorOverlay || !contenedorOculto) {
+    console.error('Error: Elementos del overlay no encontrados');
+    return;
+  }
+  
+  // ✅ Primero guardar progreso para asegurar que los datos estén actualizados
+  guardarProgreso();
+  
+  // Limpiar contenedor del overlay
+  contenedorOverlay.innerHTML = '';
+  
+  // ✅ Copiar novedades del contenedor oculto al overlay
+  const novedadesOcultas = contenedorOculto.querySelectorAll('.novedad-group');
+  novedadesOcultas.forEach((novedadOculta, index) => {
+    crearNovedadOverlay(vIndex, index, novedadOculta);
+  });
+  
+  // Si no hay novedades, agregar la primera vacía
+  if (contenedorOverlay.children.length === 0) {
+    agregarNovedadOverlay(vIndex);
+  }
+  
+  // Mostrar overlay
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+// ✅ CERRAR OVERLAY DE JUSTIFICACIONES
 // ✅ CERRAR OVERLAY DE JUSTIFICACIONES
 function cerrarJustificacionesVehiculo(vIndex) {
   const contenedorOculto = document.getElementById(`justificaciones-contenedor-${vIndex}`);
@@ -2268,7 +2366,7 @@ function cerrarJustificacionesVehiculo(vIndex) {
   // Limpiar contenedor oculto
   contenedorOculto.innerHTML = '';
   
-  // Copiar justificaciones del overlay al contenedor oculto
+  // ✅ Copiar justificaciones del overlay al contenedor oculto
   const justificacionesOverlay = contenedorOverlay.querySelectorAll('.justificacion-group');
   justificacionesOverlay.forEach((justificacionOverlay, index) => {
     const nuevaJustificacion = justificacionOverlay.cloneNode(true);
@@ -2300,6 +2398,54 @@ function cerrarJustificacionesVehiculo(vIndex) {
   overlay.style.display = 'none';
   document.body.style.overflow = 'auto';
   
+  // ✅ Guardar progreso después de cerrar
+  guardarProgreso();
+}
+
+// ✅ CERRAR OVERLAY DE NOVEDADES
+function cerrarNovedadesVehiculo(vIndex) {
+  const contenedorOculto = document.getElementById(`novedades-contenedor-${vIndex}`);
+  const contenedorOverlay = document.getElementById(`novedades-overlay-contenedor-${vIndex}`);
+  const overlay = document.getElementById(`overlay-novedades-${vIndex}`);
+  
+  if (!contenedorOculto || !contenedorOverlay || !overlay) return;
+  
+  // Limpiar contenedor oculto
+  contenedorOculto.innerHTML = '';
+  
+  // ✅ Copiar novedades del overlay al contenedor oculto
+  const novedadesOverlay = contenedorOverlay.querySelectorAll('.novedad-group');
+  novedadesOverlay.forEach((novedadOverlay, index) => {
+    const nuevaNovedad = novedadOverlay.cloneNode(true);
+    
+    // Restaurar IDs originales
+    const inputs = nuevaNovedad.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+      if (input.id) {
+        input.id = input.id.replace(/-\d+-overlay$/, `-${index}`);
+      }
+      if (input.name) {
+        input.name = input.name.replace(/_\d+_overlay$/, `_${index}`);
+      }
+    });
+    
+    // Restaurar botón eliminar original
+    const botonEliminar = nuevaNovedad.querySelector('.btn-eliminar');
+    if (botonEliminar) {
+      botonEliminar.onclick = function() {
+        nuevaNovedad.remove();
+        guardarProgreso();
+      };
+    }
+    
+    contenedorOculto.appendChild(nuevaNovedad);
+  });
+  
+  // Ocultar overlay
+  overlay.style.display = 'none';
+  document.body.style.overflow = 'auto';
+  
+  // ✅ Guardar progreso después de cerrar
   guardarProgreso();
 }
 
@@ -3364,7 +3510,7 @@ function mostrarFeedbackPicking(mensaje, vIndex, tipo = 'info') {
     if (!(value instanceof File) && key !== 'form-name') data[key] = value;
   });
   
-  // ✅ CAPTURAR NOMBRES DEL PERSONAL Y NOVEDADES POR VEHÍCULO
+  // ✅ CAPTURAR NOMBRES DEL PERSONAL, JUSTIFICACIONES Y NOVEDADES POR VEHÍCULO
   const vehiculos = document.querySelectorAll('.registro-vehiculo');
   vehiculos.forEach((_, vIndex) => {
     // Capturar nombres del personal
@@ -3376,26 +3522,49 @@ function mostrarFeedbackPicking(mensaje, vIndex, tipo = 'info') {
       }
     }
     
-    // ✅ CAPTURAR NOVEDADES POR VEHÍCULO
-    const novedadesContenedor = document.getElementById(`novedades-contenedor-${vIndex}`);
-    if (novedadesContenedor) {
-      const novedades = novedadesContenedor.querySelectorAll('.novedad-group');
-      const novedadesData = [];
+    // ✅ CAPTURAR JUSTIFICACIONES POR VEHÍCULO
+    const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${vIndex}`);
+    if (justificacionesContenedor) {
+      const justificaciones = justificacionesContenedor.querySelectorAll('.justificacion-group');
+      const justificacionesData = [];
       
-      novedades.forEach((novedad, nIndex) => {
-        const tipo = novedad.querySelector(`select[name="vehiculo_${vIndex}_tipo_novedad_${nIndex}"]`)?.value || '';
-        const descripcion = novedad.querySelector(`textarea[name="vehiculo_${vIndex}_descripcion_novedad_${nIndex}"]`)?.value || '';
-        const foto_url = novedad.querySelector(`input[name="vehiculo_${vIndex}_foto_novedad_${nIndex}_url"]`)?.value || '';
+      justificaciones.forEach((justificacion, jIndex) => {
+        const motivo = justificacion.querySelector(`select[name="vehiculo_${vIndex}_justificacion_${jIndex}"]`)?.value || '';
+        const otro_motivo = justificacion.querySelector(`input[name="vehiculo_${vIndex}_otro_justificacion_${jIndex}"]`)?.value || '';
+        const tiempo_inicio = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_inicio_${jIndex}"]`)?.value || '';
+        const tiempo_fin = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_final_${jIndex}"]`)?.value || '';
         
-        novedadesData.push({
-          tipo: tipo,
-          descripcion: descripcion,
-          foto_url: foto_url
+        justificacionesData.push({
+          motivo: motivo,
+          otro_motivo: otro_motivo,
+          tiempo_inicio: tiempo_inicio,
+          tiempo_fin: tiempo_fin
         });
       });
       
-      data[`_novedades_${vIndex}`] = novedadesData;
+      data[`_justificaciones_${vIndex}`] = justificacionesData;
     }
+    
+    // ✅ CAPTURAR NOVEDADES POR VEHÍCULO
+    const novedadesContenedor = document.getElementById(`novedades-contenedor-${vIndex}`);
+if (novedadesContenedor) {
+  const novedades = novedadesContenedor.querySelectorAll('.novedad-group');
+  const novedadesData = [];
+  
+  novedades.forEach((novedad, nIndex) => {
+    const tipo = novedad.querySelector(`select[name="vehiculo_${vIndex}_tipo_novedad_${nIndex}"]`)?.value || '';
+    const descripcion = novedad.querySelector(`textarea[name="vehiculo_${vIndex}_descripcion_novedad_${nIndex}"]`)?.value || '';
+    const foto_url = novedad.querySelector(`input[name="vehiculo_${vIndex}_foto_novedad_${nIndex}_url"]`)?.value || '';
+    
+    novedadesData.push({
+      tipo: tipo,
+      descripcion: descripcion,
+      foto_url: foto_url  // ✅ Incluye la URL de ImgBB o la URL local
+    });
+  });
+  
+  data[`_novedades_${vIndex}`] = novedadesData;
+}
   });
   
   // ✅ GUARDAR PARADAS DE OPERACIÓN
@@ -3421,8 +3590,11 @@ function mostrarFeedbackPicking(mensaje, vIndex, tipo = 'info') {
   data._paradasDetalle = paradasData;
   data._productosEscaneados = productosEscaneadosPorVehiculo;
   
+  console.log('💾 Guardando progreso:', data);
   localStorage.setItem('pepsico_data', JSON.stringify(data));
 }
+
+
         // ============================================
         // LIMPIEZA TOTAL
         // ============================================
@@ -3869,6 +4041,9 @@ Debe cumplir:
           }
         });
       }
+      
+      
+      
     }
 
     // ✅ PASO 4: Poblar muelles DESPUÉS de crear los vehículos
