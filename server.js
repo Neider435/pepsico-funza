@@ -1,14 +1,22 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
-const app = express();
 const PDFDocument = require('pdfkit');
 const nodemailer = require('nodemailer');
 const fs = require('fs');
-const path = require('path'); 
+const path = require('path');
+
+const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
+// ✅ CONFIGURACIÓN CORS CORREGIDA
+app.use(cors({
+  origin: ['https://pepsico-funza.netlify.app', 'https://pepsico-funza-production-b0f5.up.railway.app', '*'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 app.use(express.json());
 
 // ===== LOGS DE VARIABLES DE ENTORNO =====
