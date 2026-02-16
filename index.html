@@ -1017,72 +1017,92 @@ function manejarOtroMuelle(vIndex) {
 
         // ✅ FUNCIÓN PARA GENERAR CAMPOS DE NOMBRES POR VEHÍCULO (NUEVO)
         function generarCamposNombresVehiculo(vIndex) {
-            const totalInput = document.querySelector(`input[name="vehiculo_${vIndex}_personas"]`);
-            if (!totalInput) return;
-            
-            const total = parseInt(totalInput.value) || 0;
-            const container = document.getElementById(`nombres-personal-${vIndex}`);
-            if (!container) return;
-            
-            container.innerHTML = '';
-            
-            if (total > 0) {
-                const label = document.createElement('label');
-                label.textContent = 'Nombres del Colaborador:';
-                label.style.display = 'block';
-                label.style.fontWeight = 'bold';
-                label.style.marginTop = '15px';
-                container.appendChild(label);
-            }
-            
-            for (let i = 1; i <= total; i++) {
-                const div = document.createElement('div');
-                div.style.marginBottom = '10px';
-                
-                const label = document.createElement('label');
-                label.textContent = `Nombre persona ${i}:`;
-                label.style.display = 'block';
-                label.style.fontWeight = 'bold';
-                label.style.marginBottom = '5px';
-                label.style.fontSize = '0.9em';
-                label.htmlFor = `vehiculo_${vIndex}_nombre_persona_${i}`;
-                
-                const input = document.createElement('input');
-input.type = 'text';  // ✅ Cambiar a 'text' para poder usar maxlength
-input.inputmode = 'numeric';  // ✅ Teclado numérico en móviles
-input.id = `vehiculo_${vIndex}_nombre_persona_${idx + 1}`;
-input.name = `vehiculo_${vIndex}_nombre_persona_${idx + 1}`;
-input.placeholder = `Cédula del colaborador ${idx + 1}`;
-input.value = nombre;
-input.required = true;
-input.maxLength = 10;  // ✅ Limitar a máximo 10 caracteres
-input.style.width = '100%';
-input.style.padding = '8px';
-input.style.border = '1px solid #170303';
-input.style.borderRadius = '8px';
-input.style.boxSizing = 'border-box';
-
-// ✅ Limitar a solo números y máximo 10 caracteres
-input.oninput = function() {
-  // Eliminar todo excepto números
-  this.value = this.value.replace(/\D/g, '');
+  const totalInput = document.querySelector(`input[name="vehiculo_${vIndex}_personas"]`);
+  if (!totalInput) return;
   
-  // Limitar a máximo 10 dígitos
-  if (this.value.length > 10) {
-    this.value = this.value.substring(0, 10);
+  const total = parseInt(totalInput.value) || 0;
+  const container = document.getElementById(`nombres-personal-${vIndex}`);
+  if (!container) return;
+  
+  container.innerHTML = '';
+  
+  if (total > 0) {
+    const label = document.createElement('label');
+    label.textContent = 'Cédulas de los Colaboradores:';
+    label.style.display = 'block';
+    label.style.fontWeight = 'bold';
+    label.style.marginTop = '15px';
+    label.style.color = '#333';
+    container.appendChild(label);
+  }
+  
+  for (let i = 1; i <= total; i++) {
+    const div = document.createElement('div');
+    div.style.marginBottom = '15px';
+    div.style.padding = '10px';
+    div.style.backgroundColor = '#f8f9fa';
+    div.style.borderRadius = '8px';
+    
+    const label = document.createElement('label');
+    label.textContent = `Cédula colaborador ${i}:`;
+    label.style.display = 'block';
+    label.style.fontWeight = 'bold';
+    label.style.marginBottom = '8px';
+    label.style.fontSize = '0.95em';
+    label.style.color = '#555';
+    label.htmlFor = `vehiculo_${vIndex}_nombre_persona_${i}`;
+    
+    const input = document.createElement('input');
+    input.type = 'text';  // ✅ 'text' para poder usar maxlength y validación personalizada
+    input.inputmode = 'numeric';  // ✅ Teclado numérico en móviles
+    input.id = `vehiculo_${vIndex}_nombre_persona_${i}`;  // ✅ CORREGIDO: usar 'i' en lugar de 'idx'
+    input.name = `vehiculo_${vIndex}_nombre_persona_${i}`;  // ✅ CORREGIDO: usar 'i' en lugar de 'idx'
+    input.placeholder = `Ingrese cédula (máx. 10 dígitos)`;
+    input.value = '';  // ✅ CORREGIDO: valor vacío inicial (no 'nombre')
+    input.required = true;
+    input.maxLength = 10;  // ✅ Limitar a máximo 10 caracteres
+    input.style.width = '100%';
+    input.style.padding = '10px';
+    input.style.border = '2px solid #001855';
+    input.style.borderRadius = '8px';
+    input.style.boxSizing = 'border-box';
+    input.style.fontSize = '1.1em';
+    input.style.fontFamily = 'Arial, sans-serif';
+
+    // ✅ Limitar a solo números y máximo 10 dígitos
+    input.oninput = function() {
+      // Eliminar todo excepto números
+      this.value = this.value.replace(/\D/g, '');
+      
+      // Limitar a máximo 10 dígitos
+      if (this.value.length > 10) {
+        this.value = this.value.substring(0, 10);
+      }
+      
+      guardarProgreso();
+    };
+    
+    // ✅ Formatear visualmente con puntos cada 3 dígitos (opcional, solo visual)
+    input.onblur = function() {
+      if (this.value.length === 10) {
+        const sinPuntos = this.value.replace(/\./g, '');
+        const conPuntos = sinPuntos.replace(/(\d{3})(\d{3})(\d{4})/, '$1.$2.$3');
+        this.value = conPuntos;
+      }
+    };
+    
+    // ✅ Eliminar puntos al enfocar para editar
+    input.onfocus = function() {
+      this.value = this.value.replace(/\./g, '');
+    };
+    
+    div.appendChild(label);
+    div.appendChild(input);
+    container.appendChild(div);
   }
   
   guardarProgreso();
-};
-                
-                div.appendChild(label);
-                div.appendChild(input);
-                container.appendChild(div);
-            }
-            
-            guardarProgreso();
-        }
-
+}
         // ============================================
         // FUNCIONES DE VALIDACIÓN DE HORAS
         // ============================================
@@ -1713,39 +1733,6 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
     </div>
   </div>
 </div>
-
-<!-- ✅ BOTÓN PARA ABRIR NOVEDADES -->
-<button type="button" onclick="abrirNovedadesVehiculo(${vIndex})"
-        style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 15px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-    📝 Novedades
-</button>
-
-<!-- ✅ CONTENEDOR OCULTO PARA NOVEDADES (se sincroniza con el overlay) -->
-<div id="novedades-contenedor-${vIndex}" style="display: none;"></div>
-
-<!-- ✅ OVERLAY/MODAL DE NOVEDADES -->
-<div id="overlay-novedades-${vIndex}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center; padding: 20px;">
-  <div style="background: white; padding: 25px; border-radius: 10px; width: 95%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
-    <h4 style="text-align: center; color: #C76E00; margin-top: 0;">NOVEDADES - VEHÍCULO #${vIndex + 1}</h4>
-    <hr style="margin: 15px 0; border-style: dashed;">
-    
-    <!-- CONTENEDOR DE NOVEDADES -->
-    <div id="novedades-overlay-contenedor-${vIndex}" style="margin-bottom: 20px;"></div>
-    
-    <!-- BOTONES DE ACCIÓN -->
-    <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px; padding-top: 15px; border-top: 2px solid #e74c3c;">
-      <button type="button" onclick="agregarNovedadOverlay(${vIndex})"
-              style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; padding: 10px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; flex: 1;">
-        ➕ Agregar Novedad
-      </button>
-      
-      <button type="button" onclick="cerrarNovedadesVehiculo(${vIndex})"
-              style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 10px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; flex: 1;">
-        ✅ Aceptar
-      </button>
-    </div>
-  </div>
-</div>
                 
                 <label>Foto De vehiculo:</label>
                 <input type="file" name="vehiculo_${vIndex}_foto" id="${fotoInputId}" accept="image/*" capture="environment">
@@ -2001,234 +1988,6 @@ input.oninput = function() {
                 setupFotoPreview(fotoInputId, previewFotoId, nombrePersonalizado);
             });
         }
-
-        // ✅ ABRIR OVERLAY DE NOVEDADES
-function abrirNovedadesVehiculo(vIndex) {
-  const overlay = document.getElementById(`overlay-novedades-${vIndex}`);
-  const contenedorOverlay = document.getElementById(`novedades-overlay-contenedor-${vIndex}`);
-  const contenedorOculto = document.getElementById(`novedades-contenedor-${vIndex}`);
-  
-  if (!overlay || !contenedorOverlay || !contenedorOculto) {
-    console.error('Error: Elementos del overlay no encontrados');
-    return;
-  }
-  
-  // Limpiar contenedor del overlay
-  contenedorOverlay.innerHTML = '';
-  
-  // Copiar novedades del contenedor oculto al overlay
-  const novedadesOcultas = contenedorOculto.querySelectorAll('.novedad-group');
-  novedadesOcultas.forEach((novedadOculta, index) => {
-    crearNovedadOverlay(vIndex, index, novedadOculta);
-  });
-  
-  // Si no hay novedades, agregar la primera vacía
-  if (contenedorOverlay.children.length === 0) {
-    agregarNovedadOverlay(vIndex);
-  }
-  
-  // Mostrar overlay
-  overlay.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-}
-
-// ✅ CERRAR OVERLAY DE NOVEDADES
-function cerrarNovedadesVehiculo(vIndex) {
-  const contenedorOculto = document.getElementById(`novedades-contenedor-${vIndex}`);
-  const contenedorOverlay = document.getElementById(`novedades-overlay-contenedor-${vIndex}`);
-  const overlay = document.getElementById(`overlay-novedades-${vIndex}`);
-  
-  if (!contenedorOculto || !contenedorOverlay || !overlay) return;
-  
-  // Limpiar contenedor oculto
-  contenedorOculto.innerHTML = '';
-  
-  // Copiar novedades del overlay al contenedor oculto
-  const novedadesOverlay = contenedorOverlay.querySelectorAll('.novedad-group');
-  novedadesOverlay.forEach((novedadOverlay, index) => {
-    const nuevaNovedad = novedadOverlay.cloneNode(true);
-    
-    // Restaurar IDs originales
-    const inputs = nuevaNovedad.querySelectorAll('input, select');
-    inputs.forEach(input => {
-      if (input.id) {
-        input.id = input.id.replace(/-\d+-overlay$/, `-${index}`);
-      }
-      if (input.name) {
-        input.name = input.name.replace(/_\d+_overlay$/, `_${index}`);
-      }
-    });
-    
-    // Restaurar botón eliminar original
-    const botonEliminar = nuevaNovedad.querySelector('.btn-eliminar');
-    if (botonEliminar) {
-      botonEliminar.onclick = function() {
-        nuevaNovedad.remove();
-        guardarProgreso();
-      };
-    }
-    
-    contenedorOculto.appendChild(nuevaNovedad);
-  });
-  
-  // Ocultar overlay
-  overlay.style.display = 'none';
-  document.body.style.overflow = 'auto';
-  
-  guardarProgreso();
-}
-
-// ✅ AGREGAR NOVEDAD EN EL OVERLAY
-function agregarNovedadOverlay(vIndex) {
-  const index = document.getElementById(`novedades-overlay-contenedor-${vIndex}`)?.children.length || 0;
-  crearNovedadOverlay(vIndex, index);
-}
-
-// ✅ CREAR NOVEDAD EN EL OVERLAY
-function crearNovedadOverlay(vIndex, index, datosElemento = null) {
-  const contenedor = document.getElementById(`novedades-overlay-contenedor-${vIndex}`);
-  if (!contenedor) return;
-  
-  const div = document.createElement('div');
-  div.className = 'novedad-group';
-  div.dataset.index = index;
-  div.style.border = '2px solid #e74c3c';
-  div.style.borderRadius = '8px';
-  div.style.padding = '15px';
-  div.style.marginBottom = '15px';
-  div.style.position = 'relative';
-  
-  // ✅ Botón eliminar (arriba a la derecha)
-  const botonEliminar = document.createElement('button');
-  botonEliminar.type = 'button';
-  botonEliminar.className = 'btn-eliminar';
-  botonEliminar.innerHTML = '🗑️';
-  botonEliminar.style.position = 'absolute';
-  botonEliminar.style.top = '5px';
-  botonEliminar.style.right = '5px';
-  botonEliminar.style.background = '#dc3545';
-  botonEliminar.style.color = 'white';
-  botonEliminar.style.border = 'none';
-  botonEliminar.style.padding = '5px 10px';
-  botonEliminar.style.borderRadius = '3px';
-  botonEliminar.style.cursor = 'pointer';
-  botonEliminar.style.fontSize = '1em';
-  botonEliminar.onclick = function() {
-    div.remove();
-    guardarProgreso();
-  };
-  
-  // ✅ Obtener valores si existe un elemento de datos
-  let tipo_novedad = '';
-  let descripcion = '';
-  let foto_url = '';
-  
-  if (datosElemento) {
-    tipo_novedad = datosElemento.querySelector(`select[name="vehiculo_${vIndex}_tipo_novedad_${index}"]`)?.value || '';
-    descripcion = datosElemento.querySelector(`textarea[name="vehiculo_${vIndex}_descripcion_novedad_${index}"]`)?.value || '';
-    foto_url = datosElemento.querySelector(`input[name="vehiculo_${vIndex}_foto_novedad_${index}_url"]`)?.value || '';
-  }
-  
-  const fotoInputId = `foto_novedad_${vIndex}_${index}_overlay`;
-  const previewFotoId = `preview_foto_novedad_${vIndex}_${index}_overlay`;
-  
-  div.innerHTML = `
-    <div style="margin-top: 20px;">
-      <!-- Tipo de Novedad -->
-      <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; margin-top: 10px;">Tipo de Novedad:</label>
-      <select name="vehiculo_${vIndex}_tipo_novedad_${index}_overlay" id="tipo-novedad-overlay-${vIndex}-${index}" style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
-        <option value="">Seleccione tipo</option>
-        <option value="cajas_rotas" ${tipo_novedad === 'cajas_rotas' ? 'selected' : ''}>Cajas Rotas</option>
-        <option value="faltante_producto" ${tipo_novedad === 'faltante_producto' ? 'selected' : ''}>Faltante de Producto</option>
-        <option value="sobrante_producto" ${tipo_novedad === 'sobrante_producto' ? 'selected' : ''}>Sobrante de Producto</option>
-        <option value="estibas_malas" ${tipo_novedad === 'estibas_malas' ? 'selected' : ''}>Estibas Malas</option>
-      </select>
-      
-      <!-- Descripción -->
-      <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; margin-top: 10px;">Descripción:</label>
-      <textarea name="vehiculo_${vIndex}_descripcion_novedad_${index}_overlay" id="descripcion-novedad-overlay-${vIndex}-${index}" 
-                placeholder="Describa la novedad" style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; min-height: 80px; resize: vertical;">${descripcion}</textarea>
-      
-      <!-- Foto -->
-      <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; margin-top: 15px;">Foto de la Novedad:</label>
-      <input type="file" name="vehiculo_${vIndex}_foto_novedad_${index}_overlay" id="${fotoInputId}" accept="image/*" capture="environment" style="width: 100%; padding: 10px; background: #e74c3c; color: white; border: none; border-radius: 5px; font-weight: bold;">
-      <div class="preview-foto" id="${previewFotoId}" style="margin-top: 10px;"></div>
-      <input type="hidden" name="vehiculo_${vIndex}_foto_novedad_${index}_url_overlay" id="foto_novedad_${vIndex}_${index}_url_overlay" value="${foto_url}">
-    </div>
-  `;
-  
-  div.appendChild(botonEliminar);
-  contenedor.appendChild(div);
-  
-  // ✅ Configurar preview de foto
-  const fotoInput = document.getElementById(fotoInputId);
-  if (fotoInput) {
-    fotoInput.addEventListener('change', function() {
-      setupFotoPreviewNovedad(fotoInputId, previewFotoId, vIndex, index);
-    });
-    
-    // Mostrar preview si ya hay foto
-    if (foto_url) {
-      const preview = document.getElementById(previewFotoId);
-      if (preview) {
-        preview.innerHTML = `<img src="${foto_url}" style="max-width: 100%; border-radius: 5px; border: 2px solid #e74c3c;">`;
-      }
-    }
-  }
-}
-
-// ✅ SETUP FOTO PREVIEW PARA NOVEDADES
-function setupFotoPreviewNovedad(inputId, previewId, vIndex, nIndex) {
-  const input = document.getElementById(inputId);
-  const preview = document.getElementById(previewId);
-  const file = input.files[0];
-  
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      preview.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; border-radius: 5px; border: 2px solid #e74c3c;">`;
-      
-      // Subir a ImgBB si hay API key
-      if (window.imgbbApiKey) {
-        const formData = new FormData();
-        formData.append('image', file);
-        
-        fetch(`https://api.imgbb.com/1/upload?key=${window.imgbbApiKey}`, {
-          method: 'POST',
-          body: formData
-        })
-        .then(response => response.json())
-        .then(result => {
-          if (result.success) {
-            const fotoUrlInput = document.getElementById(`foto_novedad_${vIndex}_${nIndex}_url_overlay`);
-            if (fotoUrlInput) {
-              fotoUrlInput.value = result.data.url;
-            }
-            guardarProgreso();
-          }
-        })
-        .catch(error => {
-          console.warn('No se pudo subir a ImgBB:', error);
-        });
-      }
-    };
-    reader.readAsDataURL(file);
-  }
-}
-
-// ✅ CERRAR OVERLAY AL HACER CLIC FUERA
-document.addEventListener('click', function(event) {
-  const overlays = document.querySelectorAll('[id^="overlay-novedades-"]');
-  overlays.forEach(overlay => {
-    if (overlay.style.display === 'flex') {
-      const contenido = overlay.querySelector('div');
-      if (contenido && !contenido.contains(event.target) && event.target === overlay) {
-        const vIndex = overlay.id.match(/\d+/)[0];
-        cerrarNovedadesVehiculo(parseInt(vIndex));
-      }
-    }
-  });
-});
 
         // ✅ ABRIR OVERLAY DE JUSTIFICACIONES
 function abrirJustificacionesVehiculo(vIndex) {
@@ -3400,27 +3159,6 @@ function mostrarFeedbackPicking(mensaje, vIndex, tipo = 'info') {
       
       data[`_justificaciones_${vIndex}`] = justificacionesData;
     }
-    
-    // ✅ CAPTURAR NOVEDADES POR VEHÍCULO (NUEVO)
-    const novedadesContenedor = document.getElementById(`novedades-contenedor-${vIndex}`);
-    if (novedadesContenedor) {
-      const novedades = novedadesContenedor.querySelectorAll('.novedad-group');
-      const novedadesData = [];
-      
-      novedades.forEach((novedad, nIndex) => {
-        const tipo = novedad.querySelector(`select[name="vehiculo_${vIndex}_tipo_novedad_${nIndex}"]`)?.value || '';
-        const descripcion = novedad.querySelector(`textarea[name="vehiculo_${vIndex}_descripcion_novedad_${nIndex}"]`)?.value || '';
-        const foto_url = novedad.querySelector(`input[name="vehiculo_${vIndex}_foto_novedad_${nIndex}_url"]`)?.value || '';
-        
-        novedadesData.push({
-          tipo: tipo,
-          descripcion: descripcion,
-          foto_url: foto_url
-        });
-      });
-      
-      data[`_novedades_${vIndex}`] = novedadesData;
-    }
   });
   
   // ✅ GUARDAR PARADAS DE OPERACIÓN
@@ -3622,30 +3360,6 @@ Debe cumplir:
         cajas_totales: document.getElementById('cajas_totales').value,
         respo_diligen: document.getElementById('responsable').value,
         datos_vehiculos: vehiculosData.map((v, i) => {
-
-          const novedadesContenedor = document.getElementById(`novedades-contenedor-${i}`);
-    const novedadesData = [];
-    
-    if (novedadesContenedor) {
-      const novedades = novedadesContenedor.querySelectorAll('.novedad-group');
-      novedades.forEach((novedad, nIndex) => {
-        const tipo = novedad.querySelector(`select[name="vehiculo_${i}_tipo_novedad_${nIndex}"]`)?.value || '';
-        const descripcion = novedad.querySelector(`textarea[name="vehiculo_${i}_descripcion_novedad_${nIndex}"]`)?.value || '';
-        const foto_url = novedad.querySelector(`input[name="vehiculo_${i}_foto_novedad_${nIndex}_url"]`)?.value || '';
-        
-        novedadesData.push({
-          tipo: tipo,
-          descripcion: descripcion,
-          foto_url: foto_url
-        });
-      });
-    }
-    
-    return {
-      // ... todos tus campos existentes ...
-      novedades: novedadesData  // ✅ Añadir novedades
-    };
-    
             // ✅ Verificar que tipo_operacion tenga valor
             if (v.tipo_operacion === undefined) {
                 console.warn(`⚠️ Vehículo ${i}: tipo_operacion es undefined, corrigiendo a ""`);
@@ -3872,46 +3586,6 @@ Debe cumplir:
           }
         });
       }
-      // ✅ RESTAURAR NOVEDADES POR VEHÍCULO
-const novedadesContenedor = document.getElementById(`novedades-contenedor-${i}`);
-if (novedadesContenedor && data[`_novedades_${i}`]) {
-  novedadesContenedor.innerHTML = '';
-  
-  data[`_novedades_${i}`].forEach((novedad, nIndex) => {
-    const div = document.createElement('div');
-    div.className = 'novedad-group';
-    div.dataset.index = nIndex;
-    
-    const botonEliminar = document.createElement('button');
-    botonEliminar.type = 'button';
-    botonEliminar.className = 'btn-eliminar';
-    botonEliminar.textContent = 'Eliminar';
-    botonEliminar.onclick = function() {
-      div.remove();
-      guardarProgreso();
-    };
-    
-    div.innerHTML = `
-      <label>Tipo de Novedad:</label>
-      <select name="vehiculo_${i}_tipo_novedad_${nIndex}">
-        <option value="">Seleccione tipo</option>
-        <option value="cajas_rotas" ${novedad.tipo === 'cajas_rotas' ? 'selected' : ''}>Cajas Rotas</option>
-        <option value="faltante_producto" ${novedad.tipo === 'faltante_producto' ? 'selected' : ''}>Faltante de Producto</option>
-        <option value="sobrante_producto" ${novedad.tipo === 'sobrante_producto' ? 'selected' : ''}>Sobrante de Producto</option>
-        <option value="estibas_malas" ${novedad.tipo === 'estibas_malas' ? 'selected' : ''}>Estibas Malas</option>
-      </select>
-      
-      <label>Descripción:</label>
-      <textarea name="vehiculo_${i}_descripcion_novedad_${nIndex}" style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; min-height: 80px;">${novedad.descripcion}</textarea>
-      
-      <input type="hidden" name="vehiculo_${i}_foto_novedad_${nIndex}_url" value="${novedad.foto_url}">
-    `;
-    
-    div.appendChild(botonEliminar);
-    novedadesContenedor.appendChild(div);
-  });
-}
-      
     }
 
     // ✅ PASO 4: Poblar muelles DESPUÉS de crear los vehículos
