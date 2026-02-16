@@ -1703,7 +1703,7 @@ function actualizarTipoOperacionPorLugar() {
     <!-- Motivo -->
     <div style="flex: 1;">
       <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Motivo:</label>
-      <select id="${motivoSelectId}" name="vehiculo_${vIndex}_motivo" required
+      <select id="${motivoSelectId}" name="vehiculo_${vIndex}_motivo"
               style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;"
               onchange="alternarDestinoRemitente(this, ${vIndex}); manejarOtroCampo(this);">
         <option value="">Seleccione</option>
@@ -3795,6 +3795,28 @@ function mostrarResumenProductos(vIndex) {
   container.innerHTML = html;
 }
 
+// ✅ HACER VISIBLES LOS CAMPOS DE MOTIVO ANTES DE VALIDAR
+function mostrarCamposMotivo() {
+  const registros = document.querySelectorAll('.registro-vehiculo');
+  registros.forEach((reg, index) => {
+    const containerMotivoTipo = document.getElementById(`motivo-tipo-operacion-container-${index}`);
+    const lineaMotivoTipo = document.getElementById(`motivo-tipo-linea-${index}`);
+    const motivoSolo = document.getElementById(`motivo-solo-${index}`);
+    
+    if (containerMotivoTipo && lineaMotivoTipo && motivoSolo) {
+      // ✅ Mostrar siempre uno de los dos contenedores
+      const lugar = document.getElementById('lugar').value;
+      if (lugar === 'SantoDomingo') {
+        lineaMotivoTipo.style.display = 'flex';
+        motivoSolo.style.display = 'none';
+      } else {
+        lineaMotivoTipo.style.display = 'none';
+        motivoSolo.style.display = 'block';
+      }
+    }
+  });
+}
+
 // ✅ FUNCIÓN CORREGIDA: Validar cantidad a borrar
 function validarCantidadBorrar(vIndex, codigo) {
   const input = document.getElementById(`borrar-cantidad-${vIndex}-${codigo}`);
@@ -4324,6 +4346,28 @@ Debe cumplir:
     // ✅ VALIDAR INSPECCIÓN DE VEHÍCULOS
     let inspeccionCompleta = true;
     let vehiculoConInspeccionPendiente = -1;
+
+    // ✅ VALIDAR MOTIVO DE CADA VEHÍCULO (NUEVO)
+      mostrarCamposMotivo();
+  for (let i = 0; i < vehiculosData.length; i++) {
+    const vehiculo = vehiculosData[i];
+    if (!vehiculo.motivo || vehiculo.motivo.trim() === '') {
+      alert(`❌ Error: El Vehículo #${i + 1} no tiene motivo seleccionado.\n\nPor favor, seleccione: Cargue, Descargue u Otro.`);
+      
+      // ✅ Hacer visible el contenedor del motivo y hacer scroll
+      const motivoSelect = document.getElementById(`motivo-cargue-descargue-${i}`);
+      if (motivoSelect) {
+        const container = motivoSelect.closest('.registro-vehiculo');
+        if (container) {
+          container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          motivoSelect.focus();
+          motivoSelect.style.borderColor = '#dc3545';
+          motivoSelect.style.boxShadow = '0 0 0 2px rgba(220, 53, 69, 0.25)';
+        }
+      }
+      return;
+    }
+  }
     
     for (let i = 0; i < vehiculosData.length; i++) {
         const vehiculo = vehiculosData[i];
@@ -4417,9 +4461,7 @@ Debe cumplir:
             vehiculosData[i].total_cajas_escaneadas = productosEscaneadosPorVehiculo[i].totalCajas;
         }
     }
-    
-    // Preparar datos para enviar
-        // Preparar datos para enviar
+
     // Preparar datos para enviar
 const formData = {
   fecha: document.getElementById('fecha').value,
