@@ -4,12 +4,18 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// ✅ CONFIGURACIÓN CORS EXPLÍCITA (CORREGIDO)
+// ✅ CONFIGURACIÓN CORS EXPLÍCITA (CORREGIDO PARA NETLIFY)
 app.use(cors({
-  origin: ['https://pepsico-funza.netlify.app', 'http://localhost:3000', 'http://localhost:5500'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  origin: [
+    'https://pepsico-funza.netlify.app',           // ✅ Tu frontend en Netlify
+    'https://pepsico-funza-production-b0f5.up.railway.app',  // ✅ Tu backend en Railway
+    'http://localhost:3000',
+    'http://localhost:5500'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true,
+  optionsSuccessStatus: 200
 }));
 
 // ✅ MANEJAR PREFLIGHT (OPTIONS) EXPLÍCITAMENTE
