@@ -1377,6 +1377,27 @@ function manejarOtroMuelle(vIndex) {
     const estadoSuelo = document.getElementById(`estado_suelo_${i}`)?.value || '';
     const aprobado = document.getElementById(`aprobado_${i}`)?.value || '';
     
+    // ✅ CAPTURAR JUSTIFICACIONES DEL VEHÍCULO (NUEVO)
+    const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${i}`);
+    const justificacionesData = [];
+    
+    if (justificacionesContenedor) {
+      const justificaciones = justificacionesContenedor.querySelectorAll('.justificacion-group');
+      justificaciones.forEach((justificacion, jIndex) => {
+        const motivo = justificacion.querySelector(`select[name="vehiculo_${i}_justificacion_${jIndex}"]`)?.value || '';
+        const otro_motivo = justificacion.querySelector(`input[name="vehiculo_${i}_otro_justificacion_${jIndex}"]`)?.value || '';
+        const tiempo_inicio = justificacion.querySelector(`input[name="vehiculo_${i}_tiempo_muerto_inicio_${jIndex}"]`)?.value || '';
+        const tiempo_fin = justificacion.querySelector(`input[name="vehiculo_${i}_tiempo_muerto_final_${jIndex}"]`)?.value || '';
+        
+        justificacionesData.push({
+          justificacion: motivo,
+          otro_justificacion: otro_motivo,
+          tiempo_muerto_inicio: tiempo_inicio,
+          tiempo_muerto_final: tiempo_fin
+        });
+      });
+    }
+    
     // ✅ CAPTURAR NOVEDADES DEL VEHÍCULO
     const novedadesContenedor = document.getElementById(`novedades-contenedor-${i}`);
     const novedadesData = [];
@@ -1414,10 +1435,6 @@ function manejarOtroMuelle(vIndex) {
       personas: getValue(`vehiculo_${i}_personas`),
       nombres_personal: nombresPersonal,
       cajas: getValue(`vehiculo_${i}_cajas`),
-      justificacion: getValue(`vehiculo_${i}_justificacion`),
-      otro_justificacion: getValue(`vehiculo_${i}_otro_justificacion`),
-      tiempo_muerto_inicio: getValue(`vehiculo_${i}_tiempo_muerto_inicio`),
-      tiempo_muerto_final: getValue(`vehiculo_${i}_tiempo_muerto_final`),
       foto_url: getValue(`vehiculo_${i}_foto_url`),
       tipo_operacion: getValue(`vehiculo_${i}_tipo_operacion`) || '',
       // ✅ DATOS DE INSPECCIÓN
@@ -1428,6 +1445,8 @@ function manejarOtroMuelle(vIndex) {
       evidencias_plagas: evidenciasPlagas,
       estado_suelo: estadoSuelo,
       aprobado: aprobado,
+      // ✅ DATOS DE JUSTIFICACIONES (NUEVO)
+      justificaciones: justificacionesData,
       // ✅ DATOS DE NOVEDADES
       novedades: novedadesData
     };
@@ -1442,11 +1461,11 @@ function manejarOtroMuelle(vIndex) {
       interior_camion: v.interior_camion,
       estado_carpa: v.estado_carpa,
       aprobado: v.aprobado,
+      justificaciones: v.justificaciones,
       novedades: v.novedades
     });
   });
 }
-
         // ============================================
         // MANEJO DE CAMPOS "OTRO"
         // ============================================
@@ -4390,40 +4409,42 @@ Debe cumplir:
     
     // Preparar datos para enviar
         // Preparar datos para enviar
-    const formData = {
-        fecha: document.getElementById('fecha').value,
-        lugar: document.getElementById('lugar').value,
-        lider_asignado: document.getElementById('lider').value.toUpperCase(),
-        coordinador: document.getElementById('coordinador').value,
-        coordinador_otro: document.getElementById('coordinador_otro').value,
-        lider_pepsico: document.getElementById('lider_pepsico').value,
-        lider_pepsico_otro: document.getElementById('lider_pepsico_otro').value,
-        turno: document.getElementById('turno').value,
-        total_personas: document.getElementById('total_personas').value,
-        cajas_totales: document.getElementById('cajas_totales').value,
-        respo_diligen: document.getElementById('responsable').value,
-        datos_vehiculos: vehiculosData.map((v, i) => {
-            // ✅ Verificar que tipo_operacion tenga valor
-            if (v.tipo_operacion === undefined) {
-                console.warn(`⚠️ Vehículo ${i}: tipo_operacion es undefined, corrigiendo a ""`);
-                v.tipo_operacion = '';
-            }
-            // ✅ INCLUIR NOVEDADES AQUÍ (AGREGA ESTA LÍNEA)
-            v.novedades = v.novedades || []; // ← AGREGA ESTA LÍNEA
-            return v;
-        }),
-        
-        datos_paradas_operacion: Array.from(
-            document.querySelectorAll('#operacion-contenedor .parada-group')
-        ).map(grupo => {
-            return {
-                inicio: grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '',
-                fin: grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '',
-                motivo: grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '',
-                otro_motivo: grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || ''
-            };
-        })
+    // Preparar datos para enviar
+const formData = {
+  fecha: document.getElementById('fecha').value,
+  lugar: document.getElementById('lugar').value,
+  lider_asignado: document.getElementById('lider').value.toUpperCase(),
+  coordinador: document.getElementById('coordinador').value,
+  coordinador_otro: document.getElementById('coordinador_otro').value,
+  lider_pepsico: document.getElementById('lider_pepsico').value,
+  lider_pepsico_otro: document.getElementById('lider_pepsico_otro').value,
+  turno: document.getElementById('turno').value,
+  total_personas: document.getElementById('total_personas').value,
+  cajas_totales: document.getElementById('cajas_totales').value,
+  respo_diligen: document.getElementById('responsable').value,
+  datos_vehiculos: vehiculosData.map((v, i) => {
+    // ✅ Verificar que tipo_operacion tenga valor
+    if (v.tipo_operacion === undefined) {
+      console.warn(`⚠️ Vehículo ${i}: tipo_operacion es undefined, corrigiendo a ""`);
+      v.tipo_operacion = '';
+    }
+    // ✅ Incluir novedades
+    v.novedades = v.novedades || [];
+    // ✅ Incluir justificaciones (como array)
+    v.justificaciones = v.justificaciones || [];
+    return v;
+  }),
+  datos_paradas_operacion: Array.from(
+    document.querySelectorAll('#operacion-contenedor .parada-group')
+  ).map(grupo => {
+    return {
+      inicio: grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '',
+      fin: grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '',
+      motivo: grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '',
+      otro_motivo: grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || ''
     };
+  })
+};
     
     console.log('📝 Datos que se enviarán a MySQL:');
     console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
