@@ -78,48 +78,65 @@ app.post('/api/registro', async (req, res) => {
       
       // Insertar vehículo
       // ✅ Depuración: Verificar qué llega al servidor
-console.log('📥 Vehículo recibido:', {
-  placa: vehiculo.placa,
-  tipo_operacion: vehiculo.tipo_operacion,
-  tipo_operacion_tipo: typeof vehiculo.tipo_operacion,
-  tiene_tipo_operacion: vehiculo.hasOwnProperty('tipo_operacion')
-});
+      console.log('📥 Vehículo recibido:', {
+        placa: vehiculo.placa,
+        tipo_operacion: vehiculo.tipo_operacion,
+        tipo_operacion_tipo: typeof vehiculo.tipo_operacion,
+        tiene_tipo_operacion: vehiculo.hasOwnProperty('tipo_operacion')
+      });
 
-const [vehiculoResult] = await connection.query(
-  `INSERT INTO vehiculos (
-    registro_id, inicio, fin, motivo, otro_motivo, muelle, otro_muelle_num,
-    placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, otro_origen, personas, cajas,
-    justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_final, 
-    foto_url, nombres_personal, tipo_operacion
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  [
-    registroId,
-    vehiculo.inicio || '',
-    vehiculo.fin || '',
-    vehiculo.motivo || '',
-    vehiculo.otro_motivo || '',
-    vehiculo.muelle || '',
-    vehiculo.otro_muelle_num || '',
-    vehiculo.placa || '',
-    vehiculo.tipo_vehi || '',
-    vehiculo.otro_tipo || '',
-    vehiculo.destino || '',
-    vehiculo.otro_destino || '',
-    vehiculo.origen || '',
-    vehiculo.otro_origen || '',
-    vehiculo.personas || '',
-    vehiculo.cajas || '',
-    vehiculo.justificacion || '',
-    vehiculo.otro_justificacion || '',
-    vehiculo.tiempo_muerto_inicio || '',
-    vehiculo.tiempo_muerto_final || '',
-    vehiculo.foto_url || '',
-    nombresJSON,
-    vehiculo.tipo_operacion || ''  // ✅ CORREGIDO: valor por defecto
-  ]
-);
+      const [vehiculoResult] = await connection.query(
+        `INSERT INTO vehiculos (
+          registro_id, inicio, fin, motivo, otro_motivo, muelle, otro_muelle_num,
+          placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, otro_origen, personas, cajas,
+          justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_final, 
+          foto_url, nombres_personal, tipo_operacion
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          registroId,
+          vehiculo.inicio || '',
+          vehiculo.fin || '',
+          vehiculo.motivo || '',
+          vehiculo.otro_motivo || '',
+          vehiculo.muelle || '',
+          vehiculo.otro_muelle_num || '',
+          vehiculo.placa || '',
+          vehiculo.tipo_vehi || '',
+          vehiculo.otro_tipo || '',
+          vehiculo.destino || '',
+          vehiculo.otro_destino || '',
+          vehiculo.origen || '',
+          vehiculo.otro_origen || '',
+          vehiculo.personas || '',
+          vehiculo.cajas || '',
+          vehiculo.justificacion || '',
+          vehiculo.otro_justificacion || '',
+          vehiculo.tiempo_muerto_inicio || '',
+          vehiculo.tiempo_muerto_final || '',
+          vehiculo.foto_url || '',
+          nombresJSON,
+          vehiculo.tipo_operacion || ''  // ✅ CORREGIDO: valor por defecto
+        ]
+    );
       
       const vehiculoId = vehiculoResult.insertId;
+      // ✅ NUEVO: Insertar novedades por vehículo
+  if (vehiculo.novedades && Array.isArray(vehiculo.novedades)) {
+    for (const novedad of vehiculo.novedades) {
+      await connection.query(
+        `INSERT INTO novedades (
+          vehiculo_id, registro_id, tipo_novedad, descripcion, foto_url
+        ) VALUES (?, ?, ?, ?, ?)`,
+        [
+          vehiculoId,
+          registroId,
+          novedad.tipo || '',
+          novedad.descripcion || '',
+          novedad.foto_url || ''
+        ]
+      );
+    }
+  }
       
       // ✅ INSERTAR DETALLES DE INSPECCIÓN usando los campos del mismo objeto vehiculo
       await connection.query(
