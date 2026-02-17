@@ -4,17 +4,7 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// ✅ CONFIGURACIÓN CORS MEJORADA (ANTES DE CUALQUIER OTRA COSA)
-app.use(cors({
-  origin: ['https://pepsico-funza.netlify.app', 'http://localhost:3000', 'http://localhost:5500'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
-
-// ✅ MANEJAR PRE-FLIGHT OPTIONS EXPLÍCITAMENTE
-app.options('*', cors());
-
+app.use(cors());
 app.use(express.json());
 
 // ===== LOGS DE VARIABLES DE ENTORNO =====
@@ -38,23 +28,11 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-// ✅ ENDPOINT DE PRUEBA CORS (para verificar que funciona)
-app.get('/api/test', (req, res) => {
-  res.json({ 
-    success: true, 
-    message: 'CORS configurado correctamente',
-    timestamp: new Date().toISOString()
-  });
-});
-
 // Endpoint para recibir datos del formulario
 app.post('/api/registro', async (req, res) => {
   let connection;
   
   try {
-    console.log('📥 Recibiendo datos del formulario...');
-    console.log('📊 Datos recibidos:', JSON.stringify(req.body, null, 2));
-    
     // Obtener conexión para transacción
     connection = await pool.getConnection();
     await connection.beginTransaction();
@@ -91,7 +69,6 @@ app.post('/api/registro', async (req, res) => {
     );
     
     const registroId = registroResult.insertId;
-    console.log('✅ Registro principal creado con ID:', registroId);
     
     // 2. Insertar vehículos Y sus detalles de inspección
     for (let i = 0; i < datos_vehiculos.length; i++) {
@@ -101,10 +78,12 @@ app.post('/api/registro', async (req, res) => {
         ? JSON.stringify(vehiculo.nombres_personal) 
         : null;
       
+      // ✅ Depuración: Verificar qué llega al servidor
       console.log('📥 Vehículo recibido:', {
         placa: vehiculo.placa,
         tipo_operacion: vehiculo.tipo_operacion,
-        tipo_carga: vehiculo.tipo_carga,
+        tipo_operacion_tipo: typeof vehiculo.tipo_operacion,
+        tiene_tipo_operacion: vehiculo.hasOwnProperty('tipo_operacion'),
         tiene_justificaciones: vehiculo.hasOwnProperty('justificaciones'),
         tiene_novedades: vehiculo.hasOwnProperty('novedades')
       });
@@ -114,14 +93,14 @@ app.post('/api/registro', async (req, res) => {
           registro_id, inicio, fin, motivo, otro_motivo, tipo_carga, muelle, otro_muelle_num,
           placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, otro_origen, personas, cajas,
           foto_url, nombres_personal, tipo_operacion
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           registroId,
           vehiculo.inicio || '',
           vehiculo.fin || '',
           vehiculo.motivo || '',
           vehiculo.otro_motivo || '',
-          vehiculo.tipo_carga || '',
+          vehiculo.tipo_carga || '', 
           vehiculo.muelle || '',
           vehiculo.otro_muelle_num || '',
           vehiculo.placa || '',
@@ -140,7 +119,6 @@ app.post('/api/registro', async (req, res) => {
       );
       
       const vehiculoId = vehiculoResult.insertId;
-      console.log('✅ Vehículo insertado con ID:', vehiculoId);
       
       // ✅ NUEVO: Insertar justificaciones por vehículo (TABLA SEPARADA)
       if (vehiculo.justificaciones && Array.isArray(vehiculo.justificaciones)) {
@@ -254,7 +232,7 @@ app.post('/api/registro', async (req, res) => {
       connection.release();
     }
     
-    console.error('❌ Error al guardar:', error);
+    console.error('Error al guardar:', error);
     res.status(500).json({
       success: false,
       error: error.message
@@ -288,6 +266,5 @@ app.get('/health', async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`✅ Servidor corriendo en puerto ${port}`);
-  console.log(`✅ CORS configurado para: https://pepsico-funza.netlify.app`);
+  console.log(`Servidor corriendo en puerto ${port}`);
 });
