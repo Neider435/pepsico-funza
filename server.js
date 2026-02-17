@@ -4,17 +4,7 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// ✅ CORS CONFIGURADO EXPLÍCITAMENTE (ANTES DE CUALQUIER OTRA COSA)
-app.use(cors({
-  origin: ['https://pepsico-funza.netlify.app', 'http://localhost:3000', 'http://localhost:5500'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
-
-// ✅ MANEJAR PREFLIGHT OPTIONS EXPLÍCITAMENTE
-app.options('*', cors());
-
+app.use(cors());
 app.use(express.json());
 
 // ===== LOGS DE VARIABLES DE ENTORNO =====
@@ -99,34 +89,34 @@ app.post('/api/registro', async (req, res) => {
       });
 
       const [vehiculoResult] = await connection.query(
-        `INSERT INTO vehiculos (
-          registro_id, inicio, fin, motivo, otro_motivo, tipo_carga, muelle, otro_muelle_num,
-          placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, otro_origen, personas, cajas,
-          foto_url, nombres_personal, tipo_operacion
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          registroId,
-          vehiculo.inicio || '',
-          vehiculo.fin || '',
-          vehiculo.motivo || '',
-          vehiculo.otro_motivo || '',
-          vehiculo.tipo_carga || '', 
-          vehiculo.muelle || '',
-          vehiculo.otro_muelle_num || '',
-          vehiculo.placa || '',
-          vehiculo.tipo_vehi || '',
-          vehiculo.otro_tipo || '',
-          vehiculo.destino || '',
-          vehiculo.otro_destino || '',
-          vehiculo.origen || '',
-          vehiculo.otro_origen || '',
-          vehiculo.personas || '',
-          vehiculo.cajas || '',
-          vehiculo.foto_url || '',
-          nombresJSON,
-          vehiculo.tipo_operacion || ''
-        ]
-      );
+  `INSERT INTO vehiculos (
+    registro_id, inicio, fin, motivo, otro_motivo, tipo_carga, muelle, otro_muelle_num,
+    placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, otro_origen, personas, cajas,
+    foto_url, nombres_personal, tipo_operacion
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  [
+    registroId,
+    vehiculo.inicio || '',
+    vehiculo.fin || '',
+    vehiculo.motivo || '',
+    vehiculo.otro_motivo || '',
+    vehiculo.tipo_carga || '',  // ✅ NUEVO CAMPO
+    vehiculo.muelle || '',
+    vehiculo.otro_muelle_num || '',
+    vehiculo.placa || '',
+    vehiculo.tipo_vehi || '',
+    vehiculo.otro_tipo || '',
+    vehiculo.destino || '',
+    vehiculo.otro_destino || '',
+    vehiculo.origen || '',
+    vehiculo.otro_origen || '',
+    vehiculo.personas || '',
+    vehiculo.cajas || '',
+    vehiculo.foto_url || '',
+    nombresJSON,
+    vehiculo.tipo_operacion || ''
+  ]
+);
       
       const vehiculoId = vehiculoResult.insertId;
       
