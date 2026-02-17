@@ -4892,11 +4892,23 @@ function enviarFormulario(event) {
     // ✅ Eliminar datos de localStorage
     localStorage.removeItem('pepsico_data');
     
-    // ✅ ENVIAR CORREO CON EMAILJS (NUEVO)
-    enviarCorreoEmailJS(formData);
-    
-    // ✅ Redirigir a aceptacion.html
-    window.location.href = 'aceptacion.html';
+    // ✅ ENVIAR CORREO CON EMAILJS (ESPERAR A QUE TERMINE)
+    enviarCorreoEmailJS(formData)
+      .then(() => {
+        console.log('✅ Correo enviado, redirigiendo...');
+        // ✅ Redirigir SOLO después de que el correo se envíe
+        setTimeout(() => {
+          window.location.href = 'aceptacion.html';
+        }, 1000); // ✅ Pequeña pausa para asegurar que se envíe
+      })
+      .catch((emailError) => {
+        console.error('❌ Error al enviar correo:', emailError);
+        // ✅ AUNQUE FALLÉ EL CORREO, REDIRIGIR (los datos ya se guardaron)
+        alert('⚠️ El registro se guardó correctamente, pero hubo un error al enviar el correo.');
+        setTimeout(() => {
+          window.location.href = 'aceptacion.html';
+        }, 1000);
+      });
   } else {
     throw new Error(result.error || 'Error desconocido');
   }
@@ -4909,30 +4921,35 @@ function enviarFormulario(event) {
   });
 }
 
-// ✅ ENVIAR CORREO CON EMAILJS
+// ✅ ENVIAR CORREO CON EMAILJS (CORREGIDO - RETORNA PROMISE)
 function enviarCorreoEmailJS(data) {
-  // ✅ Parámetros para la plantilla de EmailJS
-  const templateParams = {
-    fecha: data.fecha,
-    lugar: data.lugar,
-    turno: data.turno,
-    respo_diligen: data.respo_diligen,
-    total_vehiculos: data.datos_vehiculos.length,
-    cajas_totales: data.cajas_totales,
-    total_personas: data.total_personas
-  };
-
-  // ✅ Enviar correo
-  emailjs.send(
-    'service_7fe29nl',      // ⚠️ Tu Service ID de EmailJS
-    'template_xey3tlm',     // ⚠️ Tu Template ID de EmailJS
-    templateParams
-  )
-  .then(function(response) {
-    console.log('✅ Correo enviado exitosamente!', response.status, response.text);
-  }, function(error) {
-    console.error('❌ Error al enviar correo:', error);
-    alert('⚠️ El registro se guardó, pero hubo un error al enviar el correo.');
+  return new Promise((resolve, reject) => {
+    // ✅ Parámetros para la plantilla de EmailJS
+    const templateParams = {
+      fecha: data.fecha,
+      lugar: data.lugar,
+      turno: data.turno,
+      respo_diligen: data.respo_diligen,
+      total_vehiculos: data.datos_vehiculos.length,
+      cajas_totales: data.cajas_totales,
+      total_personas: data.total_personas
+    };
+    
+    console.log('📧 Enviando correo con EmailJS...', templateParams);
+    
+    // ✅ Enviar correo
+    emailjs.send(
+      'service_7fe29nl',      // ✅ Tu Service ID
+      'template_xey3tlm',     // ✅ Tu Template ID
+      templateParams
+    )
+    .then(function(response) {
+      console.log('✅ Correo enviado exitosamente!', response.status, response.text);
+      resolve(response);
+    }, function(error) {
+      console.error('❌ Error al enviar correo:', error);
+      reject(error);
+    });
   });
 }
         
