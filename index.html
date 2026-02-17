@@ -3110,8 +3110,8 @@ function cerrarJustificacionesVehiculo(vIndex) {
   guardarProgreso();
 }
 
-// ✅ VERSIÓN CORRECTA (captura valores explícitamente)
-// ✅ CERRAR OVERLAY DE NOVEDADES (CORREGIDO)
+
+// ✅ CERRAR OVERLAY DE NOVEDADES (CORREGIDO - Captura valores explícitamente)
 function cerrarNovedadesVehiculo(vIndex) {
   const contenedorOculto = document.getElementById(`novedades-contenedor-${vIndex}`);
   const contenedorOverlay = document.getElementById(`novedades-overlay-contenedor-${vIndex}`);
@@ -3147,6 +3147,13 @@ function cerrarNovedadesVehiculo(vIndex) {
     const descripcionValor = descripcionTextarea?.value || '';
     const fotoUrlValor = fotoUrlInput?.value || '';
     
+    // ✅ LOG DE DEPURACIÓN
+    console.log(`💾 Guardando novedad ${index}:`, {
+      tipo: tipoValor,
+      descripcion: descripcionValor,
+      foto_url: fotoUrlValor
+    });
+    
     div.innerHTML = `
       <label>Tipo de Novedad:</label>
       <select name="vehiculo_${vIndex}_tipo_novedad_${index}">
@@ -3178,6 +3185,9 @@ function cerrarNovedadesVehiculo(vIndex) {
   
   // ✅ Guardar progreso después de cerrar
   guardarProgreso();
+  
+  // ✅ LOG DE DEPURACIÓN
+  console.log(`✅ Novedades guardadas para Vehículo ${vIndex + 1}`);
 }
 
 // ✅ AGREGAR JUSTIFICACIÓN EN EL OVERLAY
@@ -4965,49 +4975,7 @@ function enviarFormulario(event) {
         tipo_operacion: data[`vehiculo_${i}_tipo_operacion`] || ''
       };
 
-      const novedadesContenedor = document.getElementById(`novedades-contenedor-${i}`);
-      if (novedadesContenedor && data[`_novedades_${i}`]) {
-        novedadesContenedor.innerHTML = '';
-        
-        data[`_novedades_${i}`].forEach((novedad, nIndex) => {
-          const div = document.createElement('div');
-          div.className = 'novedad-group';
-          div.dataset.index = nIndex;
-          
-          const botonEliminar = document.createElement('button');
-          botonEliminar.type = 'button';
-          botonEliminar.className = 'btn-eliminar';
-          botonEliminar.textContent = 'Eliminar';
-          botonEliminar.onclick = function() {
-            div.remove();
-            guardarProgreso();
-          };
-          
-          div.innerHTML = `
-            <label>Tipo de Novedad:</label>
-            <select name="vehiculo_${i}_tipo_novedad_${nIndex}">
-              <option value="">Seleccione tipo</option>
-              <option value="cajas_rotas" ${novedad.tipo === 'cajas_rotas' ? 'selected' : ''}>Cajas rotas</option>
-              <option value="faltante_producto" ${novedad.tipo === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
-              <option value="sobrante_producto" ${novedad.tipo === 'sobrante_producto' ? 'selected' : ''}>Sobrante de producto</option>
-              <option value="estibas_malas" ${novedad.tipo === 'estibas_malas' ? 'selected' : ''}>Estibas malas</option>
-              <option value="otro" ${novedad.tipo === 'otro' ? 'selected' : ''}>Otro</option>
-            </select>
-            
-            <label>Descripción:</label>
-            <textarea name="vehiculo_${i}_descripcion_novedad_${nIndex}" placeholder="Describa la novedad">${novedad.descripcion}</textarea>
-            
-            <label>Foto de la Novedad:</label>
-            <div class="preview-foto" style="margin-top: 10px;">
-              ${novedad.foto_url ? `<img src="${novedad.foto_url}" style="max-width: 100%; border-radius: 5px; border: 2px solid #001855;">` : ''}
-            </div>
-            <input type="hidden" name="vehiculo_${i}_foto_novedad_${nIndex}_url" value="${novedad.foto_url}">
-          `;
-          
-          div.appendChild(botonEliminar);
-          novedadesContenedor.appendChild(div);
-        });
-      }
+      
 
       // ✅ Cargar nombres del personal desde localStorage
       for (let j = 1; ; j++) {
@@ -5029,12 +4997,6 @@ function enviarFormulario(event) {
         }
       }
       
-      // ✅ RESTAURAR JUSTIFICACIONES POR VEHÍCULO
-      // ✅ RESTAURAR JUSTIFICACIONES POR VEHÍCULO (CORREGIDO)
-// ✅ RESTAURAR JUSTIFICACIONES POR VEHÍCULO (CORREGIDO)
-// ✅ RESTAURAR JUSTIFICACIONES POR VEHÍCULO (CORREGIDO)
-// ✅ RESTAURAR JUSTIFICACIONES POR VEHÍCULO (CORREGIDO)
-// ✅ RESTAURAR JUSTIFICACIONES POR VEHÍCULO (CORREGIDO)
 const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${i}`);
 if (justificacionesContenedor && data[`_justificaciones_${i}`]) {
   justificacionesContenedor.innerHTML = '';
@@ -5115,6 +5077,59 @@ if (justificacionesContenedor && data[`_justificaciones_${i}`]) {
         guardarProgreso();
       });
     }
+  });
+}
+
+// ✅ RESTAURAR NOVEDADES POR VEHÍCULO
+const novedadesContenedor = document.getElementById(`novedades-contenedor-${i}`);
+if (novedadesContenedor && data[`_novedades_${i}`]) {
+  novedadesContenedor.innerHTML = '';
+  
+  // ✅ LOG DE DEPURACIÓN
+  console.log(`📥 Restaurando novedades Vehículo ${i}:`, data[`_novedades_${i}`]);
+  
+  data[`_novedades_${i}`].forEach((novedad, nIndex) => {
+    const div = document.createElement('div');
+    div.className = 'novedad-group';
+    div.dataset.index = nIndex;
+    
+    const botonEliminar = document.createElement('button');
+    botonEliminar.type = 'button';
+    botonEliminar.className = 'btn-eliminar';
+    botonEliminar.textContent = 'Eliminar';
+    botonEliminar.onclick = function() {
+      div.remove();
+      guardarProgreso();
+    };
+    
+    // ✅ USAR EXACTAMENTE LOS MISMOS NOMBRES QUE EN guardarProgreso()
+    const tipoValor = novedad.tipo || '';
+    const descripcionValor = novedad.descripcion || '';
+    const fotoUrlValor = novedad.foto_url || '';
+    
+    div.innerHTML = `
+      <label>Tipo de Novedad:</label>
+      <select name="vehiculo_${i}_tipo_novedad_${nIndex}">
+        <option value="">Seleccione tipo</option>
+        <option value="cajas_rotas" ${tipoValor === 'cajas_rotas' ? 'selected' : ''}>Cajas rotas</option>
+        <option value="faltante_producto" ${tipoValor === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
+        <option value="sobrante_producto" ${tipoValor === 'sobrante_producto' ? 'selected' : ''}>Sobrante de producto</option>
+        <option value="estibas_malas" ${tipoValor === 'estibas_malas' ? 'selected' : ''}>Estibas malas</option>
+        <option value="otro" ${tipoValor === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      
+      <label>Descripción:</label>
+      <textarea name="vehiculo_${i}_descripcion_novedad_${nIndex}" placeholder="Describa la novedad">${descripcionValor}</textarea>
+      
+      <label>Foto de la Novedad:</label>
+      <div class="preview-foto" style="margin-top: 10px;">
+        ${fotoUrlValor ? `<img src="${fotoUrlValor}" style="max-width: 100%; border-radius: 5px; border: 2px solid #001855;">` : ''}
+      </div>
+      <input type="hidden" name="vehiculo_${i}_foto_novedad_${nIndex}_url" value="${fotoUrlValor}">
+    `;
+    
+    div.appendChild(botonEliminar);
+    novedadesContenedor.appendChild(div);
   });
 }
       
