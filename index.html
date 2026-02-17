@@ -465,7 +465,8 @@
 
         <!-- ✅ BOTONES ENVIAR Y BORRAR TODO (sin cambios) -->
         <div style="display: flex; gap: 10px;">
-            <button type="submit" style="flex: 3; padding: 12px; background: #205d35; color: white; border: none; border-radius: 5px; font-weight: bold; font-size: 1.1em; cursor: pointer;">Enviar</button>
+            <button type="submit" style="flex: 3; padding: 12px; background: #205d35; color: white; border: none;
+            border-radius: 5px; font-weight: bold; font-size: 1.1em; cursor: pointer;">Enviar</button>
             <button type="button" class="btn-borrar-todo" style="flex: 1; padding: 12px; background: #852d36; color: white; border: none; border-radius: 5px; font-weight: bold; font-size: 1em; cursor: pointer;" onclick="limpiarTodo()">🗑️ Borrar Todo</button>
         </div>
         
@@ -2321,29 +2322,28 @@ function controlarTiempoVehiculo(vIndex) {
   }
 }
 
-// ✅ EDITAR TIEMPO (modo bloqueado → desbloqueado)
 function editarTiempoVehiculo(vIndex) {
   const inicioInput = document.getElementById(`inicio-input-${vIndex}`);
   const finInput = document.getElementById(`fin-input-${vIndex}`);
   const btnEditar = document.getElementById(`btn-editar-tiempo-${vIndex}`);
   const btnControl = document.getElementById(`btn-control-tiempo-${vIndex}`);
   const btnEliminar = document.getElementById(`btn-eliminar-tiempo-${vIndex}`);
-
-  // ✅ SI ESTÁ EN MODO EDICIÓN → GUARDAR
-  if (estadoTiempoVehiculo[vIndex] === 'editando') {
-    // ✅ Validar formato
-    if (!/^\d{2}:\d{2}$/.test(inicioInput.value)) {
-      alert('❌ Formato de hora de inicio inválido. Usa HH:MM');
-      inicioInput.focus();
-      return;
-    }
-    if (!/^\d{2}:\d{2}$/.test(finInput.value)) {
-      alert('❌ Formato de hora de finalización inválido. Usa HH:MM');
-      finInput.focus();
-      return;
-    }
-
-    // ✅ Validar que final ≥ inicio
+  
+  /// ✅ SI ESTÁ EN MODO EDICIÓN → GUARDAR
+if (estadoTiempoVehiculo[vIndex] === 'editando') {
+  // ✅ Validar formato SOLO si hay contenido
+  if (inicioInput.value && !/^\d{2}:\d{2}$/.test(inicioInput.value)) {
+    alert('❌ Formato de hora de inicio inválido. Usa HH:MM');
+    inicioInput.focus();
+    return;
+  }
+  if (finInput.value && !/^\d{2}:\d{2}$/.test(finInput.value)) {
+    alert('❌ Formato de hora de finalización inválido. Usa HH:MM');
+    finInput.focus();
+    return;
+  }
+  // ✅ Validar que final ≥ inicio SOLO si ambos tienen valor
+  if (inicioInput.value && finInput.value) {
     const inicioMin = horaAMinutos(inicioInput.value);
     const finMin = horaAMinutos(finInput.value);
     if (finMin < inicioMin) {
@@ -2351,55 +2351,120 @@ function editarTiempoVehiculo(vIndex) {
       finInput.focus();
       return;
     }
-
-    // ✅ Guardar cambios
-    btnEditar.innerHTML = '✏️ Editar Tiempo';
-    btnEditar.style.background = 'linear-gradient(135deg, #6c757d 0%, #495054 100%)';
-    btnEditar.style.color = 'white';
-    btnEditar.disabled = false;
-
-    // ✅ Bloquear los campos nuevamente
-    inicioInput.readOnly = true;
-    finInput.readOnly = true;
-
-    // ✅ Restaurar otros botones
-    btnControl.disabled = false;
-    btnEliminar.disabled = false;
-
-    // ✅ Guardar estado
-    estadoTiempoVehiculo[vIndex] = 'editado';
-
-    guardarProgreso();
-    console.log(`💾 Cambios guardados para Vehículo ${vIndex + 1}`);
-    mostrarNotificacion(`✅ Edición guardada`, 'success');
-
-    return;
   }
-
+  // ✅ Guardar cambios
+  btnEditar.innerHTML = '✏️ Editar Tiempo';
+  btnEditar.style.background = 'linear-gradient(135deg, #6c757d 0%, #495054 100%)';
+  btnEditar.style.color = 'white';
+  btnEditar.disabled = false;
+  // ✅ Bloquear los campos nuevamente
+  inicioInput.readOnly = true;
+  finInput.readOnly = true;
+  // ✅ Restaurar otros botones
+  btnControl.disabled = false;
+  btnEliminar.disabled = false;
+  // ✅ Ocultar botón cancelar
+  const btnCancelar = document.getElementById(`btn-cancelar-tiempo-${vIndex}`);
+  if (btnCancelar) btnCancelar.remove();
+  // ✅ Guardar estado
+  estadoTiempoVehiculo[vIndex] = 'editado';
+  guardarProgreso();
+  console.log(`💾 Cambios guardados para Vehículo ${vIndex + 1}`);
+  mostrarNotificacion(`✅ Edición guardada`, 'success');
+  return;
+}
+  
   // ✅ SI NO ESTÁ EN MODO EDICIÓN → ACTIVAR EDICIÓN
   if (estadoTiempoVehiculo[vIndex] === 'finalizado') {
     if (!confirm('⚠️ Estás editando un tiempo finalizado. ¿Deseas continuar?')) return;
   }
-
+  
   // ✅ Activar modo edición
   inicioInput.readOnly = false;
   finInput.readOnly = false;
   inicioInput.focus();
-
+  
   // ✅ Cambiar botón a "Guardar Edición"
   btnEditar.innerHTML = '💾 Guardar Edición';
   btnEditar.style.background = 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)';
   btnEditar.style.color = 'white';
-
+  
   // ✅ Bloquear otros botones mientras edita
   btnControl.disabled = true;
   btnEliminar.disabled = true;
-
+  
+  // ✅ AGREGAR BOTÓN "CANCELAR" (NUEVO)
+  const btnCancelar = document.createElement('button');
+  btnCancelar.id = `btn-cancelar-tiempo-${vIndex}`;
+  btnCancelar.type = 'button';
+  btnCancelar.innerHTML = '❌ Cancelar';
+  btnCancelar.style.cssText = `
+    flex: 1; 
+    min-width: 120px; 
+    padding: 10px 15px; 
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); 
+    color: white; 
+    border: none; 
+    border-radius: 6px; 
+    font-weight: bold; 
+    font-size: 0.95em; 
+    cursor: pointer; 
+    transition: all 0.2s;
+  `;
+  btnCancelar.onclick = function() {
+    cancelarEdicionTiempo(vIndex);
+  };
+  
+  // ✅ Insertar botón cancelar después del botón editar
+  btnEditar.parentNode.insertBefore(btnCancelar, btnEditar.nextSibling);
+  
   // ✅ Guardar estado
   estadoTiempoVehiculo[vIndex] = 'editando';
-
   console.log(`✏️ Modo edición activado para Vehículo ${vIndex + 1}`);
-  mostrarNotificacion(`📝 Edición activada. Cambia las horas y haz clic en "Guardar Edición".`, 'warning');
+  mostrarNotificacion(`📝 Edición activada. Cambia las horas o haz clic en "Cancelar" para salir.`, 'warning');
+}
+
+// ✅ CANCELAR EDICIÓN DE TIEMPO (NUEVA FUNCIÓN)
+// ✅ CANCELAR EDICIÓN DE TIEMPO (CORREGIDO)
+function cancelarEdicionTiempo(vIndex) {
+  const inicioInput = document.getElementById(`inicio-input-${vIndex}`);
+  const finInput = document.getElementById(`fin-input-${vIndex}`);
+  const btnEditar = document.getElementById(`btn-editar-tiempo-${vIndex}`);
+  const btnControl = document.getElementById(`btn-control-tiempo-${vIndex}`);
+  const btnEliminar = document.getElementById(`btn-eliminar-tiempo-${vIndex}`);
+  
+  // ✅ Formatear horas antes de cancelar (agrega ceros si es necesario)
+  if (inicioInput.value) {
+    applyTimeMask(inicioInput, `cargue-inicio-${vIndex}`);
+  }
+  if (finInput.value) {
+    applyTimeMask(finInput, `cargue-fin-${vIndex}`);
+  }
+  
+  // ✅ Bloquear campos nuevamente
+  inicioInput.readOnly = true;
+  finInput.readOnly = true;
+  
+  // ✅ Restaurar botón editar
+  btnEditar.innerHTML = '✏️ Editar Tiempo';
+  btnEditar.style.background = 'linear-gradient(135deg, #6c757d 0%, #495054 100%)';
+  btnEditar.style.color = 'white';
+  btnEditar.disabled = false;
+  
+  // ✅ Restaurar otros botones
+  btnControl.disabled = false;
+  btnEliminar.disabled = false;
+  
+  // ✅ Eliminar botón cancelar
+  const btnCancelar = document.getElementById(`btn-cancelar-tiempo-${vIndex}`);
+  if (btnCancelar) btnCancelar.remove();
+  
+  // ✅ Limpiar estado
+  delete estadoTiempoVehiculo[vIndex];
+  
+  guardarProgreso();
+  console.log(`❌ Edición cancelada para Vehículo ${vIndex + 1}`);
+  mostrarNotificacion(`❌ Edición cancelada`, 'warning');
 }
 
 // ✅ ELIMINAR TIEMPO (con advertencia y bloqueo durante edición)
@@ -2424,6 +2489,9 @@ function eliminarTiempoVehiculo(vIndex) {
   const mensaje = `🗑️ ¿Estás seguro de eliminar el registro de tiempo para el Vehículo ${vIndex + 1}?\n\nSe borrarán las horas de inicio y finalización.`;
 
   if (!confirm(mensaje)) return;
+
+  const btnCancelar = document.getElementById(`btn-cancelar-tiempo-${vIndex}`);
+  if (btnCancelar) btnCancelar.remove();
 
   // Limpiar campos
   inicioInput.value = '';
@@ -2568,7 +2636,6 @@ function crearNovedadOverlay(vIndex, index, datosElemento = null) {
   div.appendChild(botonEliminar);
   contenedor.appendChild(div);
   
-  // ✅ Configurar evento de foto
   // ✅ Configurar evento de foto con subida automática
 const fotoInput = div.querySelector(`#foto-novedad-${vIndex}-${index}-overlay`);
 if (fotoInput) {
@@ -4884,4 +4951,9 @@ if (justificacionesContenedor && data[`_justificaciones_${i}`]) {
   });
 });
     </script>
+
+    <script>
+       src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"
+    </script>
+    
 </body>
