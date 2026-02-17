@@ -2482,53 +2482,7 @@ function abrirNovedadesVehiculo(vIndex) {
   // Mostrar overlay
   overlay.style.display = 'flex';
   document.body.style.overflow = 'hidden';
-}
-
-// ✅ CERRAR OVERLAY DE NOVEDADES
-function cerrarNovedadesVehiculo(vIndex) {
-  const contenedorOculto = document.getElementById(`novedades-contenedor-${vIndex}`);
-  const contenedorOverlay = document.getElementById(`novedades-overlay-contenedor-${vIndex}`);
-  const overlay = document.getElementById(`overlay-novedades-${vIndex}`);
-  
-  if (!contenedorOculto || !contenedorOverlay || !overlay) return;
-  
-  // Limpiar contenedor oculto
-  contenedorOculto.innerHTML = '';
-  
-  // Copiar novedades del overlay al contenedor oculto
-  const novedadesOverlay = contenedorOverlay.querySelectorAll('.novedad-group');
-  novedadesOverlay.forEach((novedadOverlay, index) => {
-    const nuevaNovedad = novedadOverlay.cloneNode(true);
-    
-    // Restaurar IDs originales
-    const inputs = nuevaNovedad.querySelectorAll('input, select');
-    inputs.forEach(input => {
-      if (input.id) {
-        input.id = input.id.replace(/-\d+-overlay$/, `-${index}`);
-      }
-      if (input.name) {
-        input.name = input.name.replace(/_\d+_overlay$/, `_${index}`);
-      }
-    });
-    
-    // Restaurar botón eliminar original
-    const botonEliminar = nuevaNovedad.querySelector('.btn-eliminar');
-    if (botonEliminar) {
-      botonEliminar.onclick = function() {
-        nuevaNovedad.remove();
-        guardarProgreso();
-      };
-    }
-    
-    contenedorOculto.appendChild(nuevaNovedad);
-  });
-  
-  // Ocultar overlay
-  overlay.style.display = 'none';
-  document.body.style.overflow = 'auto';
-  
-  guardarProgreso();
-}
+} 
 
 // ✅ AGREGAR NOVEDAD EN EL OVERLAY
 function agregarNovedadOverlay(vIndex) {
@@ -2849,7 +2803,7 @@ function abrirNovedadesVehiculo(vIndex) {
   document.body.style.overflow = 'hidden';
 }
 
-// ✅ CERRAR OVERLAY DE JUSTIFICACIONES
+// ✅ VERSIÓN CORRECTA para justificaciones
 function cerrarJustificacionesVehiculo(vIndex) {
   const contenedorOculto = document.getElementById(`justificaciones-contenedor-${vIndex}`);
   const contenedorOverlay = document.getElementById(`justificaciones-overlay-contenedor-${vIndex}`);
@@ -2857,46 +2811,89 @@ function cerrarJustificacionesVehiculo(vIndex) {
   
   if (!contenedorOculto || !contenedorOverlay || !overlay) return;
   
-  // Limpiar contenedor oculto
   contenedorOculto.innerHTML = '';
   
-  // ✅ Copiar justificaciones del overlay al contenedor oculto
   const justificacionesOverlay = contenedorOverlay.querySelectorAll('.justificacion-group');
   justificacionesOverlay.forEach((justificacionOverlay, index) => {
-    const nuevaJustificacion = justificacionOverlay.cloneNode(true);
+    const div = document.createElement('div');
+    div.className = 'justificacion-group';
+    div.dataset.index = index;
     
-    // Restaurar IDs originales
-    const inputs = nuevaJustificacion.querySelectorAll('input, select');
-    inputs.forEach(input => {
-      if (input.id) {
-        input.id = input.id.replace(/-\d+-overlay$/, `-${index}`);
-      }
-      if (input.name) {
-        input.name = input.name.replace(/_\d+_overlay$/, `_${index}`);
-      }
-    });
+    const botonEliminar = document.createElement('button');
+    botonEliminar.type = 'button';
+    botonEliminar.className = 'btn-eliminar';
+    botonEliminar.textContent = 'Eliminar';
+    botonEliminar.onclick = function() {
+      div.remove();
+      guardarProgreso();
+    };
     
-    // Restaurar botón eliminar original
-    const botonEliminar = nuevaJustificacion.querySelector('.btn-eliminar');
-    if (botonEliminar) {
-      botonEliminar.onclick = function() {
-        nuevaJustificacion.remove();
+    // ✅ CAPTURAR VALORES EXPLÍCITAMENTE
+    const motivoSelect = justificacionOverlay.querySelector(`select[name="vehiculo_${vIndex}_justificacion_${index}_overlay"]`);
+    const otroInput = justificacionOverlay.querySelector(`input[name="vehiculo_${vIndex}_otro_justificacion_${index}_overlay"]`);
+    const tiempoInicioInput = justificacionOverlay.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_inicio_${index}_overlay"]`);
+    const tiempoFinInput = justificacionOverlay.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_final_${index}_overlay"]`);
+    
+    const motivoValor = motivoSelect?.value || '';
+    const otroValor = otroInput?.value || '';
+    const tiempoInicioValor = tiempoInicioInput?.value || '';
+    const tiempoFinValor = tiempoFinInput?.value || '';
+    
+    div.innerHTML = `
+      <div class="time-row">
+        <div>
+          <label class="time-label">Tiempo Muerto Inicio:</label>
+          <input type="tel" name="vehiculo_${vIndex}_tiempo_muerto_inicio_${index}" class="time-input-masked"
+              placeholder="HH:MM" maxlength="5" value="${tiempoInicioValor}"
+              onblur="applyTimeMask(this, 'muerto-inicio-${vIndex}-${index}')">
+          <span id="muerto-inicio-${vIndex}-${index}" class="time-display"></span>
+        </div>
+        <div>
+          <label class="time-label">Tiempo Muerto Final:</label>
+          <input type="tel" name="vehiculo_${vIndex}_tiempo_muerto_final_${index}" class="time-input-masked"
+              placeholder="HH:MM" maxlength="5" value="${tiempoFinValor}"
+              onblur="applyTimeMask(this, 'muerto-final-${vIndex}-${index}')">
+          <span id="muerto-final-${vIndex}-${index}" class="time-display"></span>
+        </div>
+      </div>
+      <label>Motivo:</label>
+      <select name="vehiculo_${vIndex}_justificacion_${index}">
+        <option value="">Seleccione motivo</option>
+        <option value="faltante_producto" ${motivoValor === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
+        <option value="liberacion_calidad" ${motivoValor === 'liberacion_calidad' ? 'selected' : ''}>Liberacion de calidad</option>
+        <option value="Daños" ${motivoValor === 'Daños' ? 'selected' : ''}>Daños (electricos, muelle, montacargas, etc.)</option>
+        <option value="otro" ${motivoValor === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      <input type="text" name="vehiculo_${vIndex}_otro_justificacion_${index}" placeholder="Especifique la incidencia" class="otro-input" 
+             value="${otroValor}" style="${motivoValor === 'otro' ? 'display: block;' : 'display: none;'}">
+    `;
+    
+    div.appendChild(botonEliminar);
+    contenedorOculto.appendChild(div);
+    
+    // Configurar evento onchange
+    const nuevoMotivoSelect = div.querySelector(`select[name="vehiculo_${vIndex}_justificacion_${index}"]`);
+    const nuevoOtroInput = div.querySelector(`input[name="vehiculo_${vIndex}_otro_justificacion_${index}"]`);
+    if (nuevoMotivoSelect && nuevoOtroInput) {
+      nuevoMotivoSelect.addEventListener('change', function() {
+        if (this.value === 'otro') {
+          nuevoOtroInput.style.display = 'block';
+        } else {
+          nuevoOtroInput.style.display = 'none';
+          nuevoOtroInput.value = '';
+        }
         guardarProgreso();
-      };
+      });
     }
-    
-    contenedorOculto.appendChild(nuevaJustificacion);
   });
   
-  // Ocultar overlay
   overlay.style.display = 'none';
   document.body.style.overflow = 'auto';
-  
-  // ✅ Guardar progreso después de cerrar
   guardarProgreso();
 }
 
-// ✅ CERRAR OVERLAY DE NOVEDADES
+// ✅ VERSIÓN CORRECTA (captura valores explícitamente)
+// ✅ CERRAR OVERLAY DE NOVEDADES (CORREGIDO)
 function cerrarNovedadesVehiculo(vIndex) {
   const contenedorOculto = document.getElementById(`novedades-contenedor-${vIndex}`);
   const contenedorOverlay = document.getElementById(`novedades-overlay-contenedor-${vIndex}`);
@@ -2910,29 +2907,51 @@ function cerrarNovedadesVehiculo(vIndex) {
   // ✅ Copiar novedades del overlay al contenedor oculto
   const novedadesOverlay = contenedorOverlay.querySelectorAll('.novedad-group');
   novedadesOverlay.forEach((novedadOverlay, index) => {
-    const nuevaNovedad = novedadOverlay.cloneNode(true);
+    const div = document.createElement('div');
+    div.className = 'novedad-group';
+    div.dataset.index = index;
     
-    // Restaurar IDs originales
-    const inputs = nuevaNovedad.querySelectorAll('input, select, textarea');
-    inputs.forEach(input => {
-      if (input.id) {
-        input.id = input.id.replace(/-\d+-overlay$/, `-${index}`);
-      }
-      if (input.name) {
-        input.name = input.name.replace(/_\d+_overlay$/, `_${index}`);
-      }
-    });
+    const botonEliminar = document.createElement('button');
+    botonEliminar.type = 'button';
+    botonEliminar.className = 'btn-eliminar';
+    botonEliminar.textContent = 'Eliminar';
+    botonEliminar.onclick = function() {
+      div.remove();
+      guardarProgreso();
+    };
     
-    // Restaurar botón eliminar original
-    const botonEliminar = nuevaNovedad.querySelector('.btn-eliminar');
-    if (botonEliminar) {
-      botonEliminar.onclick = function() {
-        nuevaNovedad.remove();
-        guardarProgreso();
-      };
-    }
+    // ✅ CAPTURAR VALORES EXPLÍCITAMENTE (NO USAR cloneNode)
+    const tipoSelect = novedadOverlay.querySelector(`select[name="vehiculo_${vIndex}_tipo_novedad_${index}_overlay"]`);
+    const descripcionTextarea = novedadOverlay.querySelector(`textarea[name="vehiculo_${vIndex}_descripcion_novedad_${index}_overlay"]`);
+    const fotoUrlInput = novedadOverlay.querySelector(`input[name="vehiculo_${vIndex}_foto_novedad_${index}_url_overlay"]`);
     
-    contenedorOculto.appendChild(nuevaNovedad);
+    const tipoValor = tipoSelect?.value || '';
+    const descripcionValor = descripcionTextarea?.value || '';
+    const fotoUrlValor = fotoUrlInput?.value || '';
+    
+    div.innerHTML = `
+      <label>Tipo de Novedad:</label>
+      <select name="vehiculo_${vIndex}_tipo_novedad_${index}">
+        <option value="">Seleccione tipo</option>
+        <option value="cajas_rotas" ${tipoValor === 'cajas_rotas' ? 'selected' : ''}>Cajas rotas</option>
+        <option value="faltante_producto" ${tipoValor === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
+        <option value="sobrante_producto" ${tipoValor === 'sobrante_producto' ? 'selected' : ''}>Sobrante de producto</option>
+        <option value="estibas_malas" ${tipoValor === 'estibas_malas' ? 'selected' : ''}>Estibas malas</option>
+        <option value="otro" ${tipoValor === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      
+      <label>Descripción:</label>
+      <textarea name="vehiculo_${vIndex}_descripcion_novedad_${index}" placeholder="Describa la novedad">${descripcionValor}</textarea>
+      
+      <label>Foto de la Novedad:</label>
+      <div class="preview-foto" style="margin-top: 10px;">
+        ${fotoUrlValor ? `<img src="${fotoUrlValor}" style="max-width: 100%; border-radius: 5px; border: 2px solid #001855;">` : ''}
+      </div>
+      <input type="hidden" name="vehiculo_${vIndex}_foto_novedad_${index}_url" value="${fotoUrlValor}">
+    `;
+    
+    div.appendChild(botonEliminar);
+    contenedorOculto.appendChild(div);
   });
   
   // Ocultar overlay
@@ -4228,15 +4247,17 @@ if (justificacionesContenedor) {
     const tiempo_inicio = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_inicio_${jIndex}"]`)?.value || '';
     const tiempo_fin = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_final_${jIndex}"]`)?.value || '';
     
-    // ✅ NOMENCLATURA UNIFICADA (debe coincidir en TODAS las funciones)
+    // ✅ NOMENCLATURA UNIFICADA (DEBE COINCIDIR EN TODAS LAS FUNCIONES)
     justificacionesData.push({
-      justificacion: motivo,              // ✅ CAMBIAR: de 'motivo' a 'justificacion'
-      otro_justificacion: otro_motivo,    // ✅ CAMBIAR: de 'otro_motivo' a 'otro_justificacion'
-      tiempo_muerto_inicio: tiempo_inicio, // ✅ CAMBIAR: de 'tiempo_inicio' a 'tiempo_muerto_inicio'
-      tiempo_muerto_final: tiempo_fin      // ✅ CAMBIAR: de 'tiempo_fin' a 'tiempo_muerto_final'
+      justificacion: motivo,              // ✅ SIEMPRE 'justificacion'
+      otro_justificacion: otro_motivo,    // ✅ SIEMPRE 'otro_justificacion'
+      tiempo_muerto_inicio: tiempo_inicio, // ✅ SIEMPRE 'tiempo_muerto_inicio'
+      tiempo_muerto_final: tiempo_fin      // ✅ SIEMPRE 'tiempo_muerto_final'
     });
   });
   
+  // ✅ LOG DE DEPURACIÓN
+  console.log(`💾 Justificaciones Vehículo ${vIndex}:`, justificacionesData);
   data[`_justificaciones_${vIndex}`] = justificacionesData;
 }
     
@@ -4707,9 +4728,15 @@ function enviarFormulario(event) {
       // ✅ RESTAURAR JUSTIFICACIONES POR VEHÍCULO (CORREGIDO)
 // ✅ RESTAURAR JUSTIFICACIONES POR VEHÍCULO (CORREGIDO)
 // ✅ RESTAURAR JUSTIFICACIONES POR VEHÍCULO (CORREGIDO)
+// ✅ RESTAURAR JUSTIFICACIONES POR VEHÍCULO (CORREGIDO)
+// ✅ RESTAURAR JUSTIFICACIONES POR VEHÍCULO (CORREGIDO)
 const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${i}`);
 if (justificacionesContenedor && data[`_justificaciones_${i}`]) {
   justificacionesContenedor.innerHTML = '';
+  
+  // ✅ LOG DE DEPURACIÓN
+  console.log(`📥 Restaurando justificaciones Vehículo ${i}:`, data[`_justificaciones_${i}`]);
+  
   data[`_justificaciones_${i}`].forEach((justificacion, jIndex) => {
     const div = document.createElement('div');
     div.className = 'justificacion-group';
@@ -4727,51 +4754,60 @@ if (justificacionesContenedor && data[`_justificaciones_${i}`]) {
     const dInicio = `muerto-inicio-${i}-${jIndex}`;
     const dFin = `muerto-final-${i}-${jIndex}`;
     
+    // ✅ USAR EXACTAMENTE LOS MISMOS NOMBRES QUE EN guardarProgreso()
+    const motivoValor = justificacion.justificacion || '';              // ✅ 'justificacion' NO 'motivo'
+    const otroMotivoValor = justificacion.otro_justificacion || '';     // ✅ 'otro_justificacion' NO 'otro_motivo'
+    const tiempoInicioValor = justificacion.tiempo_muerto_inicio || ''; // ✅ 'tiempo_muerto_inicio' NO 'tiempo_inicio'
+    const tiempoFinValor = justificacion.tiempo_muerto_final || '';     // ✅ 'tiempo_muerto_final' NO 'tiempo_fin'
+    
     div.innerHTML = `
       <div class="time-row">
         <div>
           <label class="time-label">Tiempo Muerto Inicio:</label>
           <input type="tel" name="vehiculo_${i}_tiempo_muerto_inicio_${jIndex}" class="time-input-masked"
-              placeholder="HH:MM" maxlength="5" value="${justificacion.tiempo_muerto_inicio || ''}"
+              placeholder="HH:MM" maxlength="5" value="${tiempoInicioValor}"
               onblur="applyTimeMask(this, '${dInicio}')">
           <span id="${dInicio}" class="time-display"></span>
         </div>
         <div>
           <label class="time-label">Tiempo Muerto Final:</label>
           <input type="tel" name="vehiculo_${i}_tiempo_muerto_final_${jIndex}" class="time-input-masked"
-              placeholder="HH:MM" maxlength="5" value="${justificacion.tiempo_muerto_final || ''}"
+              placeholder="HH:MM" maxlength="5" value="${tiempoFinValor}"
               onblur="applyTimeMask(this, '${dFin}')">
           <span id="${dFin}" class="time-display"></span>
         </div>
       </div>
-      
       <label>Motivo:</label>
-      <select name="vehiculo_${i}_justificacion_${jIndex}">
+      <select name="vehiculo_${i}_justificacion_${jIndex}" id="justificacion-select-${i}-${jIndex}">
         <option value="">Seleccione motivo</option>
-        <option value="faltante_producto" ${justificacion.justificacion === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
-        <option value="liberacion_calidad" ${justificacion.justificacion === 'liberacion_calidad' ? 'selected' : ''}>Liberacion de calidad</option>
-        <option value="Daños" ${justificacion.justificacion === 'Daños' ? 'selected' : ''}>Daños (electricos, muelle, montacargas, etc.)</option>
-        <option value="otro" ${justificacion.justificacion === 'otro' ? 'selected' : ''}>Otro</option>
+        <option value="faltante_producto" ${motivoValor === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
+        <option value="liberacion_calidad" ${motivoValor === 'liberacion_calidad' ? 'selected' : ''}>Liberacion de calidad</option>
+        <option value="Daños" ${motivoValor === 'Daños' ? 'selected' : ''}>Daños (electricos, muelle, montacargas, etc.)</option>
+        <option value="otro" ${motivoValor === 'otro' ? 'selected' : ''}>Otro</option>
       </select>
-      <input type="text" name="vehiculo_${i}_otro_justificacion_${jIndex}" placeholder="Especifique la incidencia" class="otro-input" value="${justificacion.otro_justificacion || ''}">
+      <input type="text" name="vehiculo_${i}_otro_justificacion_${jIndex}" placeholder="Especifique la incidencia" class="otro-input" 
+             value="${otroMotivoValor}" 
+             style="${motivoValor === 'otro' ? 'display: block;' : 'display: none;'}">
     `;
     
     div.appendChild(botonEliminar);
     justificacionesContenedor.appendChild(div);
     
-    // Configurar eventos
-    const motivoSelect = div.querySelector(`select[name="vehiculo_${i}_justificacion_${jIndex}"]`);
-    if (motivoSelect) {
+    // ✅ Configurar eventos DESPUÉS de añadir al DOM
+    const motivoSelect = div.querySelector(`#justificacion-select-${i}-${jIndex}`);
+    const otroInput = div.querySelector(`input[name="vehiculo_${i}_otro_justificacion_${jIndex}"]`);
+    
+    if (motivoSelect && otroInput) {
       motivoSelect.addEventListener('change', function() {
-        const otroInput = div.querySelector('.otro-input');
-        if (otroInput) {
-          if (this.value === 'otro') {
-            otroInput.style.display = 'block';
-          } else {
-            otroInput.style.display = 'none';
-            otroInput.value = '';
-          }
+        if (this.value === 'otro') {
+          otroInput.style.display = 'block';
+          otroInput.required = true;
+        } else {
+          otroInput.style.display = 'none';
+          otroInput.required = false;
+          otroInput.value = '';
         }
+        guardarProgreso();
       });
     }
   });
