@@ -299,6 +299,15 @@
 }
     </style>
 
+    <!-- ✅ EMAILJS SDK -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script type="text/javascript">
+  (function() {
+    // ✅ REEMPLAZA CON TU PUBLIC KEY DE EMAILJS
+    emailjs.init("Aj5Ky5P4DCu-u_BFj4G-t");
+  })();
+</script>
+
 </head>
 <body>
   <script>
@@ -1359,10 +1368,34 @@ function manejarOtroMuelle(vIndex) {
     const reg = registros[i];
     if (vehiculosData[i] === undefined) vehiculosData[i] = {};
     
+    // ✅ FUNCIÓN getValue MEJORADA para campos visibles
     const getValue = name => {
-      const el = reg.querySelector(`[name="${name}"]`);
+      const el = reg.querySelector(`[name="${name}"]:not([style*="display: none"])`);
       return el ? el.value || '' : '';
     };
+    
+    // ✅ CAPTURAR MOTIVO ESPECÍFICAMENTE DEL SELECT VISIBLE
+    const motivoSelect = reg.querySelector(`select[name="vehiculo_${i}_motivo"]`);
+    let motivo = '';
+    if (motivoSelect) {
+      // Verificar si el select o su padre están visibles
+      const estilo = window.getComputedStyle(motivoSelect);
+      const estiloPadre = window.getComputedStyle(motivoSelect.parentElement);
+      if (estilo.display !== 'none' && estiloPadre.display !== 'none') {
+        motivo = motivoSelect.value || '';
+      } else {
+        // Buscar el select visible alternativo
+        const selectsMotivo = reg.querySelectorAll(`select[name="vehiculo_${i}_motivo"]`);
+        for (let select of selectsMotivo) {
+          const s = window.getComputedStyle(select);
+          const p = window.getComputedStyle(select.parentElement);
+          if (s.display !== 'none' && p.display !== 'none') {
+            motivo = select.value || '';
+            break;
+          }
+        }
+      }
+    }
     
     // ✅ Obtener datos de nombres del personal
     const nombresPersonal = [];
@@ -1386,35 +1419,31 @@ function manejarOtroMuelle(vIndex) {
     // ✅ CAPTURAR JUSTIFICACIONES DEL VEHÍCULO (NUEVO)
     const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${i}`);
     const justificacionesData = [];
-    
     if (justificacionesContenedor) {
       const justificaciones = justificacionesContenedor.querySelectorAll('.justificacion-group');
       justificaciones.forEach((justificacion, jIndex) => {
-        const motivo = justificacion.querySelector(`select[name="vehiculo_${i}_justificacion_${jIndex}"]`)?.value || '';
+        const motivoJust = justificacion.querySelector(`select[name="vehiculo_${i}_justificacion_${jIndex}"]`)?.value || '';
         const otro_motivo = justificacion.querySelector(`input[name="vehiculo_${i}_otro_justificacion_${jIndex}"]`)?.value || '';
         const tiempo_inicio = justificacion.querySelector(`input[name="vehiculo_${i}_tiempo_muerto_inicio_${jIndex}"]`)?.value || '';
         const tiempo_fin = justificacion.querySelector(`input[name="vehiculo_${i}_tiempo_muerto_final_${jIndex}"]`)?.value || '';
-        
         justificacionesData.push({
-        justificacion: motivo,  // ✅ DEBE SER 'justificacion'
-        otro_justificacion: otro_motivo,  // ✅ DEBE SER 'otro_justificacion'
-        tiempo_muerto_inicio: tiempo_inicio,  // ✅ DEBE SER 'tiempo_muerto_inicio'
-        tiempo_muerto_final: tiempo_fin  // ✅ DEBE SER 'tiempo_muerto_final'
+          justificacion: motivoJust,
+          otro_justificacion: otro_motivo,
+          tiempo_muerto_inicio: tiempo_inicio,
+          tiempo_muerto_final: tiempo_fin
+        });
       });
-            });
     }
     
     // ✅ CAPTURAR NOVEDADES DEL VEHÍCULO
     const novedadesContenedor = document.getElementById(`novedades-contenedor-${i}`);
     const novedadesData = [];
-    
     if (novedadesContenedor) {
       const novedades = novedadesContenedor.querySelectorAll('.novedad-group');
       novedades.forEach((novedad, nIndex) => {
         const tipo = novedad.querySelector(`select[name="vehiculo_${i}_tipo_novedad_${nIndex}"]`)?.value || '';
         const descripcion = novedad.querySelector(`textarea[name="vehiculo_${i}_descripcion_novedad_${nIndex}"]`)?.value || '';
         const foto_url = novedad.querySelector(`input[name="vehiculo_${i}_foto_novedad_${nIndex}_url"]`)?.value || '';
-        
         novedadesData.push({
           tipo: tipo,
           descripcion: descripcion,
@@ -1425,35 +1454,35 @@ function manejarOtroMuelle(vIndex) {
     
     // ✅ ASIGNAR TODOS LOS DATOS AL VEHÍCULO
     vehiculosData[i] = {
-  inicio: getValue(`vehiculo_${i}_inicio`),
-  fin: getValue(`vehiculo_${i}_fin`),
-  motivo: getValue(`vehiculo_${i}_motivo`),
-  otro_motivo: getValue(`vehiculo_${i}_otro_motivo`),
-  tipo_carga: getValue(`vehiculo_${i}_tipo_carga`),
-  muelle: getValue(`vehiculo_${i}_muelle`),
-  otro_muelle_num: getValue(`vehiculo_${i}_otro_muelle_num`),
-  placa: getValue(`vehiculo_${i}_placa`),
-  tipo_vehi: getValue(`vehiculo_${i}_tipo_vehi`),
-  otro_tipo: getValue(`vehiculo_${i}_otro_tipo`),
-  destino: getValue(`vehiculo_${i}_destino`),
-  otro_destino: getValue(`vehiculo_${i}_otro_destino`),
-  origen: getValue(`vehiculo_${i}_origen`),
-  otro_origen: getValue(`vehiculo_${i}_otro_origen`),
-  personas: getValue(`vehiculo_${i}_personas`),
-  nombres_personal: nombresPersonal,
-  cajas: getValue(`vehiculo_${i}_cajas`),
-  foto_url: getValue(`vehiculo_${i}_foto_url`),
-  tipo_operacion: getValue(`vehiculo_${i}_tipo_operacion`) || '',
-  interior_camion: interiorCamion,
-  estado_carpa: estadoCarpa,
-  olores_extranos: oloresExtranos,
-  objetos_extranos: objetosExtranos,
-  evidencias_plagas: evidenciasPlagas,
-  estado_suelo: estadoSuelo,
-  aprobado: aprobado,
-  justificaciones: justificacionesData,
-  novedades: novedadesData
-};
+      inicio: getValue(`vehiculo_${i}_inicio`),
+      fin: getValue(`vehiculo_${i}_fin`),
+      motivo: motivo,  // ✅ USAR LA VARIABLE CAPTURADA ESPECÍFICAMENTE
+      otro_motivo: getValue(`vehiculo_${i}_otro_motivo`),
+      tipo_carga: getValue(`vehiculo_${i}_tipo_carga`),
+      muelle: getValue(`vehiculo_${i}_muelle`),
+      otro_muelle_num: getValue(`vehiculo_${i}_otro_muelle_num`),
+      placa: getValue(`vehiculo_${i}_placa`),
+      tipo_vehi: getValue(`vehiculo_${i}_tipo_vehi`),
+      otro_tipo: getValue(`vehiculo_${i}_otro_tipo`),
+      destino: getValue(`vehiculo_${i}_destino`),
+      otro_destino: getValue(`vehiculo_${i}_otro_destino`),
+      origen: getValue(`vehiculo_${i}_origen`),
+      otro_origen: getValue(`vehiculo_${i}_otro_origen`),
+      personas: getValue(`vehiculo_${i}_personas`),
+      nombres_personal: nombresPersonal,
+      cajas: getValue(`vehiculo_${i}_cajas`),
+      foto_url: getValue(`vehiculo_${i}_foto_url`),
+      tipo_operacion: getValue(`vehiculo_${i}_tipo_operacion`) || '',
+      interior_camion: interiorCamion,
+      estado_carpa: estadoCarpa,
+      olores_extranos: oloresExtranos,
+      objetos_extranos: objetosExtranos,
+      evidencias_plagas: evidenciasPlagas,
+      estado_suelo: estadoSuelo,
+      aprobado: aprobado,
+      justificaciones: justificacionesData,
+      novedades: novedadesData
+    };
   }
   
   // ✅ Depuración
@@ -1461,6 +1490,8 @@ function manejarOtroMuelle(vIndex) {
   vehiculosData.forEach((v, i) => {
     console.log(`Vehículo ${i}:`, {
       placa: v.placa,
+      motivo: v.motivo,
+      motivo_vacio: !v.motivo || v.motivo.trim() === '',
       tipo_operacion: v.tipo_operacion,
       interior_camion: v.interior_camion,
       estado_carpa: v.estado_carpa,
@@ -4544,22 +4575,41 @@ function enviarFormulario(event) {
     return response.json();
   })
   .then(result => {
-    if (result.success) {
-      // ✅ Eliminar datos de localStorage
-      localStorage.removeItem('pepsico_data');
-      
-      // ✅ Redirigir a aceptacion.html
-      window.location.href = 'aceptacion.html';
-    } else {
-      throw new Error(result.error || 'Error desconocido');
-    }
-  })
+  if (result.success) {
+    localStorage.removeItem('pepsico_data');
+    enviarCorreoConfirmacion(formData);
+    window.location.href = 'aceptacion.html';
+  }
+})
   .catch(error => {
     console.error('Error:', error);
     alert('❌ Error al guardar: ' + error.message + '\n\nPor favor, inténtalo de nuevo.');
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
   });
+}
+
+function enviarCorreoConfirmacion(datos) {
+  const templateParams = {
+    fecha: datos.fecha,
+    lugar: datos.lugar,
+    turno: datos.turno,
+    respo_diligen: datos.respo_diligen,
+    total_vehiculos: datos.datos_vehiculos.length,
+    cajas_totales: datos.cajas_totales,
+    total_personas: datos.total_personas,
+    to_email: 'notificaciones@emmacolombia.com'
+  };
+
+  // ✅ TU SERVICE ID Y TEMPLATE ID VAN AQUÍ
+  emailjs.send('service_7fe29nl', 'template_xey3tlm', templateParams)
+    .then(() => {
+      console.log('✅ Correo enviado exitosamente');
+      mostrarNotificacion('✅ Correo de confirmación enviado', 'success');
+    }, (error) => {
+      console.error('❌ Error al enviar correo:', error);
+      mostrarNotificacion('⚠️ Error al enviar correo de confirmación', 'warning');
+    });
 }
         
 
