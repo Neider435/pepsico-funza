@@ -59,8 +59,8 @@
         
         .btn-agregar-registro,
         .btn-agregar-parada-op {
-            background-color: #23668e;
-            color: white;
+            background-color: #cec000;
+            color: rgb(12, 8, 8);
             border: none;
             cursor: pointer;
             margin-top: 15px;
@@ -396,7 +396,7 @@
         <h3 style="text-align:center; font-size:1.3em; color:#74153b;">REGISTRO DE VEHÍCULOS</h3>
         <div id="vehiculos-contenedor"></div>
         <button type="button" class="btn-agregar-registro" onclick="agregarRegistroVehiculo()">
-            + Registrar Nuevo Vehículo
+            ------------------------ + Registrar Nuevo Vehículo ------------------------
         </button>
         
       
@@ -508,75 +508,102 @@
 const estadoTiempoParada = {};
 
 // ✅ FUNCIÓN UNIFICADA: Generar time-row con botones inteligentes
+// ✅ FUNCIÓN UNIFICADA: Generar time-row con botones inteligentes (CORREGIDO)
 function generarTimeRowConBotonesParada(index, sufijo = '', valorInicio = '', valorFin = '') {
   const dInicio = `operacion-inicio-${index}${sufijo ? '-' + sufijo : ''}`;
   const dFin = `operacion-fin-${index}${sufijo ? '-' + sufijo : ''}`;
   const nombreInicio = `parada_inicio_operacion_${index}${sufijo ? '_' + sufijo : ''}`;
   const nombreFin = `parada_fin_operacion_${index}${sufijo ? '_' + sufijo : ''}`;
   const btnId = `btn-control-tiempo-${index}${sufijo ? '-' + sufijo : ''}`;
+  const btnEditarId = `btn-editar-tiempo-${index}${sufijo ? '-' + sufijo : ''}`;
+  const btnEliminarId = `btn-eliminar-tiempo-${index}${sufijo ? '-' + sufijo : ''}`;
+  const btnCancelarId = `btn-cancelar-tiempo-${index}${sufijo ? '-' + sufijo : ''}`;
   
   // Determinar estado inicial del botón
   let btnTexto = '▶️ Iniciar';
   let btnStyle = '';
   let btnDisabled = '';
+  let inputsReadOnly = 'readonly';
   
   if (valorInicio && !valorFin) {
     btnTexto = '⏹️ Finalizar';
     btnStyle = 'background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white;';
+    btnDisabled = '';
+    inputsReadOnly = 'readonly';
   } else if (valorInicio && valorFin) {
     btnTexto = '✅ Finalizado';
     btnStyle = 'background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;';
     btnDisabled = 'disabled';
+    inputsReadOnly = 'readonly';
+  }
+  
+  // ✅ Verificar si está en modo edición
+  const estadoKey = `${index}-${sufijo}`;
+  if (estadoTiempoParada[estadoKey] === 'editando') {
+    inputsReadOnly = '';
+    btnTexto = '💾 Guardar';
+    btnStyle = 'background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white;';
   }
   
   return `
-    <div class="time-row" style="display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px;">
-      <div style="flex: 1;">
-        <label class="time-label">Hora Inicio (HH:MM):</label>
-        <input type="tel" name="${nombreInicio}" class="time-input-masked"
-            placeholder="HH:MM" maxlength="5" value="${valorInicio}"
-            onblur="applyTimeMask(this, '${dInicio}')"
-            style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1em; text-align: center;">
-        <span id="${dInicio}" class="time-display"></span>
-      </div>
-      <div style="flex: 1;">
-        <label class="time-label">Hora Final (HH:MM):</label>
-        <input type="tel" name="${nombreFin}" class="time-input-masked"
-            placeholder="HH:MM" maxlength="5" value="${valorFin}"
-            onblur="applyTimeMask(this, '${dFin}')"
-            style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1em; text-align: center;">
-        <span id="${dFin}" class="time-display"></span>
-      </div>
-    </div>
-    
-    <!-- ✅ BOTONES INTELIGENTES (una sola línea) -->
-    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
-      <button type="button" id="${btnId}" onclick="controlarTiempoParada(${index}, '${sufijo}')"
-              style="flex: 1; min-width: 100px; padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; font-size: 0.85em; cursor: pointer; transition: all 0.2s; ${btnStyle}"
-              ${btnDisabled}>
-        ${btnTexto}
-      </button>
-      
-      <button type="button" onclick="editarTiempoParada(${index}, '${sufijo}')"
-              style="flex: 1; min-width: 90px; padding: 10px 15px; background: linear-gradient(135deg, #6c757d 0%, #495054 100%); color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 0.85em; cursor: pointer;">
-        ✏️ Editar
-      </button>
-      
-      <button type="button" onclick="eliminarTiempoParada(${index}, '${sufijo}')"
-              style="flex: 1; min-width: 90px; padding: 10px 15px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 0.85em; cursor: pointer;">
-        🗑️ Eliminar
-      </button>
-    </div>
-  `;
+<div class="time-row" style="display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px;">
+  <div style="flex: 1;">
+    <label class="time-label">Hora Inicio (HH:MM):</label>
+    <input type="tel" name="${nombreInicio}" class="time-input-masked"
+        placeholder="HH:MM" maxlength="5" value="${valorInicio}"
+        onblur="applyTimeMask(this, '${dInicio}')"
+        ${inputsReadOnly}
+        style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1em; text-align: center;">
+    <span id="${dInicio}" class="time-display"></span>
+  </div>
+  <div style="flex: 1;">
+    <label class="time-label">Hora Final (HH:MM):</label>
+    <input type="tel" name="${nombreFin}" class="time-input-masked"
+        placeholder="HH:MM" maxlength="5" value="${valorFin}"
+        onblur="applyTimeMask(this, '${dFin}')"
+        ${inputsReadOnly}
+        style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1em; text-align: center;">
+    <span id="${dFin}" class="time-display"></span>
+  </div>
+</div>
+<!-- ✅ BOTONES INTELIGENTES (una sola línea) -->
+<div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
+  <button type="button" id="${btnId}" onclick="controlarTiempoParada(${index}, '${sufijo}')"
+      style="flex: 1; min-width: 100px; padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; font-size: 0.85em; cursor: pointer; transition: all 0.2s; ${btnStyle}"
+      ${btnDisabled}>
+    ${btnTexto}
+  </button>
+  <button type="button" id="${btnEditarId}" onclick="editarTiempoParada(${index}, '${sufijo}')"
+      style="flex: 1; min-width: 90px; padding: 10px 15px; background: linear-gradient(135deg, #6c757d 0%, #495054 100%); color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 0.85em; cursor: pointer;">
+    ✏️ Editar
+  </button>
+  <button type="button" id="${btnCancelarId}" onclick="cancelarEdicionParada(${index}, '${sufijo}')"
+      style="flex: 1; min-width: 90px; padding: 10px 15px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 0.85em; cursor: pointer; display: ${estadoTiempoParada[estadoKey] === 'editando' ? 'block' : 'none'};">
+    ❌ Cancelar
+  </button>
+  <button type="button" id="${btnEliminarId}" onclick="eliminarTiempoParada(${index}, '${sufijo}')"
+      style="flex: 1; min-width: 90px; padding: 10px 15px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 0.85em; cursor: pointer;">
+    🗑️ Eliminar
+  </button>
+</div>
+`;
 }
 
-// ✅ CONTROLAR TIEMPO PARADA (Iniciar/Finalizar)
 // ✅ CONTROLAR TIEMPO PARADA (Iniciar/Finalizar) - SIN ALERTA AL INICIAR
 function controlarTiempoParada(index, sufijo) {
   const sufijoName = sufijo ? `_${sufijo}` : '';
+  const estadoKey = `${index}-${sufijo}`;
+  
+  // ❌ Si está en modo edición, no permitir iniciar/finalizar
+  if (estadoTiempoParada[estadoKey] === 'editando') {
+    alert('⚠️ Primero guarda la edición antes de iniciar/finalizar.');
+    return;
+  }
+  
   const inicioInput = document.querySelector(`input[name="parada_inicio_operacion_${index}${sufijoName}"]`);
   const finInput = document.querySelector(`input[name="parada_fin_operacion_${index}${sufijoName}"]`);
   const btnControl = document.getElementById(`btn-control-tiempo-${index}${sufijo ? '-' + sufijo : ''}`);
+  const btnEditar = document.getElementById(`btn-editar-tiempo-${index}${sufijo ? '-' + sufijo : ''}`);
   
   if (!inicioInput || !finInput || !btnControl) return;
   
@@ -587,7 +614,6 @@ function controlarTiempoParada(index, sufijo) {
     const minuto = String(ahora.getMinutes()).padStart(2, '0');
     const horaActual = `${hora}:${minuto}`;
     
-    // ✅ Sin confirmación - iniciar directamente
     inicioInput.value = horaActual;
     applyTimeMask(inicioInput, `operacion-inicio-${index}${sufijo ? '-' + sufijo : ''}`);
     
@@ -595,10 +621,16 @@ function controlarTiempoParada(index, sufijo) {
     btnControl.innerHTML = '⏹️ Finalizar';
     btnControl.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
     btnControl.style.color = 'white';
+    btnControl.disabled = false;
+    
+    // Bloquear edición mientras está activo
+    if (btnEditar) {
+      btnEditar.disabled = true;
+      btnEditar.style.opacity = '0.7';
+    }
     
     // Guardar estado
-    estadoTiempoParada[`${index}-${sufijo}`] = 'iniciado';
-    
+    estadoTiempoParada[estadoKey] = 'iniciado';
     guardarProgreso();
     console.log(`▶️ Tiempo iniciado para Parada ${index + 1} a las ${inicioInput.value}`);
     
@@ -619,7 +651,6 @@ function controlarTiempoParada(index, sufijo) {
     // Validar que fin no sea menor que inicio
     const inicioMin = horaAMinutos(inicioInput.value);
     const finMin = horaAMinutos(finInput.value);
-    
     if (finMin < inicioMin) {
       alert('❌ Error: La hora final no puede ser menor que la hora de inicio.');
       finInput.value = '';
@@ -632,9 +663,14 @@ function controlarTiempoParada(index, sufijo) {
     btnControl.style.color = 'white';
     btnControl.disabled = true;
     
-    // Guardar estado
-    estadoTiempoParada[`${index}-${sufijo}`] = 'finalizado';
+    // Habilitar edición nuevamente
+    if (btnEditar) {
+      btnEditar.disabled = false;
+      btnEditar.style.opacity = '1';
+    }
     
+    // Guardar estado
+    estadoTiempoParada[estadoKey] = 'finalizado';
     guardarProgreso();
     console.log(`⏹️ Tiempo finalizado para Parada ${index + 1} a las ${finInput.value}`);
     
@@ -644,36 +680,137 @@ function controlarTiempoParada(index, sufijo) {
   }
 }
 
-// ✅ EDITAR TIEMPO PARADA MANUALMENTE
+// ✅ EDITAR TIEMPO PARADA MANUALMENTE - SIN ALERTA
 function editarTiempoParada(index, sufijo) {
   const sufijoName = sufijo ? `_${sufijo}` : '';
+  const estadoKey = `${index}-${sufijo}`;
   const inicioInput = document.querySelector(`input[name="parada_inicio_operacion_${index}${sufijoName}"]`);
   const finInput = document.querySelector(`input[name="parada_fin_operacion_${index}${sufijoName}"]`);
   const btnControl = document.getElementById(`btn-control-tiempo-${index}${sufijo ? '-' + sufijo : ''}`);
+  const btnEditar = document.getElementById(`btn-editar-tiempo-${index}${sufijo ? '-' + sufijo : ''}`);
+  const btnEliminar = document.getElementById(`btn-eliminar-tiempo-${index}${sufijo ? '-' + sufijo : ''}`);
+  const btnCancelar = document.getElementById(`btn-cancelar-tiempo-${index}${sufijo ? '-' + sufijo : ''}`);
   
-  if (!inicioInput || !finInput || !btnControl) return;
+  if (!inicioInput || !finInput || !btnEditar) return;
   
-  // Mostrar advertencia
-  if (!confirm('⚠️ ¿Estás seguro de EDITAR manualmente las horas?\n\nEsto puede afectar el cálculo de tiempos.')) {
+  // ✅ SI ESTÁ EN MODO EDICIÓN → GUARDAR
+  if (estadoTiempoParada[estadoKey] === 'editando') {
+    // ✅ Validar formato (permitir campos vacíos)
+    if (inicioInput.value && !/^\d{2}:\d{2}$/.test(inicioInput.value)) {
+      alert('❌ Formato de hora de inicio inválido. Usa HH:MM o deja vacío.');
+      inicioInput.focus();
+      return;
+    }
+    if (finInput.value && !/^\d{2}:\d{2}$/.test(finInput.value)) {
+      alert('❌ Formato de hora de finalización inválido. Usa HH:MM o deja vacío.');
+      finInput.focus();
+      return;
+    }
+    
+    // ✅ Validar que final ≥ inicio (solo si ambos tienen valor)
+    if (inicioInput.value && finInput.value) {
+      const inicioMin = horaAMinutos(inicioInput.value);
+      const finMin = horaAMinutos(finInput.value);
+      if (finMin < inicioMin) {
+        alert('❌ La hora final no puede ser menor que la hora de inicio.');
+        finInput.focus();
+        return;
+      }
+    }
+    
+    // ✅ Guardar cambios
+    btnEditar.innerHTML = '✏️ Editar';
+    btnEditar.style.background = 'linear-gradient(135deg, #6c757d 0%, #495054 100%)';
+    inicioInput.readOnly = true;
+    finInput.readOnly = true;
+    
+    // ✅ Restaurar otros botones
+    if (btnControl) btnControl.disabled = false;
+    if (btnEliminar) btnEliminar.disabled = false;
+    if (btnCancelar) btnCancelar.style.display = 'none';
+    
+    // ✅ Guardar estado
+    estadoTiempoParada[estadoKey] = 'editado';
+    guardarProgreso();
+    mostrarNotificacion(`✅ Edición guardada`, 'success');
     return;
   }
   
-  // Habilitar edición
+  // ✅ ACTIVAR MODO EDICIÓN - SIN ALERTA
+  inicioInput.readOnly = false;
+  finInput.readOnly = false;
   inicioInput.focus();
-  inicioInput.select();
   
-  guardarProgreso();
-  console.log(`✏️ Modo edición activado para Parada ${index + 1}`);
+  // ✅ Cambiar botón a "Guardar"
+  btnEditar.innerHTML = '💾 Guardar';
+  btnEditar.style.background = 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)';
+  
+  // ✅ Bloquear otros botones mientras edita
+  if (btnControl) btnControl.disabled = true;
+  if (btnEliminar) btnEliminar.disabled = true;
+  
+  // ✅ Mostrar botón Cancelar
+  if (btnCancelar) btnCancelar.style.display = 'block';
+  
+  // ✅ Guardar estado
+  estadoTiempoParada[estadoKey] = 'editando';
+  mostrarNotificacion(`📝 Edición activada. Cambia las horas o haz clic en "Cancelar".`, 'warning');
 }
 
-// ✅ ELIMINAR TIEMPO PARADA
-function eliminarTiempoParada(index, sufijo) {
+// ✅ CANCELAR EDICIÓN PARADA (NUEVA FUNCIÓN)
+function cancelarEdicionParada(index, sufijo) {
   const sufijoName = sufijo ? `_${sufijo}` : '';
+  const estadoKey = `${index}-${sufijo}`;
   const inicioInput = document.querySelector(`input[name="parada_inicio_operacion_${index}${sufijoName}"]`);
   const finInput = document.querySelector(`input[name="parada_fin_operacion_${index}${sufijoName}"]`);
   const btnControl = document.getElementById(`btn-control-tiempo-${index}${sufijo ? '-' + sufijo : ''}`);
+  const btnEditar = document.getElementById(`btn-editar-tiempo-${index}${sufijo ? '-' + sufijo : ''}`);
+  const btnEliminar = document.getElementById(`btn-eliminar-tiempo-${index}${sufijo ? '-' + sufijo : ''}`);
+  const btnCancelar = document.getElementById(`btn-cancelar-tiempo-${index}${sufijo ? '-' + sufijo : ''}`);
+  
+  if (!inicioInput || !finInput || !btnEditar) return;
+  
+  // ✅ Bloquear campos nuevamente
+  inicioInput.readOnly = true;
+  finInput.readOnly = true;
+  
+  // ✅ Restaurar botón editar
+  btnEditar.innerHTML = '✏️ Editar';
+  btnEditar.style.background = 'linear-gradient(135deg, #6c757d 0%, #495054 100%)';
+  btnEditar.disabled = false;
+  
+  // ✅ Restaurar otros botones
+  if (btnControl) btnControl.disabled = false;
+  if (btnEliminar) btnEliminar.disabled = false;
+  
+  // ✅ Ocultar botón cancelar
+  if (btnCancelar) btnCancelar.style.display = 'none';
+  
+  // ✅ Limpiar estado
+  delete estadoTiempoParada[estadoKey];
+  
+  guardarProgreso();
+  mostrarNotificacion(`❌ Edición cancelada`, 'warning');
+}
+
+// ✅ ELIMINAR TIEMPO PARADA - FUNCIONA DURANTE EDICIÓN
+function eliminarTiempoParada(index, sufijo) {
+  const sufijoName = sufijo ? `_${sufijo}` : '';
+  const estadoKey = `${index}-${sufijo}`;
+  const inicioInput = document.querySelector(`input[name="parada_inicio_operacion_${index}${sufijoName}"]`);
+  const finInput = document.querySelector(`input[name="parada_fin_operacion_${index}${sufijoName}"]`);
+  const btnControl = document.getElementById(`btn-control-tiempo-${index}${sufijo ? '-' + sufijo : ''}`);
+  const btnEditar = document.getElementById(`btn-editar-tiempo-${index}${sufijo ? '-' + sufijo : ''}`);
+  const btnEliminar = document.getElementById(`btn-eliminar-tiempo-${index}${sufijo ? '-' + sufijo : ''}`);
+  const btnCancelar = document.getElementById(`btn-cancelar-tiempo-${index}${sufijo ? '-' + sufijo : ''}`);
   
   if (!inicioInput || !finInput || !btnControl) return;
+  
+  // ✅ Permitir eliminar incluso en modo edición
+  // if (estadoTiempoParada[estadoKey] === 'editando') {
+  //   alert('⚠️ Primero guarda o cancela la edición antes de eliminar.');
+  //   return;
+  // }
   
   if (!inicioInput.value && !finInput.value) {
     alert('ℹ️ No hay tiempo registrado para eliminar.');
@@ -700,11 +837,25 @@ function eliminarTiempoParada(index, sufijo) {
   btnControl.style.color = '';
   btnControl.disabled = false;
   
+  // Restaurar botón de editar
+  if (btnEditar) {
+    btnEditar.innerHTML = '✏️ Editar';
+    btnEditar.style.background = 'linear-gradient(135deg, #6c757d 0%, #495054 100%)';
+    btnEditar.style.color = 'white';
+    btnEditar.disabled = false;
+  }
+  
+  // Restaurar botón de eliminar
+  if (btnEliminar) btnEliminar.disabled = false;
+  
+  // Ocultar botón cancelar
+  if (btnCancelar) btnCancelar.style.display = 'none';
+  
   // Limpiar estado
-  delete estadoTiempoParada[`${index}-${sufijo}`];
+  delete estadoTiempoParada[estadoKey];
   
   guardarProgreso();
-  console.log(`🗑️ Tiempo eliminado para Parada ${index + 1}`);
+  mostrarNotificacion(`🗑️ Tiempo eliminado`, 'warning');
 }
 
 // ✅ ABRIR OVERLAY DE PARADAS DE OPERACIÓN
@@ -3108,30 +3259,33 @@ function crearJustificacionOverlay(vIndex, index, datosElemento = null) {
       <span id="${dFin}" class="time-display"></span>
     </div>
   </div>
-  
-  <!-- ✅ BOTONES DE CONTROL EN UNA SOLA LÍNEA -->
-  <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
-    <!-- Botón Iniciar/Finalizar -->
-    <button type="button" id="btn-tm-control-${vIndex}-${index}" 
-            onclick="controlarTiempoMuerto(${vIndex}, ${index})"
-            style="flex: 1; min-width: 120px; padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; font-size: 0.95em; cursor: pointer; transition: all 0.2s;">
-      ${tiempo_muerto_inicio ? '⏹️ Finalizar' : '▶️ Iniciar'}
-    </button>
-    
-    <!-- Botón Editar -->
-    <button type="button" id="btn-tm-editar-${vIndex}-${index}"
-            onclick="editarTiempoMuerto(${vIndex}, ${index})"
-            style="flex: 1; min-width: 120px; padding: 10px 15px; background: linear-gradient(135deg, #6c757d 0%, #495054 100%); color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 0.95em; cursor: pointer; transition: all 0.2s;">
-      ✏️ Editar Tiempo
-    </button>
-    
-    <!-- Botón Eliminar -->
-    <button type="button" id="btn-tm-eliminar-${vIndex}-${index}"
-            onclick="eliminarTiempoMuerto(${vIndex}, ${index})"
-            style="flex: 1; min-width: 120px; padding: 10px 15px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 0.95em; cursor: pointer; transition: all 0.2s;">
-      🗑️ Eliminar
-    </button>
-  </div>
+
+<div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+  <!-- Botón Iniciar/Finalizar -->
+  <button type="button" id="btn-tm-control-${vIndex}-${index}"
+    onclick="controlarTiempoMuerto(${vIndex}, ${index})"
+    style="flex: 1; min-width: 120px; padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; font-size: 0.95em; cursor: pointer; transition: all 0.2s;">
+    ${tiempo_muerto_inicio ? '⏹️ Finalizar' : '▶️ Iniciar'}
+  </button>
+  <!-- Botón Editar -->
+  <button type="button" id="btn-tm-editar-${vIndex}-${index}"
+    onclick="editarTiempoMuerto(${vIndex}, ${index})"
+    style="flex: 1; min-width: 120px; padding: 10px 15px; background: linear-gradient(135deg, #6c757d 0%, #495054 100%); color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 0.95em; cursor: pointer; transition: all 0.2s;">
+    ✏️ Editar Tiempo
+  </button>
+  <!-- ✅ Botón Cancelar (NUEVO - igual que cargue/descargue) -->
+  <button type="button" id="btn-tm-cancelar-${vIndex}-${index}"
+    onclick="cancelarEdicionTiempoMuerto(${vIndex}, ${index})"
+    style="flex: 1; min-width: 120px; padding: 10px 15px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 0.95em; cursor: pointer; transition: all 0.2s; display: none;">
+    ❌ Cancelar
+  </button>
+  <!-- Botón Eliminar -->
+  <button type="button" id="btn-tm-eliminar-${vIndex}-${index}"
+    onclick="eliminarTiempoMuerto(${vIndex}, ${index})"
+    style="flex: 1; min-width: 120px; padding: 10px 15px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 0.95em; cursor: pointer; transition: all 0.2s;">
+    🗑️ Eliminar
+  </button>
+</div>
 </div>
       
       <!-- Motivo -->
@@ -3258,42 +3412,50 @@ function controlarTiempoMuerto(vIndex, nIndex) {
 }
 
 // ✅ EDITAR TIEMPO MUERTO
+// ✅ EDITAR TIEMPO MUERTO (CORREGIDO: Agrega botón Cancelar y desbloquea campos)
 function editarTiempoMuerto(vIndex, nIndex) {
   const inicioInput = document.getElementById(`tm-inicio-${vIndex}-${nIndex}`);
   const finInput = document.getElementById(`tm-fin-${vIndex}-${nIndex}`);
   const btnEditar = document.getElementById(`btn-tm-editar-${vIndex}-${nIndex}`);
   const btnControl = document.getElementById(`btn-tm-control-${vIndex}-${nIndex}`);
   const btnEliminar = document.getElementById(`btn-tm-eliminar-${vIndex}-${nIndex}`);
+  const contenedorBotones = btnEditar.parentElement; // Contenedor de los botones
+
+  if (!inicioInput || !finInput || !btnEditar) return;
 
   // ✅ SI ESTÁ EN MODO EDICIÓN → GUARDAR
   if (estadoTiempoMuerto[`${vIndex}-${nIndex}`] === 'editando') {
-    if (!/^\d{2}:\d{2}$/.test(inicioInput.value)) {
+    // Validaciones al guardar
+    if (inicioInput.value && !/^\d{2}:\d{2}$/.test(inicioInput.value)) {
       alert('❌ Formato de hora de inicio inválido. Usa HH:MM');
-      inicioInput.focus();
       return;
     }
-    if (!/^\d{2}:\d{2}$/.test(finInput.value)) {
+    if (finInput.value && !/^\d{2}:\d{2}$/.test(finInput.value)) {
       alert('❌ Formato de hora de finalización inválido. Usa HH:MM');
-      finInput.focus();
       return;
     }
-
+    
     const inicioMin = horaAMinutos(inicioInput.value);
     const finMin = horaAMinutos(finInput.value);
-    if (finMin < inicioMin) {
+    if (inicioMin && finMin && finMin < inicioMin) {
       alert('❌ La hora final no puede ser menor que la hora de inicio.');
-      finInput.focus();
       return;
     }
 
     // Guardar cambios
     btnEditar.innerHTML = '✏️ Editar Tiempo';
     btnEditar.style.background = 'linear-gradient(135deg, #6c757d 0%, #495054 100%)';
-    btnEditar.style.color = 'white';
     inicioInput.readOnly = true;
     finInput.readOnly = true;
-    btnControl.disabled = false;
-    btnEliminar.disabled = false;
+    
+    // Restaurar otros botones
+    if(btnControl) btnControl.disabled = false;
+    if(btnEliminar) btnEliminar.disabled = false;
+    
+    // Eliminar botón cancelar
+    const btnCancelar = document.getElementById(`btn-tm-cancelar-${vIndex}-${nIndex}`);
+    if (btnCancelar) btnCancelar.remove();
+
     estadoTiempoMuerto[`${vIndex}-${nIndex}`] = 'editado';
     guardarProgreso();
     mostrarNotificacion(`✅ Edición guardada`, 'success');
@@ -3305,18 +3467,53 @@ function editarTiempoMuerto(vIndex, nIndex) {
     if (!confirm('⚠️ Estás editando un tiempo muerto finalizado. ¿Deseas continuar?')) return;
   }
 
+  // Desbloquear campos para escribir
   inicioInput.readOnly = false;
   finInput.readOnly = false;
   inicioInput.focus();
+  inicioInput.select(); // Seleccionar texto para facilitar edición
 
+  // Cambiar botón a "Guardar"
   btnEditar.innerHTML = '💾 Guardar Edición';
   btnEditar.style.background = 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)';
-  btnEditar.style.color = 'white';
-  btnControl.disabled = true;
-  btnEliminar.disabled = true;
-  estadoTiempoMuerto[`${vIndex}-${nIndex}`] = 'editando';
 
-  mostrarNotificacion(`📝 Edición activada. Cambia las horas y haz clic en "Guardar Edición".`, 'warning');
+  // Bloquear otros botones temporalmente
+  if(btnControl) btnControl.disabled = true;
+  if(btnEliminar) btnEliminar.disabled = true;
+
+  // ✅ CREAR BOTÓN CANCELAR SI NO EXISTE
+  let btnCancelar = document.getElementById(`btn-tm-cancelar-${vIndex}-${nIndex}`);
+  if (!btnCancelar) {
+    btnCancelar = document.createElement('button');
+    btnCancelar.id = `btn-tm-cancelar-${vIndex}-${nIndex}`;
+    btnCancelar.type = 'button';
+    btnCancelar.innerHTML = '❌ Cancelar';
+    btnCancelar.style.cssText = `
+      flex: 1; min-width: 100px; padding: 10px 15px; 
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); 
+      color: white; border: none; border-radius: 6px; 
+      font-weight: bold; font-size: 0.85em; cursor: pointer; margin-left: 5px;
+    `;
+    btnCancelar.onclick = function() {
+      // Lógica de Cancelar: Restaurar valores originales (opcional) o simplemente salir
+      inicioInput.readOnly = true;
+      finInput.readOnly = true;
+      btnEditar.innerHTML = '✏️ Editar Tiempo';
+      btnEditar.style.background = 'linear-gradient(135deg, #6c757d 0%, #495054 100%)';
+      if(btnControl) btnControl.disabled = false;
+      if(btnEliminar) btnEliminar.disabled = false;
+      btnCancelar.remove();
+      delete estadoTiempoMuerto[`${vIndex}-${nIndex}`];
+      mostrarNotificacion(`❌ Edición cancelada`, 'warning');
+    };
+    // Insertar después del botón Editar
+    contenedorBotones.insertBefore(btnCancelar, btnEditar.nextSibling);
+  } else {
+    btnCancelar.style.display = 'block';
+  }
+
+  estadoTiempoMuerto[`${vIndex}-${nIndex}`] = 'editando';
+  mostrarNotificacion(`📝 Escribe las horas y haz clic en "Guardar Edición"`, 'info');
 }
 
 // ✅ ELIMINAR TIEMPO MUERTO
@@ -3348,18 +3545,59 @@ function eliminarTiempoMuerto(vIndex, nIndex) {
   btnControl.style.background = '';
   btnControl.style.color = '';
   btnControl.disabled = false;
+  // ✅ Guardar cambios
+btnEditar.innerHTML = '✏️ Editar Tiempo';
+btnEditar.style.background = 'linear-gradient(135deg, #6c757d 0%, #495054 100%)';
+btnEditar.style.color = 'white';
+inicioInput.readOnly = true;
+finInput.readOnly = true;
+btnControl.disabled = false;
+btnEliminar.disabled = false;
+
+// ✅ Ocultar botón cancelar (NUEVO)
+const btnCancelar = document.getElementById(`btn-tm-cancelar-${vIndex}-${nIndex}`);
+if (btnCancelar) btnCancelar.style.display = 'none';
+
+estadoTiempoMuerto[`${vIndex}-${nIndex}`] = 'editado';
+guardarProgreso();
+mostrarNotificacion(`✅ Edición guardada`, 'success');
+return;
+}
+
+// ✅ CANCELAR EDICIÓN TIEMPO MUERTO (NUEVA - igual que cargue/descargue)
+function cancelarEdicionTiempoMuerto(vIndex, nIndex) {
+  const inicioInput = document.getElementById(`tm-inicio-${vIndex}-${nIndex}`);
+  const finInput = document.getElementById(`tm-fin-${vIndex}-${nIndex}`);
+  const btnEditar = document.getElementById(`btn-tm-editar-${vIndex}-${nIndex}`);
+  const btnControl = document.getElementById(`btn-tm-control-${vIndex}-${nIndex}`);
+  const btnEliminar = document.getElementById(`btn-tm-eliminar-${vIndex}-${nIndex}`);
+  const btnCancelar = document.getElementById(`btn-tm-cancelar-${vIndex}-${nIndex}`);
+  
+  // ✅ Bloquear campos nuevamente
+  inicioInput.readOnly = true;
+  finInput.readOnly = true;
+  
+  // ✅ Restaurar botón editar
   btnEditar.innerHTML = '✏️ Editar Tiempo';
   btnEditar.style.background = 'linear-gradient(135deg, #6c757d 0%, #495054 100%)';
   btnEditar.style.color = 'white';
   btnEditar.disabled = false;
-
+  
+  // ✅ Restaurar otros botones
+  btnControl.disabled = false;
+  btnEliminar.disabled = false;
+  
+  // ✅ Ocultar botón cancelar
+  btnCancelar.style.display = 'none';
+  
+  // ✅ Limpiar estado
   delete estadoTiempoMuerto[`${vIndex}-${nIndex}`];
+  
   guardarProgreso();
-  mostrarNotificacion(`🗑️ Tiempo muerto eliminado`, 'warning');
+  console.log(`❌ Edición cancelada para Justificación ${nIndex + 1} del Vehículo ${vIndex + 1}`);
+  mostrarNotificacion(`❌ Edición cancelada`, 'warning');
 }
 
-        // ✅ ABRIR OVERLAY DE INSPECCIÓN
-// ✅ ABRIR OVERLAY DE INSPECCIÓN
 function abrirInspeccionVehiculo(vIndex) {
     const overlay = document.getElementById(`overlay-inspeccion-${vIndex}`);
     if (overlay) {
