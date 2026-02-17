@@ -4,7 +4,17 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
+// ✅ CORS CONFIGURADO EXPLÍCITAMENTE (ANTES DE CUALQUIER OTRA COSA)
+app.use(cors({
+  origin: ['https://pepsico-funza.netlify.app', 'http://localhost:3000', 'http://localhost:5500'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
+// ✅ MANEJAR PREFLIGHT OPTIONS EXPLÍCITAMENTE
+app.options('*', cors());
+
 app.use(express.json());
 
 // ===== LOGS DE VARIABLES DE ENTORNO =====
