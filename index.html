@@ -4686,6 +4686,9 @@ Debe cumplir:
 // ============================================
 function enviarFormulario(event) {
   event.preventDefault();
+
+    console.log('📧 EmailJS cargado:', typeof emailjs !== 'undefined');
+    console.log('📧 EmailJS inicializado:', emailjs);
   
   // ✅ PASO 1: Hacer visibles los campos de motivo ANTES de validar
   mostrarCamposMotivo();
@@ -4885,21 +4888,51 @@ function enviarFormulario(event) {
     return response.json();
   })
   .then(result => {
-    if (result.success) {
-      // ✅ Eliminar datos de localStorage
-      localStorage.removeItem('pepsico_data');
-      
-      // ✅ Redirigir a aceptacion.html
-      window.location.href = 'aceptacion.html';
-    } else {
-      throw new Error(result.error || 'Error desconocido');
-    }
-  })
+  if (result.success) {
+    // ✅ Eliminar datos de localStorage
+    localStorage.removeItem('pepsico_data');
+    
+    // ✅ ENVIAR CORREO CON EMAILJS (NUEVO)
+    enviarCorreoEmailJS(formData);
+    
+    // ✅ Redirigir a aceptacion.html
+    window.location.href = 'aceptacion.html';
+  } else {
+    throw new Error(result.error || 'Error desconocido');
+  }
+})
   .catch(error => {
     console.error('Error:', error);
     alert('❌ Error al guardar: ' + error.message + '\n\nPor favor, inténtalo de nuevo.');
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
+  });
+}
+
+// ✅ ENVIAR CORREO CON EMAILJS
+function enviarCorreoEmailJS(data) {
+  // ✅ Parámetros para la plantilla de EmailJS
+  const templateParams = {
+    fecha: data.fecha,
+    lugar: data.lugar,
+    turno: data.turno,
+    respo_diligen: data.respo_diligen,
+    total_vehiculos: data.datos_vehiculos.length,
+    cajas_totales: data.cajas_totales,
+    total_personas: data.total_personas
+  };
+
+  // ✅ Enviar correo
+  emailjs.send(
+    'service_7fe29nl',      // ⚠️ Tu Service ID de EmailJS
+    'template_xey3tlm',     // ⚠️ Tu Template ID de EmailJS
+    templateParams
+  )
+  .then(function(response) {
+    console.log('✅ Correo enviado exitosamente!', response.status, response.text);
+  }, function(error) {
+    console.error('❌ Error al enviar correo:', error);
+    alert('⚠️ El registro se guardó, pero hubo un error al enviar el correo.');
   });
 }
         
@@ -5205,8 +5238,13 @@ if (novedadesContenedor && data[`_novedades_${i}`]) {
 });
     </script>
 
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script>
-       src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"
+      // ✅ INICIALIZAR EMAILJS (ejecutar cuando cargue la página)
+      (function() {
+        // ⚠️ REEMPLAZA CON TU PUBLIC KEY DE EMAILJS
+        emailjs.init("TU_PUBLIC_KEY_AQUI");
+      })();
     </script>
     
 </body>
