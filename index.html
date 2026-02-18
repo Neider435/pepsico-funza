@@ -1482,32 +1482,14 @@ function manejarOtroMuelle(vIndex) {
             guardarProgreso();
         }
 
-        // ✅ FUNCIÓN CORREGIDA: Reindexar manteniendo eventos
-function reindexarVehiculos() {
-  const contenedor = document.getElementById('vehiculos-contenedor');
-  contenedor.innerHTML = '';
-  
-  // ✅ LIMPIAR ARRAY
-  vehiculosData = vehiculosData.slice(0, contenedor.children.length);
-  
-  // ✅ RECREAR CADA VEHÍCULO CON SUS DATOS
-  for (let i = 0; i < vehiculosData.length; i++) {
-    crearVehiculoHTML(contenedor, i, vehiculosData[i]);
-  }
-  
-  // ✅ FORZAR ACTUALIZACIÓN DE VISIBILIDAD
-  setTimeout(() => {
-    const registros = contenedor.querySelectorAll('.registro-vehiculo');
-    registros.forEach((reg, index) => {
-      const motivoSelect = reg.querySelector(`select[name="vehiculo_${index}_motivo"]`);
-      if (motivoSelect) {
-        alternarDestinoRemitente(motivoSelect, index);
-      }
-    });
-  }, 50);
-  
-  guardarProgreso();
-}
+        function reindexarVehiculos() {
+            const contenedor = document.getElementById('vehiculos-contenedor');
+            contenedor.innerHTML = '';
+            
+            for (let i = 0; i < vehiculosData.length; i++) {
+                crearVehiculoHTML(contenedor, i, vehiculosData[i]);
+            }
+        }
 
         function agregarRegistroVehiculo() {
             const vIndex = vehiculosData.length;
@@ -1521,8 +1503,7 @@ function reindexarVehiculos() {
         }
         
 
-// ✅ FUNCIÓN CORREGIDA: Capturar campos visibles correctamente
-function sincronizarVehiculosDesdeDOM() {
+        function sincronizarVehiculosDesdeDOM() {
   const contenedor = document.getElementById('vehiculos-contenedor');
   const registros = contenedor.querySelectorAll('.registro-vehiculo');
   
@@ -1530,27 +1511,83 @@ function sincronizarVehiculosDesdeDOM() {
     const reg = registros[i];
     if (vehiculosData[i] === undefined) vehiculosData[i] = {};
     
-    // ✅ FUNCIÓN getValue MEJORADA: Busca en el registro específico
-    const getValue = (name) => {
+    // ✅ FUNCIÓN getValue CORREGIDA: Ignora campos ocultos
+    const getValue = name => {
       const elementos = reg.querySelectorAll(`[name="${name}"]`);
+      // Buscar el primer elemento VISIBLE
       for (let el of elementos) {
-        // ✅ Verificar si el elemento es visible dentro de este registro
-        if (el.offsetParent !== null && reg.contains(el)) {
+        if (el.offsetParent !== null) { // ✅ Verifica si es visible
           return el.value || '';
         }
       }
+      // Fallback: si ninguno es visible, tomar el primero
       return elementos[0] ? elementos[0].value || '' : '';
     };
     
-    // ✅ CAPTURAR MOTIVO ESPECÍFICO DEL VEHÍCULO
-    const motivoSelect = reg.querySelector(`select[name="vehiculo_${i}_motivo"]`);
-    const motivo = motivoSelect ? motivoSelect.value : '';
+    // ✅ Obtener datos de nombres del personal
+    const nombresPersonal = [];
+    const nombresContainer = reg.querySelector(`#nombres-personal-${i}`);
+    if (nombresContainer) {
+      const inputsNombres = nombresContainer.querySelectorAll('input[type="text"]');
+      inputsNombres.forEach((input, idx) => {
+        nombresPersonal.push(input.value || '');
+      });
+    }
     
-    // ✅ ASIGNAR DATOS AL VEHÍCULO
+    // ✅ CAPTURAR DATOS DEL OVERLAY DE INSPECCIÓN
+    const interiorCamion = document.getElementById(`interior_camion_${i}`)?.value || '';
+    const estadoCarpa = document.getElementById(`estado_carpa_${i}`)?.value || '';
+    const oloresExtranos = document.getElementById(`olores_extranos_${i}`)?.value || '';
+    const objetosExtranos = document.getElementById(`objetos_extranos_${i}`)?.value || '';
+    const evidenciasPlagas = document.getElementById(`evidencias_plagas_${i}`)?.value || '';
+    const estadoSuelo = document.getElementById(`estado_suelo_${i}`)?.value || '';
+    const aprobado = document.getElementById(`aprobado_${i}`)?.value || '';
+    
+    // ✅ CAPTURAR JUSTIFICACIONES DEL VEHÍCULO
+    const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${i}`);
+    const justificacionesData = [];
+    
+    if (justificacionesContenedor) {
+      const justificaciones = justificacionesContenedor.querySelectorAll('.justificacion-group');
+      justificaciones.forEach((justificacion, jIndex) => {
+        const motivo = justificacion.querySelector(`select[name="vehiculo_${i}_justificacion_${jIndex}"]`)?.value || '';
+        const otro_motivo = justificacion.querySelector(`input[name="vehiculo_${i}_otro_justificacion_${jIndex}"]`)?.value || '';
+        const tiempo_inicio = justificacion.querySelector(`input[name="vehiculo_${i}_tiempo_muerto_inicio_${jIndex}"]`)?.value || '';
+        const tiempo_fin = justificacion.querySelector(`input[name="vehiculo_${i}_tiempo_muerto_final_${jIndex}"]`)?.value || '';
+        
+        justificacionesData.push({
+          justificacion: motivo,
+          otro_justificacion: otro_motivo,
+          tiempo_muerto_inicio: tiempo_inicio,
+          tiempo_muerto_final: tiempo_fin
+        });
+      });
+    }
+    
+    // ✅ CAPTURAR NOVEDADES DEL VEHÍCULO
+    const novedadesContenedor = document.getElementById(`novedades-contenedor-${i}`);
+    const novedadesData = [];
+    
+    if (novedadesContenedor) {
+      const novedades = novedadesContenedor.querySelectorAll('.novedad-group');
+      novedades.forEach((novedad, nIndex) => {
+        const tipo = novedad.querySelector(`select[name="vehiculo_${i}_tipo_novedad_${nIndex}"]`)?.value || '';
+        const descripcion = novedad.querySelector(`textarea[name="vehiculo_${i}_descripcion_novedad_${nIndex}"]`)?.value || '';
+        const foto_url = novedad.querySelector(`input[name="vehiculo_${i}_foto_novedad_${nIndex}_url"]`)?.value || '';
+        
+        novedadesData.push({
+          tipo: tipo,
+          descripcion: descripcion,
+          foto_url: foto_url
+        });
+      });
+    }
+    
+    // ✅ ASIGNAR TODOS LOS DATOS AL VEHÍCULO
     vehiculosData[i] = {
       inicio: getValue(`vehiculo_${i}_inicio`),
       fin: getValue(`vehiculo_${i}_fin`),
-      motivo: motivo,  // ✅ CAPTURAR DIRECTAMENTE DEL SELECT
+      motivo: getValue(`vehiculo_${i}_motivo`),  // ✅ AHORA CAPTURA DEL VISIBLE
       otro_motivo: getValue(`vehiculo_${i}_otro_motivo`),
       tipo_carga: getValue(`vehiculo_${i}_tipo_carga`),
       muelle: getValue(`vehiculo_${i}_muelle`),
@@ -1563,18 +1600,32 @@ function sincronizarVehiculosDesdeDOM() {
       origen: getValue(`vehiculo_${i}_origen`),
       otro_origen: getValue(`vehiculo_${i}_otro_origen`),
       personas: getValue(`vehiculo_${i}_personas`),
+      nombres_personal: nombresPersonal,
       cajas: getValue(`vehiculo_${i}_cajas`),
       foto_url: getValue(`vehiculo_${i}_foto_url`),
-      tipo_operacion: getValue(`vehiculo_${i}_tipo_operacion`) || ''
+      tipo_operacion: getValue(`vehiculo_${i}_tipo_operacion`) || '',
+      interior_camion: interiorCamion,
+      estado_carpa: estadoCarpa,
+      olores_extranos: oloresExtranos,
+      objetos_extranos: objetosExtranos,
+      evidencias_plagas: evidenciasPlagas,
+      estado_suelo: estadoSuelo,
+      aprobado: aprobado,
+      justificaciones: justificacionesData,
+      novedades: novedadesData
     };
-    
-    // ✅ DEBUG POR VEHÍCULO
-    console.log(`📊 Vehículo ${i}:`, {
-      motivo: vehiculosData[i].motivo,
-      destino: vehiculosData[i].destino,
-      origen: vehiculosData[i].origen
-    });
   }
+  
+  // ✅ Depuración
+  console.log('📊 Datos de vehículos sincronizados:');
+  vehiculosData.forEach((v, i) => {
+    console.log(`Vehículo ${i}:`, {
+      placa: v.placa,
+      motivo: v.motivo,  // ✅ Verifica que tenga valor
+      tipo_carga: v.tipo_carga,
+      tipo_operacion: v.tipo_operacion
+    });
+  });
 }
         // ============================================
         // MANEJO DE CAMPOS "OTRO"
@@ -1625,38 +1676,46 @@ function sincronizarVehiculosDesdeDOM() {
         // FUNCIONES DE VISUALIZACIÓN CONDICIONAL
         // ============================================
 
-// ✅ FUNCIÓN CORREGIDA: Aislar campos por vehículo específico
-function alternarDestinoRemitente(selectMotivo, vIndex) {
+        function alternarDestinoRemitente(selectMotivo, vIndex) {
   const motivo = selectMotivo.value;
+  const destinoGroup = document.getElementById(`destino-group-${vIndex}`);
+  const remitenteGroup = document.getElementById(`remitente-group-${vIndex}`);
   
-  // ✅ USAR SELECTORES ESPECÍFICOS POR VEHÍCULO
-  const registro = selectMotivo.closest('.registro-vehiculo');
-  if (!registro) return;
-  
-  const destinoGroup = registro.querySelector(`#destino-group-${vIndex}`);
-  const remitenteGroup = registro.querySelector(`#remitente-group-${vIndex}`);
-  const container = registro.querySelector(`#conditional-destino-origen-${vIndex}`);
-  
-  // ✅ Mostrar/ocultar según motivo
+  // ✅ Mostrar/ocultar Destino y Origen según el motivo
   if (destinoGroup) destinoGroup.style.display = motivo === 'cargue' ? 'block' : 'none';
   if (remitenteGroup) remitenteGroup.style.display = motivo === 'descargue' ? 'block' : 'none';
-  if (container) container.style.display = (motivo === 'cargue' || motivo === 'descargue') ? 'block' : 'none';
   
-  // ✅ Manejar campos "otro"
-  const destinoSelect = registro.querySelector(`#destino-select-${vIndex}`);
-  const remitenteSelect = registro.querySelector(`#remitente-select-${vIndex}`);
+  // ✅ Mostrar/ocultar el contenedor completo de Destino/Origen
+  const container = document.getElementById(`conditional-destino-origen-${vIndex}`);
+  if (container) {
+    container.style.display = (motivo === 'cargue' || motivo === 'descargue') ? 'block' : 'none';
+  }
+  
+  // ✅ Manejar campos "otro" si existen
+  const destinoSelect = document.getElementById(`destino-select-${vIndex}`);
+  const remitenteSelect = document.getElementById(`remitente-select-${vIndex}`);
   
   if (destinoSelect) {
-    const otroDestinoInput = registro.querySelector(`#otro_destino_${vIndex}`);
+    const otroDestinoInput = document.getElementById(`otro_destino_${vIndex}`);
     if (otroDestinoInput) {
-      otroDestinoInput.style.display = destinoSelect.value === 'otro' ? 'block' : 'none';
+      if (destinoSelect.value === 'otro') {
+        otroDestinoInput.style.display = 'block';
+      } else {
+        otroDestinoInput.style.display = 'none';
+        otroDestinoInput.value = '';
+      }
     }
   }
   
   if (remitenteSelect) {
-    const otroOrigenInput = registro.querySelector(`#otro_origen_${vIndex}`);
+    const otroOrigenInput = document.getElementById(`otro_origen_${vIndex}`);
     if (otroOrigenInput) {
-      otroOrigenInput.style.display = remitenteSelect.value === 'otro' ? 'block' : 'none';
+      if (remitenteSelect.value === 'otro') {
+        otroOrigenInput.style.display = 'block';
+      } else {
+        otroOrigenInput.style.display = 'none';
+        otroOrigenInput.value = '';
+      }
     }
   }
   
@@ -1724,405 +1783,487 @@ function actualizarTipoOperacionPorLugar() {
         // CREACIÓN DE HTML PARA VEHÍCULOS
         // ============================================
 
-// ============================================
-// CREACIÓN DE HTML PARA VEHÍCULOS
-// ============================================
-function crearVehiculoHTML(contenedor, vIndex, datos = {}) {
-  const inicioId = `cargue-inicio-${vIndex}`;
-  const finId = `cargue-fin-${vIndex}`;
-  const fotoInputId = `foto_vehiculo_${vIndex}`;
-  const previewFotoId = `preview_foto_${vIndex}`;
-  const motivoSelectId = `motivo-cargue-descargue-${vIndex}`;
-  
-  const registro = document.createElement('div');
-  registro.className = 'registro-vehiculo';
-  registro.dataset.index = vIndex;
-  
-  const html = `
-    <button type="button" class="btn-eliminar-registro" onclick="eliminarRegistroVehiculo(${vIndex})">
-      Eliminar Vehículo #${vIndex + 1}
-    </button>
-    <hr style="margin-top:25px; border-style:dashed;">
-    <h3 style="text-align:center; color:#292929;">VEHÍCULO #${vIndex + 1}</h3>
-    <h4 style="font-family: Arial, sans-serif; color: #983f03; text-align: center; text-transform: uppercase; margin: 20px 0;">Cargue/Descargue</h4>
-    
-    <button type="button" onclick="abrirInspeccionVehiculo(${vIndex})"
-      style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 15px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; margin: 10px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-      🔍 Inspección de Vehículo
-    </button>
-    
-    <div class="parada-group">
-      <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #1 (Cargue/Descargue)</p>
-      
-      <!-- ✅ SISTEMA INTELIGENTE DE CONTROL DE TIEMPO -->
-      <div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
-        <div class="time-row" style="margin-bottom: 12px;">
-          <div>
-            <label class="time-label">Hora Inicio (HH:MM):</label>
-            <input type="tel" name="vehiculo_${vIndex}_inicio" id="inicio-input-${vIndex}" class="time-input-masked" required
-              placeholder="HH:MM" maxlength="5" value="${datos.inicio || ''}"
-              onblur="applyTimeMask(this, '${inicioId}');" readonly
-              style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1em; box-sizing: border-box;">
-            <span id="${inicioId}" class="time-display"></span>
-          </div>
-          <div>
-            <label class="time-label">Hora Final (HH:MM):</label>
-            <input type="tel" name="vehiculo_${vIndex}_fin" id="fin-input-${vIndex}" class="time-input-masked" required
-              placeholder="HH:MM" maxlength="5" value="${datos.fin || ''}"
-              onblur="applyTimeMask(this, '${finId}');" readonly
-              style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1em; box-sizing: border-box;">
-            <span id="${finId}" class="time-display"></span>
-          </div>
-        </div>
-        
-        <!-- ✅ BOTONES DE CONTROL EN UNA SOLA LÍNEA -->
-        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
-          <button type="button" id="btn-control-tiempo-${vIndex}" onclick="controlarTiempoVehiculo(${vIndex})"
+        function crearVehiculoHTML(contenedor, vIndex, datos = {}) {
+            const inicioId = `cargue-inicio-${vIndex}`;
+            const finId = `cargue-fin-${vIndex}`;
+            const fotoInputId = `foto_vehiculo_${vIndex}`;
+            const previewFotoId = `preview_foto_${vIndex}`;
+            const motivoSelectId = `motivo-cargue-descargue-${vIndex}`;
+            
+            const registro = document.createElement('div');
+            registro.className = 'registro-vehiculo';
+            registro.dataset.index = vIndex;
+            
+            
+            const html = `
+                <button type="button" class="btn-eliminar-registro" onclick="eliminarRegistroVehiculo(${vIndex})">
+                    Eliminar Vehículo #${vIndex + 1}
+                </button>
+                
+                <hr style="margin-top:25px; border-style:dashed;">
+                
+                <h3 style="text-align:center; color:#292929;">VEHÍCULO #${vIndex + 1}</h3>
+                <h4 style="font-family: Arial, sans-serif; color: #983f03; text-align: center; text-transform: uppercase; margin: 20px 0;">Cargue/Descargue</h4>
+                <button type="button" onclick="abrirInspeccionVehiculo(${vIndex})"
+                        style="background: linear-gradient(135deg, #001855 0%, #0039 100%); color: white; border: none; padding: 15px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; margin: 10px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                    🔍 Inspección de Vehículo
+                </button>
+
+                <div class="parada-group">
+                    <p style="font-weight:bold; margin-top:0; color:#555;">🛑 Parada #1 (Cargue/Descargue)</p>
+                    
+                    <!-- ✅ SISTEMA INTELIGENTE DE CONTROL DE TIEMPO -->
+<div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;">
+  <div class="time-row" style="margin-bottom: 12px;">
+    <div>
+      <label class="time-label">Hora Inicio (HH:MM):</label>
+      <input type="tel" name="vehiculo_${vIndex}_inicio" id="inicio-input-${vIndex}" class="time-input-masked" required
+          placeholder="HH:MM" maxlength="5" value="${datos.inicio || ''}"
+          onblur="applyTimeMask(this, '${inicioId}');"
+          readonly  <!-- ✅ BLOQUEADO POR DEFECTO -->
+          <style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1em; box-sizing: border-box;">
+      <span id="${inicioId}" class="time-display"></span>
+    </div>
+    <div>
+      <label class="time-label">Hora Final (HH:MM):</label>
+      <input type="tel" name="vehiculo_${vIndex}_fin" id="fin-input-${vIndex}" class="time-input-masked" required
+          placeholder="HH:MM" maxlength="5" value="${datos.fin || ''}"
+          onblur="applyTimeMask(this, '${finId}');"
+          readonly  <!-- ✅ BLOQUEADO POR DEFECTO -->
+          <style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1em; box-sizing: border-box;">
+      <span id="${finId}" class="time-display"></span>
+    </div>
+  </div>
+
+  <!-- ✅ BOTONES DE CONTROL EN UNA SOLA LÍNEA -->
+  <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+    <!-- Botón Iniciar/Finalizar -->
+    <button type="button" id="btn-control-tiempo-${vIndex}" 
+            onclick="controlarTiempoVehiculo(${vIndex})"
             style="flex: 1; min-width: 120px; padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; font-size: 0.95em; cursor: pointer; transition: all 0.2s;">
-            ${datos.inicio ? '⏹️ Finalizar' : '▶️ Iniciar'}
-          </button>
-          <button type="button" id="btn-editar-tiempo-${vIndex}" onclick="editarTiempoVehiculo(${vIndex})"
+      ${datos.inicio ? '⏹️ Finalizar' : '▶️ Iniciar'}
+    </button>
+
+    <!-- Botón Editar / Guardar -->
+    <button type="button" id="btn-editar-tiempo-${vIndex}"
+            onclick="editarTiempoVehiculo(${vIndex})"
             style="flex: 1; min-width: 120px; padding: 10px 15px; background: linear-gradient(135deg, #6c757d 0%, #495054 100%); color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 0.95em; cursor: pointer; transition: all 0.2s;">
-            ✏️ Editar Tiempo
-          </button>
-          <button type="button" id="btn-eliminar-tiempo-${vIndex}" onclick="eliminarTiempoVehiculo(${vIndex})"
+      ✏️ Editar Tiempo
+    </button>
+
+    <!-- Botón Eliminar -->
+    <button type="button" id="btn-eliminar-tiempo-${vIndex}"
+            onclick="eliminarTiempoVehiculo(${vIndex})"
             style="flex: 1; min-width: 120px; padding: 10px 15px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 0.95em; cursor: pointer; transition: all 0.2s;">
-            🗑️ Eliminar
-          </button>
-        </div>
-      </div>
-      
-      <!-- ✅ MOTIVO Y TIPO DE OPERACIÓN -->
-      <div id="motivo-tipo-operacion-container-${vIndex}" style="margin-bottom: 15px;">
-        <div id="motivo-tipo-linea-${vIndex}" style="display: none; gap: 20px; align-items: flex-start;">
-          <div style="flex: 1;">
-            <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Motivo:</label>
-            <select id="${motivoSelectId}" name="vehiculo_${vIndex}_motivo"
+      🗑️ Eliminar
+    </button>
+  </div>
+</div>
+                    
+                    <!-- ✅ MOTIVO Y TIPO DE OPERACIÓN EN UNA SOLA LÍNEA (solo para Santo Domingo) -->
+<div id="motivo-tipo-operacion-container-${vIndex}" style="margin-bottom: 15px;">
+  <!-- Para Santo Domingo: en una sola línea -->
+  <div id="motivo-tipo-linea-${vIndex}" style="display: none; display: flex; gap: 20px; align-items: flex-start;">
+    <!-- Motivo -->
+    <div style="flex: 1;">
+      <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Motivo:</label>
+      <select id="${motivoSelectId}" name="vehiculo_${vIndex}_motivo"
               style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;"
               onchange="alternarDestinoRemitente(this, ${vIndex}); manejarOtroCampo(this);">
-              <option value="">Seleccione</option>
-              <option value="cargue" ${datos.motivo === 'cargue' ? 'selected' : ''}>Cargue</option>
-              <option value="descargue" ${datos.motivo === 'descargue' ? 'selected' : ''}>Descargue</option>
-              <option value="otro" ${datos.motivo === 'otro' ? 'selected' : ''}>Otro</option>
-            </select>
-            <input type="text" name="vehiculo_${vIndex}_otro_motivo" placeholder="Especifique otro motivo" class="otro-input"
-              value="${datos.otro_motivo || ''}"
-              style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
-          </div>
-          <div style="flex: 1;">
-            <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Tipo de Operación:</label>
-            <select id="tipo-operacion-${vIndex}" name="vehiculo_${vIndex}_tipo_operacion"
+        <option value="">Seleccione</option>
+        <option value="cargue" ${datos.motivo === 'cargue' ? 'selected' : ''}>Cargue</option>
+        <option value="descargue" ${datos.motivo === 'descargue' ? 'selected' : ''}>Descargue</option>
+        <option value="otro" ${datos.motivo === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      <input type="text" name="vehiculo_${vIndex}_otro_motivo" placeholder="Especifique otro motivo" class="otro-input" 
+             value="${datos.otro_motivo || ''}"
+             style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
+    </div>
+    
+    <!-- Tipo de Operación -->
+    <div style="flex: 1;">
+      <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Tipo de Operación:</label>
+      <select id="tipo-operacion-${vIndex}" name="vehiculo_${vIndex}_tipo_operacion"
               style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
-              <option value="">Seleccione tipo</option>
-              <option value="3PD" ${datos.tipo_operacion === '3PD' ? 'selected' : ''}>3PD</option>
-              <option value="MQ" ${datos.tipo_operacion === 'MQ' ? 'selected' : ''}>MQ</option>
-            </select>
-          </div>
-        </div>
-        <div id="motivo-solo-${vIndex}" style="display: block;">
-          <label style="margin-top:5px; display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Motivo:</label>
-          <select id="${motivoSelectId}" name="vehiculo_${vIndex}_motivo" required
+        <option value="">Seleccione tipo</option>
+        <option value="3PD" ${datos.tipo_operacion === '3PD' ? 'selected' : ''}>3PD</option>
+        <option value="MQ" ${datos.tipo_operacion === 'MQ' ? 'selected' : ''}>MQ</option>
+      </select>
+    </div>
+  </div>
+  
+  <!-- Para otros lugares: diseño original -->
+  <div id="motivo-solo-${vIndex}" style="display: block;">
+    <label style="margin-top:5px; display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Motivo:</label>
+    <select id="${motivoSelectId}" name="vehiculo_${vIndex}_motivo" required
             onchange="alternarDestinoRemitente(this, ${vIndex}); manejarOtroCampo(this);">
-            <option value="">Seleccione</option>
-            <option value="cargue" ${datos.motivo === 'cargue' ? 'selected' : ''}>Cargue</option>
-            <option value="descargue" ${datos.motivo === 'descargue' ? 'selected' : ''}>Descargue</option>
-            <option value="otro" ${datos.motivo === 'otro' ? 'selected' : ''}>Otro</option>
-          </select>
-          <input type="text" name="vehiculo_${vIndex}_otro_motivo" placeholder="Especifique otro motivo" class="otro-input" value="${datos.otro_motivo || ''}">
-        </div>
-      </div>
-      
-      <div style="margin-bottom: 15px;">
-        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Tipo de Carga:</label>
-        <select name="vehiculo_${vIndex}_tipo_carga" id="tipo-carga-${vIndex}"
-          style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
-          <option value="">Seleccione tipo de carga</option>
-          <option value="Paletizado" ${datos.tipo_carga === 'Paletizado' ? 'selected' : ''}>Paletizado</option>
-          <option value="Arrume" ${datos.tipo_carga === 'Arrume' ? 'selected' : ''}>Arrume</option>
-        </select>
-      </div>
-    </div>
-    
-    <hr style="margin-top:25px; border-style:dashed;">
-    
-    <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 15px;">
-      <div style="flex: 1;">
-        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Muelle:</label>
-        <select name="vehiculo_${vIndex}_muelle" id="muelle-select-${vIndex}" required onchange="manejarOtroMuelle(${vIndex})"
-          style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
-          <option value="">Seleccione</option>
-        </select>
-        <input type="number" name="vehiculo_${vIndex}_otro_muelle_num" id="otro_muelle_${vIndex}" class="otro-input"
-          placeholder="N° muelle" min="1" max="999" value="${datos.otro_muelle_num || ''}"
-          style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
-      </div>
-      <div style="flex: 1;">
-        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Placa:</label>
-        <input type="text" name="vehiculo_${vIndex}_placa" required placeholder="ABC123, 123ABC o A12345" maxlength="6"
-          value="${datos.placa || ''}"
-          oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0,6); guardarProgreso();"
-          style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
-      </div>
-    </div>
-    
-    <div style="display: flex; gap: 20px; margin-bottom: 15px;">
-      <div style="flex: 1;">
-        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Tipo De Vehículo:</label>
-        <select name="vehiculo_${vIndex}_tipo_vehi" required id="tipo_vehi_${vIndex}"
-          style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
-          <option value="">Seleccione</option>
-          <option value="Van extralargo" ${datos.tipo_vehi === 'Van extralargo' ? 'selected' : ''}>Van extralargo</option>
-          <option value="Camion sencillo furgonado" ${datos.tipo_vehi === 'Camion sencillo furgonado' ? 'selected' : ''}>Camión sencillo furgonado</option>
-          <option value="Camabaja furgonado" ${datos.tipo_vehi === 'Camabaja furgonado' ? 'selected' : ''}>Camabaja furgonado</option>
-          <option value="Tractomula furgonado" ${datos.tipo_vehi === 'Tractomula furgonado' ? 'selected' : ''}>Tractomula furgonado</option>
-          <option value="Exportacion 35" ${datos.tipo_vehi === 'Exportacion 35' ? 'selected' : ''}>Exportacion 35</option>
-          <option value="Exportacion 40" ${datos.tipo_vehi === 'Exportacion 40' ? 'selected' : ''}>Exportacion 40</option>
-          <option value="Cama baja con topes" ${datos.tipo_vehi === 'Cama baja con topes' ? 'selected' : ''}>Cama baja con topes</option>
-          <option value="Camion sencillo carpado" ${datos.tipo_vehi === 'Camion sencillo carpado' ? 'selected' : ''}>Camión Sencillo Carpado</option>
-          <option value="Camabaja estandar" ${datos.tipo_vehi === 'Camabaja estandar' ? 'selected' : ''}>Camabaja estandar</option>
-          <option value="otro" ${datos.tipo_vehi === 'otro' ? 'selected' : ''}>Otro</option>
-        </select>
-        <input type="text" name="vehiculo_${vIndex}_otro_tipo" id="otro_tipo_${vIndex}" class="otro-input"
-          placeholder="Especifique tipo" value="${datos.otro_tipo || ''}"
-          style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
-      </div>
-      
-      <div style="flex: 1;" id="conditional-destino-origen-${vIndex}">
-        <div class="form-group-custom" id="destino-group-${vIndex}" style="${(datos.motivo === 'cargue') ? 'display:block;' : 'display:none;'}">
-          <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; margin-top:0;">Destino:</label>
-          <select id="destino-select-${vIndex}" name="vehiculo_${vIndex}_destino"
+      <option value="">Seleccione</option>
+      <option value="cargue" ${datos.motivo === 'cargue' ? 'selected' : ''}>Cargue</option>
+      <option value="descargue" ${datos.motivo === 'descargue' ? 'selected' : ''}>Descargue</option>
+      <option value="otro" ${datos.motivo === 'otro' ? 'selected' : ''}>Otro</option>
+    </select>
+    <input type="text" name="vehiculo_${vIndex}_otro_motivo" placeholder="Especifique otro motivo" class="otro-input" value="${datos.otro_motivo || ''}">
+  </div>
+</div>
+
+<div style="margin-bottom: 15px;">
+  <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Tipo de Carga:</label>
+  <select name="vehiculo_${vIndex}_tipo_carga" id="tipo-carga-${vIndex}"
+    style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+    <option value="">Seleccione tipo de carga</option>
+    <option value="Paletizado" ${datos.tipo_carga === 'Paletizado' ? 'selected' : ''}>Paletizado</option>
+    <option value="Arrume" ${datos.tipo_carga === 'Arrume' ? 'selected' : ''}>Arrume</option>
+  </select>
+</div>
+                </div>
+                
+                <hr style="margin-top:25px; border-style:dashed;">
+
+                <div style="display: flex; gap: 20px; align-items: flex-start; margin-bottom: 15px;">
+                  <!-- Muelle -->
+                  <div style="flex: 1;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Muelle:</label>
+                    <select name="vehiculo_${vIndex}_muelle" id="muelle-select-${vIndex}" required onchange="manejarOtroMuelle(${vIndex})"
+                            style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+                      <option value="">Seleccione</option>
+                      <!-- Los muelles se generarán dinámicamente -->
+                    </select>
+                    <input type="number" name="vehiculo_${vIndex}_otro_muelle_num" id="otro_muelle_${vIndex}" class="otro-input" 
+                          placeholder="N° muelle" min="1" max="999" value="${datos.otro_muelle_num || ''}"
+                          style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
+                  </div>
+                  
+                  <!-- Placa -->
+                  <div style="flex: 1;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Placa:</label>
+                    <input type="text" name="vehiculo_${vIndex}_placa" required 
+                          placeholder="ABC123, 123ABC o A12345" maxlength="6"
+                          value="${datos.placa || ''}"
+                          oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0,6); guardarProgreso();"
+                          style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+                  </div>
+                </div>
+                <!-- ✅ TIPO DE VEHÍCULO Y DESTINO/ORIGEN EN UNA SOLA LÍNEA -->
+<div style="display: flex; gap: 20px; margin-bottom: 15px;">
+  <!-- TIPO DE VEHÍCULO (siempre visible) -->
+  <div style="flex: 1;">
+    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Tipo De Vehículo:</label>
+    <select name="vehiculo_${vIndex}_tipo_vehi" required id="tipo_vehi_${vIndex}"
             style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
-            <option value="">Seleccione Destino</option>
-            <option value="BARRANQUILLA" ${datos.destino === 'BARRANQUILLA' ? 'selected' : ''}>BARRANQUILLA</option>
-            <option value="CALI" ${datos.destino === 'CALI' ? 'selected' : ''}>CALI</option>
-            <option value="BUCARAMANGA" ${datos.destino === 'BUCARAMANGA' ? 'selected' : ''}>BUCARAMANGA</option>
-            <option value="MEDELLIN" ${datos.destino === 'MEDELLIN' ? 'selected' : ''}>MEDELLIN</option>
-            <option value="MONTERIA" ${datos.destino === 'MONTERIA' ? 'selected' : ''}>MONTERIA</option>
-            <option value="GUARNE" ${datos.destino === 'GUARNE' ? 'selected' : ''}>GUARNE</option>
-            <option value="PEREIRA" ${datos.destino === 'PEREIRA' ? 'selected' : ''}>PEREIRA</option>
-            <option value="PERU" ${datos.destino === 'PERU' ? 'selected' : ''}>PERU</option>
-            <option value="ECUADOR" ${datos.destino === 'ECUADOR' ? 'selected' : ''}>ECUADOR</option>
-            <option value="FUNZA" ${datos.destino === 'FUNZA' ? 'selected' : ''}>FUNZA</option>
-            <option value="BOLIVIA" ${datos.destino === 'BOLIVIA' ? 'selected' : ''}>BOLIVIA</option>
-            <option value="SANTO DOMINGO" ${datos.destino === 'SANTO DOMINGO' ? 'selected' : ''}>SANTO DOMINGO</option>
-            <option value="LOCALES" ${datos.destino === 'LOCALES' ? 'selected' : ''}>LOCALES</option>
-            <option value="INNOVA" ${datos.destino === 'INNOVA' ? 'selected' : ''}>INNOVA</option>
-            <option value="CUCUTA" ${datos.destino === 'CUCUTA' ? 'selected' : ''}>CUCUTA</option>
-            <option value="LA ESTANCIA" ${datos.destino === 'LA ESTANCIA' ? 'selected' : ''}>LA ESTANCIA</option>
-            <option value="CIUDAD BOLIVAR" ${datos.destino === 'CIUDAD BOLIVAR' ? 'selected' : ''}>CIUDAD BOLIVAR</option>
-            <option value="VILLAVICENCIO" ${datos.destino === 'VILLAVICENCIO' ? 'selected' : ''}>VILLAVICENCIO</option>
-            <option value="ACACIAS" ${datos.destino === 'ACACIAS' ? 'selected' : ''}>ACACIAS</option>
-            <option value="otro" ${datos.destino === 'otro' ? 'selected' : ''}>Otro</option>
-          </select>
-          <input type="text" name="vehiculo_${vIndex}_otro_destino" id="otro_destino_${vIndex}" class="otro-input"
-            placeholder="Especifique otro destino" value="${datos.otro_destino || ''}"
-            style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
-        </div>
-        
-        <div class="form-group-custom" id="remitente-group-${vIndex}" style="${(datos.motivo === 'descargue') ? 'display:block;' : 'display:none;'}">
-          <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; margin-top:0;">Origen / Remitente:</label>
-          <select id="remitente-select-${vIndex}" name="vehiculo_${vIndex}_origen"
-            style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
-            <option value="">Seleccione Origen</option>
-            <option value="BARRANQUILLA" ${datos.origen === 'BARRANQUILLA' ? 'selected' : ''}>BARRANQUILLA</option>
-            <option value="CALI" ${datos.origen === 'CALI' ? 'selected' : ''}>CALI</option>
-            <option value="BUCARAMANGA" ${datos.origen === 'BUCARAMANGA' ? 'selected' : ''}>BUCARAMANGA</option>
-            <option value="MEDELLIN" ${datos.origen === 'MEDELLIN' ? 'selected' : ''}>MEDELLIN</option>
-            <option value="MONTERIA" ${datos.origen === 'MONTERIA' ? 'selected' : ''}>MONTERIA</option>
-            <option value="GUARNE" ${datos.origen === 'GUARNE' ? 'selected' : ''}>GUARNE</option>
-            <option value="PEREIRA" ${datos.origen === 'PEREIRA' ? 'selected' : ''}>PEREIRA</option>
-            <option value="PERU" ${datos.origen === 'PERU' ? 'selected' : ''}>PERU</option>
-            <option value="ECUADOR" ${datos.origen === 'ECUADOR' ? 'selected' : ''}>ECUADOR</option>
-            <option value="FUNZA" ${datos.origen === 'FUNZA' ? 'selected' : ''}>FUNZA</option>
-            <option value="BOLIVIA" ${datos.origen === 'BOLIVIA' ? 'selected' : ''}>BOLIVIA</option>
-            <option value="SANTO DOMINGO" ${datos.origen === 'SANTO DOMINGO' ? 'selected' : ''}>SANTO DOMINGO</option>
-            <option value="LOCALES" ${datos.origen === 'LOCALES' ? 'selected' : ''}>LOCALES</option>
-            <option value="INNOVA" ${datos.origen === 'INNOVA' ? 'selected' : ''}>INNOVA</option>
-            <option value="CUCUTA" ${datos.origen === 'CUCUTA' ? 'selected' : ''}>CUCUTA</option>
-            <option value="LA ESTANCIA" ${datos.origen === 'LA ESTANCIA' ? 'selected' : ''}>LA ESTANCIA</option>
-            <option value="CIUDAD BOLIVAR" ${datos.origen === 'CIUDAD BOLIVAR' ? 'selected' : ''}>CIUDAD BOLIVAR</option>
-            <option value="VILLAVICENCIO" ${datos.origen === 'VILLAVICENCIO' ? 'selected' : ''}>VILLAVICENCIO</option>
-            <option value="ACACIAS" ${datos.origen === 'ACACIAS' ? 'selected' : ''}>ACACIAS</option>
-            <option value="otro" ${datos.origen === 'otro' ? 'selected' : ''}>Otro</option>
-          </select>
-          <input type="text" name="vehiculo_${vIndex}_otro_origen" id="otro_origen_${vIndex}" class="otro-input"
-            placeholder="Especifique otro origen" value="${datos.otro_origen || ''}"
-            style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
-        </div>
-      </div>
+      <option value="">Seleccione</option>
+      <option value="Van extralargo" ${datos.tipo_vehi === 'Van extralargo' ? 'selected' : ''}>Van extralargo</option>
+      <option value="Camion sencillo furgonado" ${datos.tipo_vehi === 'Camion sencillo furgonado' ? 'selected' : ''}>Camión sencillo furgonado</option>
+      <option value="Camabaja furgonado" ${datos.tipo_vehi === 'Camabaja furgonado' ? 'selected' : ''}>Camabaja furgonado</option>
+      <option value="Tractomula furgonado" ${datos.tipo_vehi === 'Tractomula furgonado' ? 'selected' : ''}>Tractomula furgonado</option>
+      <option value="Exportacion 35" ${datos.tipo_vehi === 'Exportacion 35' ? 'selected' : ''}>Exportacion 35</option>
+      <option value="Exportacion 40" ${datos.tipo_vehi === 'Exportacion 40' ? 'selected' : ''}>Exportacion 40</option>
+      <option value="Cama baja con topes" ${datos.tipo_vehi === 'Cama baja con topes' ? 'selected' : ''}>Cama baja con topes</option>
+      <option value="Camion sencillo carpado" ${datos.tipo_vehi === 'Camion sencillo carpado' ? 'selected' : ''}>Camión Sencillo Carpado</option>
+      <option value="Camabaja estandar" ${datos.tipo_vehi === 'Camabaja estandar' ? 'selected' : ''}>Camabaja estandar</option>
+      <option value="otro" ${datos.tipo_vehi === 'otro' ? 'selected' : ''}>Otro</option>
+    </select>
+    <input type="text" name="vehiculo_${vIndex}_otro_tipo" id="otro_tipo_${vIndex}" class="otro-input" 
+           placeholder="Especifique tipo" value="${datos.otro_tipo || ''}"
+           style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
+  </div>
+  
+  <!-- DESTINO/ORIGEN (condicional según motivo) -->
+  <div style="flex: 1;" id="conditional-destino-origen-${vIndex}">
+    <!-- DESTINO (visible solo si motivo = cargue) -->
+    <div class="form-group-custom" id="destino-group-${vIndex}" style="${(datos.motivo === 'cargue') ? 'display:block;' : 'display:none;'}">
+      <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; margin-top:0;">Destino:</label>
+      <select id="destino-select-${vIndex}" name="vehiculo_${vIndex}_destino"
+              style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione Destino</option>
+        <option value="BARRANQUILLA" ${datos.destino === 'BARRANQUILLA' ? 'selected' : ''}>BARRANQUILLA</option>
+        <option value="CALI" ${datos.destino === 'CALI' ? 'selected' : ''}>CALI</option>
+        <option value="BUCARAMANGA" ${datos.destino === 'BUCARAMANGA' ? 'selected' : ''}>BUCARAMANGA</option>
+        <option value="MEDELLIN" ${datos.destino === 'MEDELLIN' ? 'selected' : ''}>MEDELLIN</option>
+        <option value="MONTERIA" ${datos.destino === 'MONTERIA' ? 'selected' : ''}>MONTERIA</option>
+        <option value="GUARNE" ${datos.destino === 'GUARNE' ? 'selected' : ''}>GUARNE</option>
+        <option value="PEREIRA" ${datos.destino === 'PEREIRA' ? 'selected' : ''}>PEREIRA</option>
+        <option value="PERU" ${datos.destino === 'PERU' ? 'selected' : ''}>PERU</option>
+        <option value="ECUADOR" ${datos.destino === 'ECUADOR' ? 'selected' : ''}>ECUADOR</option>
+        <option value="FUNZA" ${datos.destino === 'FUNZA' ? 'selected' : ''}>FUNZA</option>
+        <option value="BOLIVIA" ${datos.destino === 'BOLIVIA' ? 'selected' : ''}>BOLIVIA</option>
+        <option value="SANTO DOMINGO" ${datos.destino === 'SANTO DOMINGO' ? 'selected' : ''}>SANTO DOMINGO</option>
+        <option value="LOCALES" ${datos.destino === 'LOCALES' ? 'selected' : ''}>LOCALES</option>
+        <option value="INNOVA" ${datos.destino === 'INNOVA' ? 'selected' : ''}>INNOVA</option>
+        <option value="CUCUTA" ${datos.destino === 'CUCUTA' ? 'selected' : ''}>CUCUTA</option>
+        <option value="LA ESTANCIA" ${datos.destino === 'LA ESTANCIA' ? 'selected' : ''}>LA ESTANCIA</option>
+        <option value="CIUDAD BOLIVAR" ${datos.destino === 'CIUDAD BOLIVAR' ? 'selected' : ''}>CIUDAD BOLIVAR</option>
+        <option value="VILLAVICENCIO" ${datos.destino === 'VILLAVICENCIO' ? 'selected' : ''}>VILLAVICENCIO</option>
+        <option value="ACACIAS" ${datos.destino === 'ACACIAS' ? 'selected' : ''}>ACACIAS</option>
+        <option value="otro" ${datos.destino === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      <input type="text" name="vehiculo_${vIndex}_otro_destino" id="otro_destino_${vIndex}" class="otro-input" 
+             placeholder="Especifique otro destino" value="${datos.otro_destino || ''}"
+             style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
     </div>
     
-    <label>Numero De Personas en Actividad:</label>
-    <input type="number" name="vehiculo_${vIndex}_personas" min="1" required value="${datos.personas || ''}" oninput="generarCamposNombresVehiculo(${vIndex}); guardarProgreso()">
-    <div id="nombres-personal-${vIndex}" style="margin-top: 15px;"></div>
-    
-    <label>Cajas Movidas:</label>
-    <input type="number" name="vehiculo_${vIndex}_cajas" class="cajas-input-js" min="0" readonly
-      value="${datos.cajas || '0'}"
-      style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
-    
-    <div style="background: #e7f3ff; padding: 15px; border-radius: 8px; margin-top: 15px; border: 2px solid #001855;">
-      <h5 style="margin-top: 0; color: #001855; font-size: 0.95em;">📦 Picking de Productos</h5>
-      <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
-        <div style="display: flex; gap: 10px; align-items: center;">
-          <input type="text" id="codigo-picking-${vIndex}" placeholder="EAN o código especial"
-            style="flex: 3; padding: 10px 12px; border: 2px solid #001855; border-radius: 5px; font-size: 1.1em; font-family: Arial, sans-serif;"
-            onkeypress="if(event.key === 'Enter') agregarProductoPicking(${vIndex})"
-            oninput="validarCodigoPicking(this)">
-          <button type="button" onclick="agregarProductoPicking(${vIndex})"
+    <!-- ORIGEN (visible solo si motivo = descargue) -->
+    <div class="form-group-custom" id="remitente-group-${vIndex}" style="${(datos.motivo === 'descargue') ? 'display:block;' : 'display:none;'}">
+      <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333; margin-top:0;">Origen / Remitente:</label>
+      <select id="remitente-select-${vIndex}" name="vehiculo_${vIndex}_origen"
+              style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione Origen</option>
+        <option value="BARRANQUILLA" ${datos.origen === 'BARRANQUILLA' ? 'selected' : ''}>BARRANQUILLA</option>
+        <option value="CALI" ${datos.origen === 'CALI' ? 'selected' : ''}>CALI</option>
+        <option value="BUCARAMANGA" ${datos.origen === 'BUCARAMANGA' ? 'selected' : ''}>BUCARAMANGA</option>
+        <option value="MEDELLIN" ${datos.origen === 'MEDELLIN' ? 'selected' : ''}>MEDELLIN</option>
+        <option value="MONTERIA" ${datos.origen === 'MONTERIA' ? 'selected' : ''}>MONTERIA</option>
+        <option value="GUARNE" ${datos.origen === 'GUARNE' ? 'selected' : ''}>GUARNE</option>
+        <option value="PEREIRA" ${datos.origen === 'PEREIRA' ? 'selected' : ''}>PEREIRA</option>
+        <option value="PERU" ${datos.origen === 'PERU' ? 'selected' : ''}>PERU</option>
+        <option value="ECUADOR" ${datos.origen === 'ECUADOR' ? 'selected' : ''}>ECUADOR</option>
+        <option value="FUNZA" ${datos.origen === 'FUNZA' ? 'selected' : ''}>FUNZA</option>
+        <option value="BOLIVIA" ${datos.origen === 'BOLIVIA' ? 'selected' : ''}>BOLIVIA</option>
+        <option value="SANTO DOMINGO" ${datos.origen === 'SANTO DOMINGO' ? 'selected' : ''}>SANTO DOMINGO</option>
+        <option value="LOCALES" ${datos.origen === 'LOCALES' ? 'selected' : ''}>LOCALES</option>
+        <option value="INNOVA" ${datos.origen === 'INNOVA' ? 'selected' : ''}>INNOVA</option>
+        <option value="CUCUTA" ${datos.origen === 'CUCUTA' ? 'selected' : ''}>CUCUTA</option>
+        <option value="LA ESTANCIA" ${datos.origen === 'LA ESTANCIA' ? 'selected' : ''}>LA ESTANCIA</option>
+        <option value="CIUDAD BOLIVAR" ${datos.origen === 'CIUDAD BOLIVAR' ? 'selected' : ''}>CIUDAD BOLIVAR</option>
+        <option value="VILLAVICENCIO" ${datos.origen === 'VILLAVICENCIO' ? 'selected' : ''}>VILLAVICENCIO</option>
+        <option value="ACACIAS" ${datos.origen === 'ACACIAS' ? 'selected' : ''}>ACACIAS</option>
+        <option value="otro" ${datos.origen === 'otro' ? 'selected' : ''}>Otro</option>
+      </select>
+      <input type="text" name="vehiculo_${vIndex}_otro_origen" id="otro_origen_${vIndex}" class="otro-input" 
+             placeholder="Especifique otro origen" value="${datos.otro_origen || ''}"
+             style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box; margin-top: 10px; display: none;">
+    </div>
+  </div>
+</div>
+                
+                <label>Numero De Personas en Actividad:</label>
+                <input type="number" name="vehiculo_${vIndex}_personas" min="1" required value="${datos.personas || ''}" oninput="generarCamposNombresVehiculo(${vIndex}); guardarProgreso()">
+                
+                <!-- ✅ Contenedor para nombres del personal (NUEVO) -->
+                <div id="nombres-personal-${vIndex}" style="margin-top: 15px;"></div>
+                
+               <!-- ✅ CAMPO DE CAJAS MOVIDAS (SOLO LECTURA - SE ACTUALIZA AUTOMÁTICAMENTE) -->
+<label>Cajas Movidas:</label>
+<input type="number" name="vehiculo_${vIndex}_cajas" class="cajas-input-js" min="0" readonly
+value="${datos.cajas || '0'}"
+style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
+<!-- ✅ ÁREA DE PICKING CON BOTÓN -->
+<div style="background: #e7f3ff; padding: 15px; border-radius: 8px; margin-top: 15px; border: 2px solid #001855;">
+  <h5 style="margin-top: 0; color: #001855; font-size: 0.95em;">📦 Picking de Productos</h5>
+  
+  <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
+  <div style="display: flex; gap: 10px; align-items: center;">
+    <input type="text" id="codigo-picking-${vIndex}" placeholder="EAN o código especial"
+       style="flex: 3; padding: 10px 12px; border: 2px solid #001855; border-radius: 5px; font-size: 1.1em; font-family: Arial, sans-serif;"
+       onkeypress="if(event.key === 'Enter') agregarProductoPicking(${vIndex})"
+       oninput="validarCodigoPicking(this)">
+           
+    <button type="button" onclick="agregarProductoPicking(${vIndex})"
             style="flex: 1; background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 100px; border-radius: 5px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 0.95em;">
-            ➕ Agregar
-          </button>
-        </div>
-        <button type="button" onclick="document.getElementById('codigo-picking-${vIndex}').value = ''; document.getElementById('codigo-picking-${vIndex}').focus();"
-          style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 0.85em; width: 100px;">
-          🗑️ Borrar
-        </button>
-      </div>
-      <div id="feedback-picking-${vIndex}" style="min-height: 30px; margin-top: 8px;"></div>
-    </div>
-    
-    <div id="resumen-productos-${vIndex}" style="margin-top: 20px; margin-bottom: 15px;"></div>
-    
-    <button type="button" onclick="abrirJustificacionesVehiculo(${vIndex})"
-      style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 15px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-      📋 Justificaciones de Retraso
+      ➕ Agregar
     </button>
-    <div id="justificaciones-contenedor-${vIndex}" style="display: none;"></div>
-    
-    <div id="overlay-justificaciones-${vIndex}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center; padding: 20px;">
-      <div style="background: white; padding: 25px; border-radius: 10px; width: 95%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
-        <h4 style="text-align: center; color: #C76E00; margin-top: 0;">JUSTIFICACIONES DE RETRASO - VEHÍCULO #${vIndex + 1}</h4>
-        <hr style="margin: 15px 0; border-style: dashed;">
-        <div id="justificaciones-overlay-contenedor-${vIndex}" style="margin-bottom: 20px;"></div>
-        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px; padding-top: 15px; border-top: 2px solid #001855;">
-          <button type="button" onclick="agregarJustificacionOverlay(${vIndex})"
-            style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; border: none; padding: 10px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; flex: 1;">
-            ➕ Agregar Justificación
-          </button>
-          <button type="button" onclick="cerrarJustificacionesVehiculo(${vIndex})"
-            style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 10px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; flex: 1;">
-            ✅ Aceptar
-          </button>
-        </div>
-      </div>
-    </div>
-    
-    <div id="novedades-contenedor-${vIndex}" style="display: none;"></div>
-    
-    <div id="overlay-novedades-${vIndex}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center; padding: 20px;">
-      <div style="background: white; padding: 25px; border-radius: 10px; width: 95%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
-        <h4 style="text-align: center; color: #C76E00; margin-top: 0;">NOVEDADES - VEHÍCULO #${vIndex + 1}</h4>
-        <hr style="margin: 15px 0; border-style: dashed;">
-        <div id="novedades-overlay-contenedor-${vIndex}" style="margin-bottom: 20px;"></div>
-        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px; padding-top: 15px; border-top: 2px solid #001855;">
-          <button type="button" onclick="agregarNovedadOverlay(${vIndex})"
-            style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; border: none; padding: 10px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; flex: 1;">
-            ➕ Agregar Novedad
-          </button>
-          <button type="button" onclick="cerrarNovedadesVehiculo(${vIndex})"
-            style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 10px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; flex: 1;">
-            ✅ Aceptar
-          </button>
-        </div>
-      </div>
-    </div>
-    
-    <label>Foto De vehiculo:</label>
-    <input type="file" name="vehiculo_${vIndex}_foto" id="${fotoInputId}" accept="image/*" capture="environment">
-    <div class="preview-foto" id="${previewFotoId}"></div>
-    <input type="hidden" name="vehiculo_${vIndex}_foto_url" id="foto_url_${vIndex}" value="${datos.foto_url || ''}">
-    <p style="font-size:0.85em; color:#6c757d; margin-top:5px;">
-      📸 <strong>La foto se sube automáticamente.</strong> No necesita hacer nada más.
-    </p>
-    
-    <button type="button" onclick="abrirNovedadesVehiculo(${vIndex})"
-      style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 15px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-      📝 Novedades del Vehículo
+  </div>
+  
+    <!-- ✅ Botón de borrar debajo del campo EAN -->
+    <button type="button" onclick="document.getElementById('codigo-picking-${vIndex}').value = ''; document.getElementById('codigo-picking-${vIndex}').focus();"
+            style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 0.85em; width: 100px; transform: translateX(0px);">
+    🗑️ Borrar
     </button>
+</div>
+  
+  <div id="feedback-picking-${vIndex}" style="min-height: 30px; margin-top: 8px;"></div>
+</div>
+
+<!-- ✅ RESUMEN DE PRODUCTOS ESCANEADOS -->
+<div id="resumen-productos-${vIndex}" style="margin-top: 20px; margin-bottom: 15px;"></div>
+
+
+
+
+                
+                <!-- ✅ BOTÓN PARA ABRIR JUSTIFICACIONES -->
+<button type="button" onclick="abrirJustificacionesVehiculo(${vIndex})"
+        style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 15px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+    📋 Justificaciones de Retraso
+</button>
+
+<!-- ✅ CONTENEDOR OCULTO PARA JUSTIFICACIONES (se sincroniza con el overlay) -->
+<div id="justificaciones-contenedor-${vIndex}" style="display: none;"></div>
+
+<!-- ✅ OVERLAY/MODAL DE JUSTIFICACIONES -->
+<div id="overlay-justificaciones-${vIndex}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center; padding: 20px;">
+  <div style="background: white; padding: 25px; border-radius: 10px; width: 95%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
+    <h4 style="text-align: center; color: #C76E00; margin-top: 0;">JUSTIFICACIONES DE RETRASO - VEHÍCULO #${vIndex + 1}</h4>
+    <hr style="margin: 15px 0; border-style: dashed;">
     
-    <div id="overlay-inspeccion-${vIndex}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center;">
-      <div style="background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
-        <h4 style="text-align: center; color: #C76E00; margin-top: 0;">INSPECCIÓN DE VEHÍCULO #${vIndex + 1}</h4>
-        <hr style="margin: 15px 0; border-style: dashed;">
-        <div class="form-group-custom">
-          <label style="margin-top:0; font-weight: bold;">INTERIOR CAMIÓN:</label>
-          <select name="vehiculo_${vIndex}_interior_camion" id="interior_camion_${vIndex}" onchange="validarInspeccion(${vIndex})"
-            style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
-            <option value="">Seleccione</option>
-            <option value="BUENO" ${datos.interior_camion === 'BUENO' ? 'selected' : ''}>BUENO</option>
-            <option value="MALO" ${datos.interior_camion === 'MALO' ? 'selected' : ''}>MALO</option>
-          </select>
-        </div>
-        <div class="form-group-custom">
-          <label style="margin-top:0; font-weight: bold;">ESTADO DE LA CARPA:</label>
-          <select name="vehiculo_${vIndex}_estado_carpa" id="estado_carpa_${vIndex}" onchange="validarInspeccion(${vIndex})"
-            style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
-            <option value="">Seleccione</option>
-            <option value="BUENO" ${datos.estado_carpa === 'BUENO' ? 'selected' : ''}>BUENO</option>
-            <option value="MALO" ${datos.estado_carpa === 'MALO' ? 'selected' : ''}>MALO</option>
-            <option value="N/A" ${datos.estado_carpa === 'N/A' ? 'selected' : ''}>N/A</option>
-          </select>
-        </div>
-        <div class="form-group-custom">
-          <label style="margin-top:0; font-weight: bold;">OLORES EXTRAÑOS:</label>
-          <select name="vehiculo_${vIndex}_olores_extranos" id="olores_extranos_${vIndex}" onchange="validarInspeccion(${vIndex})"
-            style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
-            <option value="">Seleccione</option>
-            <option value="SI" ${datos.olores_extranos === 'SI' ? 'selected' : ''}>SI</option>
-            <option value="NO" ${datos.olores_extranos === 'NO' ? 'selected' : ''}>NO</option>
-          </select>
-        </div>
-        <div class="form-group-custom">
-          <label style="margin-top:0; font-weight: bold;">OBJETOS EXTRAÑOS:</label>
-          <select name="vehiculo_${vIndex}_objetos_extranos" id="objetos_extranos_${vIndex}" onchange="validarInspeccion(${vIndex})"
-            style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
-            <option value="">Seleccione</option>
-            <option value="SI" ${datos.objetos_extranos === 'SI' ? 'selected' : ''}>SI</option>
-            <option value="NO" ${datos.objetos_extranos === 'NO' ? 'selected' : ''}>NO</option>
-          </select>
-        </div>
-        <div class="form-group-custom">
-          <label style="margin-top:0; font-weight: bold;">EVIDENCIAS DE PLAGAS:</label>
-          <select name="vehiculo_${vIndex}_evidencias_plagas" id="evidencias_plagas_${vIndex}" onchange="validarInspeccion(${vIndex})"
-            style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
-            <option value="">Seleccione</option>
-            <option value="SI" ${datos.evidencias_plagas === 'SI' ? 'selected' : ''}>SI</option>
-            <option value="NO" ${datos.evidencias_plagas === 'NO' ? 'selected' : ''}>NO</option>
-          </select>
-        </div>
-        <div class="form-group-custom">
-          <label style="margin-top:0; font-weight: bold;">ESTADO DEL SUELO:</label>
-          <select name="vehiculo_${vIndex}_estado_suelo" id="estado_suelo_${vIndex}" onchange="validarInspeccion(${vIndex})"
-            style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
-            <option value="">Seleccione</option>
-            <option value="BUENO" ${datos.estado_suelo === 'BUENO' ? 'selected' : ''}>BUENO</option>
-            <option value="MALO" ${datos.estado_suelo === 'MALO' ? 'selected' : ''}>MALO</option>
-          </select>
-        </div>
-        <div class="form-group-custom">
-          <label style="margin-top:0; font-weight: bold;">APROBADO:</label>
-          <select name="vehiculo_${vIndex}_aprobado" id="aprobado_${vIndex}" onchange="validarInspeccion(${vIndex})"
-            style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
-            <option value="">Seleccione</option>
-            <option value="SI" ${datos.aprobado === 'SI' ? 'selected' : ''}>SI</option>
-            <option value="NO" ${datos.aprobado === 'NO' ? 'selected' : ''}>NO</option>
-          </select>
-        </div>
-        <div style="text-align: center; margin-top: 25px;">
-          <button type="button" onclick="cerrarInspeccionVehiculo(${vIndex})" id="btn-aceptar-${vIndex}"
-            style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 40px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1.1em; transition: all 0.3s ease;">
-            ✅ Aceptar
-          </button>
-        </div>
-      </div>
+    <!-- CONTENEDOR DE JUSTIFICACIONES -->
+    <div id="justificaciones-overlay-contenedor-${vIndex}" style="margin-bottom: 20px;"></div>
+    
+    <!-- BOTONES DE ACCIÓN -->
+    <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px; padding-top: 15px; border-top: 2px solid #001855;">
+      <button type="button" onclick="agregarJustificacionOverlay(${vIndex})"
+              style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; border: none; padding: 10px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; flex: 1;">
+        ➕ Agregar Justificación
+      </button>
+      
+      <button type="button" onclick="cerrarJustificacionesVehiculo(${vIndex})"
+              style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 10px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; flex: 1;">
+        ✅ Aceptar
+      </button>
     </div>
-  `;
-  
-  registro.innerHTML = html;
-  contenedor.appendChild(registro);
-  
-  // ✅ MOSTRAR/OCULTAR "Tipo de Operación" basado en lugar (Santo Domingo)
+  </div>
+</div>
+
+
+<!-- ✅ BOTÓN PARA ABRIR NOVEDADES -->
+
+
+<!-- ✅ CONTENEDOR OCULTO PARA NOVEDADES (se sincroniza con el overlay) -->
+<div id="novedades-contenedor-${vIndex}" style="display: none;"></div>
+
+<!-- ✅ OVERLAY/MODAL DE NOVEDADES -->
+<div id="overlay-novedades-${vIndex}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center; padding: 20px;">
+  <div style="background: white; padding: 25px; border-radius: 10px; width: 95%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
+    <h4 style="text-align: center; color: #C76E00; margin-top: 0;">NOVEDADES - VEHÍCULO #${vIndex + 1}</h4>
+    <hr style="margin: 15px 0; border-style: dashed;">
+    
+    <!-- CONTENEDOR DE NOVEDADES -->
+    <div id="novedades-overlay-contenedor-${vIndex}" style="margin-bottom: 20px;"></div>
+    
+    <!-- BOTONES DE ACCIÓN -->
+    <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px; padding-top: 15px; border-top: 2px solid #001855;">
+      <button type="button" onclick="agregarNovedadOverlay(${vIndex})"
+              style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; border: none; padding: 10px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; flex: 1;">
+        ➕ Agregar Novedad
+      </button>
+      
+      <button type="button" onclick="cerrarNovedadesVehiculo(${vIndex})"
+              style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 10px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1em; flex: 1;">
+        ✅ Aceptar
+      </button>
+    </div>
+  </div>
+</div>
+
+                
+                <label>Foto De vehiculo:</label>
+                <input type="file" name="vehiculo_${vIndex}_foto" id="${fotoInputId}" accept="image/*" capture="environment">
+                <div class="preview-foto" id="${previewFotoId}"></div>
+                <input type="hidden" name="vehiculo_${vIndex}_foto_url" id="foto_url_${vIndex}" value="${datos.foto_url || ''}">
+                
+                <p style="font-size:0.85em; color:#6c757d; margin-top:5px;">
+                    📸 <strong>La foto se sube automáticamente.</strong> No necesita hacer nada más.
+                </p>
+
+                <button type="button" onclick="abrirNovedadesVehiculo(${vIndex})"
+                    style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 15px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                📝 Novedades del Vehículo
+            </button>
+
+
+
+<!-- ✅ OVERLAY/MODAL DE INSPECCIÓN (con validación visual) -->
+<div id="overlay-inspeccion-${vIndex}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center;">
+  <div style="background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+    <h4 style="text-align: center; color: #C76E00; margin-top: 0;">INSPECCIÓN DE VEHÍCULO #${vIndex + 1}</h4>
+    <hr style="margin: 15px 0; border-style: dashed;">
+    
+    <!-- INTERIOR CAMIÓN -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">INTERIOR CAMIÓN:</label>
+        <select name="vehiculo_${vIndex}_interior_camion" id="interior_camion_${vIndex}" onchange="validarInspeccion(${vIndex})"
+                style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione</option>
+        <option value="BUENO" ${datos.interior_camion === 'BUENO' ? 'selected' : ''}>BUENO</option>
+        <option value="MALO" ${datos.interior_camion === 'MALO' ? 'selected' : ''}>MALO</option>
+        </select>
+    </div>
+
+    <!-- ESTADO DE LA CARPA -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">ESTADO DE LA CARPA:</label>
+        <select name="vehiculo_${vIndex}_estado_carpa" id="estado_carpa_${vIndex}" onchange="validarInspeccion(${vIndex})"
+                style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione</option>
+        <option value="BUENO" ${datos.estado_carpa === 'BUENO' ? 'selected' : ''}>BUENO</option>
+        <option value="MALO" ${datos.estado_carpa === 'MALO' ? 'selected' : ''}>MALO</option>
+        <option value="N/A" ${datos.estado_carpa === 'N/A' ? 'selected' : ''}>N/A</option>
+        </select>
+    </div>
+
+    <!-- OLORES EXTRAÑOS -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">OLORES EXTRAÑOS:</label>
+        <select name="vehiculo_${vIndex}_olores_extranos" id="olores_extranos_${vIndex}" onchange="validarInspeccion(${vIndex})"
+                style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione</option>
+        <option value="SI" ${datos.olores_extranos === 'SI' ? 'selected' : ''}>SI</option>
+        <option value="NO" ${datos.olores_extranos === 'NO' ? 'selected' : ''}>NO</option>
+        </select>
+    </div>
+
+    <!-- OBJETOS EXTRAÑOS -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">OBJETOS EXTRAÑOS:</label>
+        <select name="vehiculo_${vIndex}_objetos_extranos" id="objetos_extranos_${vIndex}" onchange="validarInspeccion(${vIndex})"
+                style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione</option>
+        <option value="SI" ${datos.objetos_extranos === 'SI' ? 'selected' : ''}>SI</option>
+        <option value="NO" ${datos.objetos_extranos === 'NO' ? 'selected' : ''}>NO</option>
+        </select>
+    </div>
+
+    <!-- EVIDENCIAS DE PLAGAS -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">EVIDENCIAS DE PLAGAS:</label>
+        <select name="vehiculo_${vIndex}_evidencias_plagas" id="evidencias_plagas_${vIndex}" onchange="validarInspeccion(${vIndex})"
+                style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione</option>
+        <option value="SI" ${datos.evidencias_plagas === 'SI' ? 'selected' : ''}>SI</option>
+        <option value="NO" ${datos.evidencias_plagas === 'NO' ? 'selected' : ''}>NO</option>
+        </select>
+    </div>
+
+    <!-- ESTADO DEL SUELO -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">ESTADO DEL SUELO:</label>
+        <select name="vehiculo_${vIndex}_estado_suelo" id="estado_suelo_${vIndex}" onchange="validarInspeccion(${vIndex})"
+                style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione</option>
+        <option value="BUENO" ${datos.estado_suelo === 'BUENO' ? 'selected' : ''}>BUENO</option>
+        <option value="MALO" ${datos.estado_suelo === 'MALO' ? 'selected' : ''}>MALO</option>
+        </select>
+    </div>
+
+    <!-- APROBADO -->
+    <div class="form-group-custom">
+        <label style="margin-top:0; font-weight: bold;">APROBADO:</label>
+        <select name="vehiculo_${vIndex}_aprobado" id="aprobado_${vIndex}" onchange="validarInspeccion(${vIndex})"
+                style="width: 100%; padding: 10px; border: 2px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+        <option value="">Seleccione</option>
+        <option value="SI" ${datos.aprobado === 'SI' ? 'selected' : ''}>SI</option>
+        <option value="NO" ${datos.aprobado === 'NO' ? 'selected' : ''}>NO</option>
+        </select>
+    </div>
+
+    <!-- BOTÓN ACEPTAR -->
+    <div style="text-align: center; margin-top: 25px;">
+      <button type="button" onclick="cerrarInspeccionVehiculo(${vIndex})"
+              id="btn-aceptar-${vIndex}"
+              style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 40px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 1.1em; transition: all 0.3s ease;">
+        ✅ Aceptar
+      </button>
+    </div>
+  </div>
+</div>
+            `;
+            
+            registro.innerHTML = html;
+            contenedor.appendChild(registro);
+
+            
+            
+            
+             // ✅ MOSTRAR/OCULTAR "Tipo de Operación" basado en lugar (Santo Domingo)
   const lugar = document.getElementById('lugar').value;
   const containerMotivoTipo = document.getElementById(`motivo-tipo-operacion-container-${vIndex}`);
   const lineaMotivoTipo = document.getElementById(`motivo-tipo-linea-${vIndex}`);
@@ -2137,128 +2278,129 @@ function crearVehiculoHTML(contenedor, vIndex, datos = {}) {
       motivoSolo.style.display = 'block';
     }
   }
-  
-  // ✅ MANEJAR CAMPO "OTRO" PARA ORIGEN
-  const origenSelect = document.getElementById(`remitente-select-${vIndex}`);
-  if (origenSelect) {
-    origenSelect.addEventListener('change', () => manejarOtroOrigen(vIndex));
-    manejarOtroOrigen(vIndex);
-  }
-  
-  function manejarOtroOrigen(vIndex) {
-    const origenSelect = document.querySelector(`#remitente-select-${vIndex}`);
-    const otroInput = document.querySelector(`#otro_origen_${vIndex}`);
-    
-    if (!origenSelect || !otroInput) return;
-    
-    if (origenSelect.value === 'otro') {
-      otroInput.style.display = 'block';
-      otroInput.required = true;
-    } else {
-      otroInput.style.display = 'none';
-      otroInput.required = false;
-      otroInput.value = '';
-    }
-    
-    guardarProgreso();
-  }
-  
-  // ✅ MANEJAR CAMBIO DE MOTIVO (CARGUE/DESCARGUE)
-  const motivoSelect = document.getElementById(motivoSelectId);
-  if (motivoSelect) {
-    motivoSelect.addEventListener('change', () => {
-      alternarDestinoRemitente(motivoSelect, vIndex);
-      manejarOtroCampo(motivoSelect);
-      guardarProgreso();
-    });
-    
-    // ✅ Inicializar visibilidad según el valor guardado
-    alternarDestinoRemitente(motivoSelect, vIndex);
-  }
-  
-  // ✅ MANEJAR TODOS LOS CAMPOS "OTRO"
-  const selects = registro.querySelectorAll('select');
-  selects.forEach(sel => {
-    const otro = sel.nextElementSibling;
-    if (otro && otro.classList.contains('otro-input')) {
-      if (sel.value === 'otro') otro.style.display = 'block';
-      sel.addEventListener('change', () => manejarOtroCampo(sel));
-    }
-  });
-  
-  // ✅ MANEJAR JUSTIFICACIÓN
-  const justificacionSelect = registro.querySelector(`select[name="vehiculo_${vIndex}_justificacion"]`);
-  if (justificacionSelect) {
-    justificacionSelect.addEventListener('change', () => mostrarTiempoMuerto(justificacionSelect, vIndex));
-  }
-  
-  // ✅ CARGAR NOMBRES DEL PERSONAL SI EXISTEN
-  if (datos.nombres_personal && datos.nombres_personal.length > 0) {
-    const nombresContainer = document.getElementById(`nombres-personal-${vIndex}`);
-    if (nombresContainer) {
-      datos.nombres_personal.forEach((nombre, idx) => {
-        const div = document.createElement('div');
-        div.style.marginBottom = '10px';
-        
-        const label = document.createElement('label');
-        label.textContent = `Nombre del Colaborador # ${idx + 1}:`;
-        label.style.display = 'block';
-        label.style.fontWeight = 'bold';
-        label.style.marginBottom = '5px';
-        label.style.fontSize = '0.9em';
-        label.htmlFor = `vehiculo_${vIndex}_nombre_persona_${idx + 1}`;
-        
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.inputmode = 'numeric';
-        input.id = `vehiculo_${vIndex}_nombre_persona_${idx + 1}`;
-        input.name = `vehiculo_${vIndex}_nombre_persona_${idx + 1}`;
-        input.placeholder = `Cédula del colaborador ${idx + 1}`;
-        input.value = nombre;
-        input.required = true;
-        input.maxLength = 10;
-        input.style.width = '100%';
-        input.style.padding = '8px';
-        input.style.border = '1px solid #170303';
-        input.style.borderRadius = '8px';
-        input.style.boxSizing = 'border-box';
-        
-        input.oninput = function() {
-          this.value = this.value.replace(/\D/g, '');
-          if (this.value.length > 10) {
-            this.value = this.value.substring(0, 10);
-          }
-          guardarProgreso();
-        };
-        
-        div.appendChild(label);
-        div.appendChild(input);
-        nombresContainer.appendChild(div);
-      });
-    }
-  }
-  
-  // ✅ GENERAR CAMPOS SI HAY VALOR EN TOTAL PERSONAS
-  const totalPersonas = datos.personas;
-  if (totalPersonas && parseInt(totalPersonas) > 0 && (!datos.nombres_personal || datos.nombres_personal.length === 0)) {
-    generarCamposNombresVehiculo(vIndex);
-  }
-  
-  // ✅ CONFIGURAR SUBIDA DE FOTO
-  document.getElementById(fotoInputId).addEventListener('change', function() {
-    let fechaInput = document.getElementById('fecha').value;
-    if (!fechaInput) fechaInput = new Date().toISOString().split('T')[0];
-    
-    const [yyyy, mm, dd] = fechaInput.split('-');
-    const fechaFormateada = `${dd}.${mm}.${yyyy}`;
-    const tipoVehiculo = (datos.tipo_vehi || 'vehiculo').replace(/ /g, '_');
-    const nombrePersonalizado = `${fechaFormateada}.${tipoVehiculo}.vehiculo_${vIndex}`;
-    
-    setupFotoPreview(fotoInputId, previewFotoId, nombrePersonalizado);
-  });
+            
+            const origenSelect = document.getElementById(`remitente-select-${vIndex}`);
+if (origenSelect) {
+  origenSelect.addEventListener('change', () => manejarOtroOrigen(vIndex));
+  // Llamar inmediatamente para mostrar/ocultar "otro" si ya está seleccionado
+  manejarOtroOrigen(vIndex);
 }
+            function manejarOtroOrigen(vIndex) {
+  const origenSelect = document.querySelector(`#remitente-select-${vIndex}`);
+  const otroInput = document.querySelector(`#otro_origen_${vIndex}`);
+  
+  if (!origenSelect || !otroInput) return;
+  
+  if (origenSelect.value === 'otro') {
+    otroInput.style.display = 'block';
+    otroInput.required = true;
+  } else {
+    otroInput.style.display = 'none';
+    otroInput.required = false;
+    otroInput.value = '';
+  }
+  
+  guardarProgreso();
+}
+            
+            const motivoSelect = document.getElementById(motivoSelectId);
+            motivoSelect.addEventListener('change', () => {
+                alternarDestinoRemitente(motivoSelect, vIndex);
+                manejarOtroCampo(motivoSelect);
+                guardarProgreso();
+            });
 
-// ✅ ESTADO DE TIEMPO POR VEHÍCULO
+            // ✅ Inicializar visibilidad según el valor guardado
+            alternarDestinoRemitente(motivoSelect, vIndex);
+            
+            const selects = registro.querySelectorAll('select');
+            selects.forEach(sel => {
+                const otro = sel.nextElementSibling;
+                if (otro && otro.classList.contains('otro-input')) {
+                    if (sel.value === 'otro') otro.style.display = 'block';
+                    sel.addEventListener('change', () => manejarOtroCampo(sel));
+                }
+            });
+            
+            alternarDestinoRemitente(motivoSelect, vIndex);
+            
+            const justificacionSelect = registro.querySelector(`select[name="vehiculo_${vIndex}_justificacion"]`);
+            if (justificacionSelect) {
+                justificacionSelect.addEventListener('change', () => mostrarTiempoMuerto(justificacionSelect, vIndex));
+            }
+            
+            // ✅ Cargar nombres del personal si existen (NUEVO)
+            if (datos.nombres_personal && datos.nombres_personal.length > 0) {
+                const nombresContainer = document.getElementById(`nombres-personal-${vIndex}`);
+                if (nombresContainer) {
+                    datos.nombres_personal.forEach((nombre, idx) => {
+                        const div = document.createElement('div');
+                        div.style.marginBottom = '10px';
+                        
+                        const label = document.createElement('label');
+                        label.textContent = `Nombre del Colaborador # ${idx + 1}:`;
+                        label.style.display = 'block';
+                        label.style.fontWeight = 'bold';
+                        label.style.marginBottom = '5px';
+                        label.style.fontSize = '0.9em';
+                        label.htmlFor = `vehiculo_${vIndex}_nombre_persona_${idx + 1}`;
+                        
+                        const input = document.createElement('input');
+input.type = 'text';  // ✅ Cambiar a 'text' para poder usar maxlength
+input.inputmode = 'numeric';  // ✅ Teclado numérico en móviles
+input.id = `vehiculo_${vIndex}_nombre_persona_${idx + 1}`;
+input.name = `vehiculo_${vIndex}_nombre_persona_${idx + 1}`;
+input.placeholder = `Cédula del colaborador ${idx + 1}`;
+input.value = nombre;
+input.required = true;
+input.maxLength = 10;  // ✅ Limitar a máximo 10 caracteres
+input.style.width = '100%';
+input.style.padding = '8px';
+input.style.border = '1px solid #170303';
+input.style.borderRadius = '8px';
+input.style.boxSizing = 'border-box';
+
+// ✅ Limitar a solo números y máximo 10 caracteres
+input.oninput = function() {
+  // Eliminar todo excepto números
+  this.value = this.value.replace(/\D/g, '');
+  
+  // Limitar a máximo 10 dígitos
+  if (this.value.length > 10) {
+    this.value = this.value.substring(0, 10);
+  }
+  
+  guardarProgreso();
+};
+                        
+                        div.appendChild(label);
+                        div.appendChild(input);
+                        nombresContainer.appendChild(div);
+                    });
+                }
+            }
+            
+            // ✅ Generar campos si hay valor en total personas (NUEVO)
+            // ✅ Generar campos si hay valor en total personas (CORREGIDO)
+            const totalPersonas = datos.personas;
+            if (totalPersonas && parseInt(totalPersonas) > 0 && (!datos.nombres_personal || datos.nombres_personal.length === 0)) {
+                generarCamposNombresVehiculo(vIndex);
+            }
+            
+            document.getElementById(fotoInputId).addEventListener('change', function() {
+                let fechaInput = document.getElementById('fecha').value;
+                if (!fechaInput) fechaInput = new Date().toISOString().split('T')[0];
+                
+                const [yyyy, mm, dd] = fechaInput.split('-');
+                const fechaFormateada = `${dd}.${mm}.${yyyy}`;
+                const tipoVehiculo = (datos.tipo_vehi || 'vehiculo').replace(/ /g, '_');
+                const nombrePersonalizado = `${fechaFormateada}.${tipoVehiculo}.vehiculo_${vIndex}`;
+                
+                setupFotoPreview(fotoInputId, previewFotoId, nombrePersonalizado);
+            });
+        }
+
+        // ✅ ESTADO DE TIEMPO POR VEHÍCULO (ahora incluye modo edición)
 const estadoTiempoVehiculo = {};
 
 // ✅ CONTROLAR TIEMPO (Iniciar/Finalizar)
