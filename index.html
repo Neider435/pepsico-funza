@@ -297,6 +297,12 @@
   transform: scale(1.02);
   transition: all 0.2s;
 }
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
     </style>
 
 </head>
@@ -1546,6 +1552,8 @@ function agregarRegistroVehiculo() {
     const evidenciasPlagas = document.getElementById(`evidencias_plagas_${i}`)?.value || '';
     const estadoSuelo = document.getElementById(`estado_suelo_${i}`)?.value || '';
     const aprobado = document.getElementById(`aprobado_${i}`)?.value || '';
+
+
     
     // ✅ CAPTURAR JUSTIFICACIONES DEL VEHÍCULO
     const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${i}`);
@@ -2150,14 +2158,68 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
 </div>
 
                 
-                <label>Foto De vehiculo:</label>
-                <input type="file" name="vehiculo_${vIndex}_foto" id="${fotoInputId}" accept="image/*" capture="environment">
-                <div class="preview-foto" id="${previewFotoId}"></div>
-                <input type="hidden" name="vehiculo_${vIndex}_foto_url" id="foto_url_${vIndex}" value="${datos.foto_url || ''}">
-                
-                <p style="font-size:0.85em; color:#6c757d; margin-top:5px;">
-                    📸 <strong>La foto se sube automáticamente.</strong> No necesita hacer nada más.
-                </p>
+<!-- ✅ SECCIÓN DE FOTOS PROFESIONAL CON CONTADOR -->
+<div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 20px; border-radius: 10px; border: 2px solid #001855; margin-top: 15px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #001855;">
+        <h5 style="margin: 0; color: #001855; font-size: 1.1em;">📸 Registro Fotográfico</h5>
+        <div style="background: #001855; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9em;">
+            <span id="foto-contador-${vIndex}">0</span> / 3 fotos
+        </div>
+    </div>
+    
+    <!-- ✅ BOTONES DE FOTOS -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px;">
+        <!-- Foto Inicio -->
+        <div style="text-align: center;">
+            <button type="button" onclick="tomarFotoVehiculo(${vIndex}, 'inicio')"
+                    id="btn-foto-inicio-${vIndex}"
+                    style="width: 100%; padding: 10px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.85em; transition: all 0.2s;">
+                🟢 Inicio
+            </button>
+            <input type="file" id="foto-inicio-${vIndex}" accept="image/*" capture="environment" style="display: none;" onchange="procesarFotoVehiculo(${vIndex}, 'inicio', this)">
+            <div id="preview-inicio-${vIndex}" style="margin-top: 8px; min-height: 80px; background: white; border-radius: 5px; border: 2px dashed #ced4da; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                <span style="color: #6c757d; font-size: 0.8em;">Sin foto</span>
+            </div>
+            <input type="hidden" id="url-inicio-${vIndex}" value="">
+        </div>
+        
+        <!-- Foto Durante -->
+        <div style="text-align: center;">
+            <button type="button" onclick="tomarFotoVehiculo(${vIndex}, 'durante')"
+                    id="btn-foto-durante-${vIndex}"
+                    style="width: 100%; padding: 10px; background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.85em; transition: all 0.2s;">
+                🟡 Durante
+            </button>
+            <input type="file" id="foto-durante-${vIndex}" accept="image/*" capture="environment" style="display: none;" onchange="procesarFotoVehiculo(${vIndex}, 'durante', this)">
+            <div id="preview-durante-${vIndex}" style="margin-top: 8px; min-height: 80px; background: white; border-radius: 5px; border: 2px dashed #ced4da; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                <span style="color: #6c757d; font-size: 0.8em;">Sin foto</span>
+            </div>
+            <input type="hidden" id="url-durante-${vIndex}" value="">
+        </div>
+        
+        <!-- Foto Fin -->
+        <div style="text-align: center;">
+            <button type="button" onclick="tomarFotoVehiculo(${vIndex}, 'fin')"
+                    id="btn-foto-fin-${vIndex}"
+                    style="width: 100%; padding: 10px; background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.85em; transition: all 0.2s;">
+                🔴 Fin
+            </button>
+            <input type="file" id="foto-fin-${vIndex}" accept="image/*" capture="environment" style="display: none;" onchange="procesarFotoVehiculo(${vIndex}, 'fin', this)">
+            <div id="preview-fin-${vIndex}" style="margin-top: 8px; min-height: 80px; background: white; border-radius: 5px; border: 2px dashed #ced4da; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                <span style="color: #6c757d; font-size: 0.8em;">Sin foto</span>
+            </div>
+            <input type="hidden" id="url-fin-${vIndex}" value="">
+        </div>
+    </div>
+    
+    <!-- ✅ ESTADO DE FOTOS -->
+    <div id="estado-fotos-${vIndex}" style="background: #d1ecf1; color: #0c5460; padding: 10px; border-radius: 5px; font-size: 0.85em; border-left: 4px solid #17a2b8;">
+        💡 <strong>Consejo:</strong> Toma fotos en cada etapa para un mejor registro.
+    </div>
+    
+    <!-- ✅ INPUT OCULTO LEGACY (para compatibilidad) -->
+    <input type="hidden" name="vehiculo_${vIndex}_foto_url" id="foto_url_${vIndex}" value="${datos.foto_url || ''}">
+</div>
 
                 <button type="button" onclick="abrirNovedadesVehiculo(${vIndex})"
                     style="background: linear-gradient(135deg, #001855 0%, #003380 100%); color: white; border: none; padding: 12px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; margin: 15px 0; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
@@ -2404,6 +2466,169 @@ input.oninput = function() {
                 setupFotoPreview(fotoInputId, previewFotoId, nombrePersonalizado);
             });
         }
+
+// ✅ CONTADOR DE FOTOS POR VEHÍCULO
+const fotosPorVehiculo = {};
+
+// ✅ TOMAR FOTO DEL VEHÍCULO
+function tomarFotoVehiculo(vIndex, tipo) {
+    const input = document.getElementById(`foto-${tipo}-${vIndex}`);
+    if (input) {
+        input.click();
+    }
+}
+
+// ✅ PROCESAR FOTO DEL VEHÍCULO
+async function procesarFotoVehiculo(vIndex, tipo, input) {
+    const file = input.files[0];
+    if (!file || !file.type.match('image.*')) {
+        alert('❌ Por favor selecciona una imagen válida (JPG/PNG).');
+        return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+        alert('⚠️ La imagen es muy grande. Máximo 5 MB.');
+        return;
+    }
+    
+    const preview = document.getElementById(`preview-${tipo}-${vIndex}`);
+    const urlInput = document.getElementById(`url-${tipo}-${vIndex}`);
+    const btn = document.getElementById(`btn-foto-${tipo}-${vIndex}`);
+    
+    // ✅ Mostrar loading
+    const textoOriginal = btn.innerHTML;
+    btn.innerHTML = '⏳ Subiendo...';
+    btn.disabled = true;
+    
+    // ✅ Mostrar preview inmediato
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        preview.innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px;">`;
+    };
+    reader.readAsDataURL(file);
+    
+    // ✅ Subir a ImgBB
+    try {
+        let fechaInput = document.getElementById('fecha').value;
+        if (!fechaInput) fechaInput = new Date().toISOString().split('T')[0];
+        const [yyyy, mm, dd] = fechaInput.split('-');
+        const fechaFormateada = `${dd}.${mm}.${yyyy}`;
+        
+        const vehiculoData = vehiculosData[vIndex] || {};
+        const placa = vehiculoData.placa || `V${vIndex + 1}`;
+        
+        const nombrePersonalizado = `${fechaFormateada}.${placa}.${tipo}.vehiculo_${vIndex}`;
+        
+        const urlSubida = await subirFotoImgBB(file, nombrePersonalizado);
+        
+        if (urlSubida) {
+            urlInput.value = urlSubida;
+            console.log(`✅ Foto ${tipo} subida correctamente:`, urlSubida);
+            
+            // ✅ Actualizar contador
+            actualizarContadorFotos(vIndex);
+            
+            // ✅ Actualizar estado
+            actualizarEstadoFotos(vIndex);
+            
+            // ✅ Guardar progreso
+            guardarProgreso();
+            
+            // ✅ Mostrar notificación
+            mostrarNotificacion(`✅ Foto de ${tipo} subida exitosamente`, 'success');
+            
+            // ✅ Cambiar estilo del botón
+            btn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+            btn.innerHTML = '✅ Completado';
+        } else {
+            console.log('ℹ️ Foto guardada localmente (sin subir a ImgBB)');
+            urlInput.value = reader.result;
+            actualizarContadorFotos(vIndex);
+            btn.innerHTML = '⚠️ Local';
+        }
+    } catch (error) {
+        console.error('❌ Error al subir foto:', error);
+        mostrarNotificacion('⚠️ Error al subir la foto. Se guardará localmente.', 'warning');
+        urlInput.value = reader.result;
+        btn.innerHTML = textoOriginal;
+        btn.disabled = false;
+    }
+}
+
+// ✅ ACTUALIZAR CONTADOR DE FOTOS
+function actualizarContadorFotos(vIndex) {
+    let contador = 0;
+    ['inicio', 'durante', 'fin'].forEach(tipo => {
+        const url = document.getElementById(`url-${tipo}-${vIndex}`)?.value;
+        if (url) contador++;
+    });
+    
+    const contadorElement = document.getElementById(`foto-contador-${vIndex}`);
+    if (contadorElement) {
+        contadorElement.textContent = contador;
+        
+        // ✅ Animación cuando se completa
+        if (contador === 3) {
+            contadorElement.parentElement.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+            contadorElement.parentElement.style.animation = 'pulse 0.5s ease-in-out';
+        }
+    }
+}
+
+// ✅ ACTUALIZAR ESTADO DE FOTOS
+function actualizarEstadoFotos(vIndex) {
+    const estadoDiv = document.getElementById(`estado-fotos-${vIndex}`);
+    if (!estadoDiv) return;
+    
+    let fotosCompletadas = [];
+    ['inicio', 'durante', 'fin'].forEach(tipo => {
+        const url = document.getElementById(`url-${tipo}-${vIndex}`)?.value;
+        if (url) fotosCompletadas.push(tipo);
+    });
+    
+    const total = fotosCompletadas.length;
+    
+    if (total === 0) {
+        estadoDiv.innerHTML = '💡 <strong>Consejo:</strong> Toma fotos en cada etapa para un mejor registro.';
+        estadoDiv.style.background = '#d1ecf1';
+        estadoDiv.style.color = '#0c5460';
+        estadoDiv.style.borderLeftColor = '#17a2b8';
+    } else if (total < 3) {
+        estadoDiv.innerHTML = `✅ <strong>${total}/3 fotos completadas.</strong> Faltan: ${['inicio', 'durante', 'fin'].filter(t => !fotosCompletadas.includes(t)).join(', ')}`;
+        estadoDiv.style.background = '#fff3cd';
+        estadoDiv.style.color = '#856404';
+        estadoDiv.style.borderLeftColor = '#ffc107';
+    } else {
+        estadoDiv.innerHTML = '🎉 <strong>¡Registro fotográfico completo!</strong> Las 3 fotos fueron tomadas exitosamente.';
+        estadoDiv.style.background = '#d4edda';
+        estadoDiv.style.color = '#155724';
+        estadoDiv.style.borderLeftColor = '#28a745';
+    }
+}
+
+// ✅ RESTAURAR FOTOS AL CARGAR DATOS GUARDADOS
+function restaurarFotosVehiculo(vIndex, datos) {
+    ['inicio', 'durante', 'fin'].forEach(tipo => {
+        const url = datos[`foto_${tipo}_url`] || '';
+        if (url) {
+            const preview = document.getElementById(`preview-${tipo}-${vIndex}`);
+            const urlInput = document.getElementById(`url-${tipo}-${vIndex}`);
+            const btn = document.getElementById(`btn-foto-${tipo}-${vIndex}`);
+            
+            if (preview && urlInput && btn) {
+                urlInput.value = url;
+                preview.innerHTML = `<img src="${url}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px;">`;
+                btn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+                btn.innerHTML = '✅ Completado';
+            }
+        }
+    });
+    
+    actualizarContadorFotos(vIndex);
+    actualizarEstadoFotos(vIndex);
+}
+
+
 
         // ✅ ESTADO DE TIEMPO POR VEHÍCULO (ahora incluye modo edición)
 const estadoTiempoVehiculo = {};
@@ -4532,7 +4757,7 @@ function mostrarFeedbackPicking(mensaje, vIndex, tipo = 'info') {
         // GUARDADO DE PROGRESO
         // ============================================
 
-        function guardarProgreso() {
+function guardarProgreso() {
   const form = document.forms['formulario-pepsico'];
   if (!form) return;
   
@@ -4555,53 +4780,62 @@ function mostrarFeedbackPicking(mensaje, vIndex, tipo = 'info') {
       }
     }
     
-// ✅ CAPTURAR JUSTIFICACIONES POR VEHÍCULO (CORREGIDO)
-const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${vIndex}`);
-if (justificacionesContenedor) {
-  const justificaciones = justificacionesContenedor.querySelectorAll('.justificacion-group');
-  const justificacionesData = [];
-  
-  justificaciones.forEach((justificacion, jIndex) => {
-    const motivo = justificacion.querySelector(`select[name="vehiculo_${vIndex}_justificacion_${jIndex}"]`)?.value || '';
-    const otro_motivo = justificacion.querySelector(`input[name="vehiculo_${vIndex}_otro_justificacion_${jIndex}"]`)?.value || '';
-    const tiempo_inicio = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_inicio_${jIndex}"]`)?.value || '';
-    const tiempo_fin = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_final_${jIndex}"]`)?.value || '';
+    // ✅ ============================================
+    // ✅ AQUÍ AGREGAS EL CÓDIGO DE LAS FOTOS
+    // ✅ ============================================
+    const fotoInicio = document.getElementById(`url-inicio-${vIndex}`)?.value || '';
+    const fotoDurante = document.getElementById(`url-durante-${vIndex}`)?.value || '';
+    const fotoFin = document.getElementById(`url-fin-${vIndex}`)?.value || '';
     
-    // ✅ NOMENCLATURA UNIFICADA (DEBE COINCIDIR EN TODAS LAS FUNCIONES)
-    justificacionesData.push({
-      justificacion: motivo,              // ✅ SIEMPRE 'justificacion'
-      otro_justificacion: otro_motivo,    // ✅ SIEMPRE 'otro_justificacion'
-      tiempo_muerto_inicio: tiempo_inicio, // ✅ SIEMPRE 'tiempo_muerto_inicio'
-      tiempo_muerto_final: tiempo_fin      // ✅ SIEMPRE 'tiempo_muerto_final'
-    });
-  });
-  
-  // ✅ LOG DE DEPURACIÓN
-  console.log(`💾 Justificaciones Vehículo ${vIndex}:`, justificacionesData);
-  data[`_justificaciones_${vIndex}`] = justificacionesData;
-}
+    vehiculosData[vIndex].foto_inicio_url = fotoInicio;
+    vehiculosData[vIndex].foto_durante_url = fotoDurante;
+    vehiculosData[vIndex].foto_fin_url = fotoFin;
+    // ✅ ============================================
+    
+    // ✅ CAPTURAR JUSTIFICACIONES POR VEHÍCULO
+    const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${vIndex}`);
+    if (justificacionesContenedor) {
+      const justificaciones = justificacionesContenedor.querySelectorAll('.justificacion-group');
+      const justificacionesData = [];
+      
+      justificaciones.forEach((justificacion, jIndex) => {
+        const motivo = justificacion.querySelector(`select[name="vehiculo_${vIndex}_justificacion_${jIndex}"]`)?.value || '';
+        const otro_motivo = justificacion.querySelector(`input[name="vehiculo_${vIndex}_otro_justificacion_${jIndex}"]`)?.value || '';
+        const tiempo_inicio = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_inicio_${jIndex}"]`)?.value || '';
+        const tiempo_fin = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_final_${jIndex}"]`)?.value || '';
+        
+        justificacionesData.push({
+          justificacion: motivo,
+          otro_justificacion: otro_motivo,
+          tiempo_muerto_inicio: tiempo_inicio,
+          tiempo_muerto_final: tiempo_fin
+        });
+      });
+      
+      data[`_justificaciones_${vIndex}`] = justificacionesData;
+    }
     
     // ✅ CAPTURAR NOVEDADES POR VEHÍCULO
     const novedadesContenedor = document.getElementById(`novedades-contenedor-${vIndex}`);
-if (novedadesContenedor) {
-  const novedades = novedadesContenedor.querySelectorAll('.novedad-group');
-  const novedadesData = [];
-  
-  novedades.forEach((novedad, nIndex) => {
-    const tipo = novedad.querySelector(`select[name="vehiculo_${vIndex}_tipo_novedad_${nIndex}"]`)?.value || '';
-    const descripcion = novedad.querySelector(`textarea[name="vehiculo_${vIndex}_descripcion_novedad_${nIndex}"]`)?.value || '';
-    const foto_url = novedad.querySelector(`input[name="vehiculo_${vIndex}_foto_novedad_${nIndex}_url"]`)?.value || '';
-    
-    novedadesData.push({
-      tipo: tipo,
-      descripcion: descripcion,
-      foto_url: foto_url  // ✅ Incluye la URL de ImgBB o la URL local
-    });
-  });
-  
-  data[`_novedades_${vIndex}`] = novedadesData;
-}
-  });
+    if (novedadesContenedor) {
+      const novedades = novedadesContenedor.querySelectorAll('.novedad-group');
+      const novedadesData = [];
+      
+      novedades.forEach((novedad, nIndex) => {
+        const tipo = novedad.querySelector(`select[name="vehiculo_${vIndex}_tipo_novedad_${nIndex}"]`)?.value || '';
+        const descripcion = novedad.querySelector(`textarea[name="vehiculo_${vIndex}_descripcion_novedad_${nIndex}"]`)?.value || '';
+        const foto_url = novedad.querySelector(`input[name="vehiculo_${vIndex}_foto_novedad_${nIndex}_url"]`)?.value || '';
+        
+        novedadesData.push({
+          tipo: tipo,
+          descripcion: descripcion,
+          foto_url: foto_url
+        });
+      });
+      
+      data[`_novedades_${vIndex}`] = novedadesData;
+    }
+  }); // ← ✅ ESTE ES EL CIERRE DEL forEach DE VEHÍCULOS
   
   // ✅ GUARDAR PARADAS DE OPERACIÓN
   const paradasData = [];
@@ -5185,6 +5419,14 @@ function enviarCorreoEmailJS(data) {
         if (tipoOperacionSelect) {
           tipoOperacionSelect.value = vObj.tipo_operacion;
         }
+      }
+
+      if (data[`vehiculo_${i}_foto_inicio_url`] || data[`vehiculo_${i}_foto_durante_url`] || data[`vehiculo_${i}_foto_fin_url`]) {
+          restaurarFotosVehiculo(i, {
+              foto_inicio_url: data[`vehiculo_${i}_foto_inicio_url`] || '',
+              foto_durante_url: data[`vehiculo_${i}_foto_durante_url`] || '',
+              foto_fin_url: data[`vehiculo_${i}_foto_fin_url`] || ''
+          });
       }
       
 const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${i}`);
