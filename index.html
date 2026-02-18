@@ -1797,7 +1797,7 @@ function crearVehiculoHTML(contenedor, vIndex, datos = {}) {
         <div id="motivo-tipo-linea-${vIndex}" style="display: none; gap: 20px; align-items: flex-start;">
           <div style="flex: 1;">
             <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Motivo:</label>
-            <select id="${motivoSelectId}" name="vehiculo_${vIndex}_motivo"
+            <select id="${motivoSelectId}-sd" name="vehiculo_${vIndex}_motivo"
               style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;"
               onchange="alternarDestinoRemitente(this, ${vIndex}); manejarOtroCampo(this);">
               <option value="">Seleccione</option>
@@ -1821,7 +1821,7 @@ function crearVehiculoHTML(contenedor, vIndex, datos = {}) {
         </div>
         <div id="motivo-solo-${vIndex}" style="display: block;">
           <label style="margin-top:5px; display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Motivo:</label>
-          <select id="${motivoSelectId}" name="vehiculo_${vIndex}_motivo" required
+          <select id="${motivoSelectId}-funza" name="vehiculo_${vIndex}_motivo" required
             onchange="alternarDestinoRemitente(this, ${vIndex}); manejarOtroCampo(this);">
             <option value="">Seleccione</option>
             <option value="cargue" ${datos.motivo === 'cargue' ? 'selected' : ''}>Cargue</option>
@@ -3996,34 +3996,25 @@ function mostrarResumenProductos(vIndex) {
 }
 
 // ✅ HACER VISIBLES LOS CAMPOS DE MOTIVO ANTES DE VALIDAR
-// ✅ FUNCIÓN CORREGIDA: Asegura visibilidad estricta antes de validar
+// ✅ HACER VISIBLES LOS CAMPOS DE MOTIVO ANTES DE VALIDAR
 function mostrarCamposMotivo() {
-    const lugar = document.getElementById('lugar').value;
-    const registros = document.querySelectorAll('.registro-vehiculo');
+  const registros = document.querySelectorAll('.registro-vehiculo');
+  registros.forEach((reg, index) => {
+    const containerMotivoTipo = document.getElementById(`motivo-tipo-operacion-container-${index}`);
+    const lineaMotivoTipo = document.getElementById(`motivo-tipo-linea-${index}`);
+    const motivoSolo = document.getElementById(`motivo-solo-${index}`);
     
-    registros.forEach((reg, index) => {
-        const containerMotivoTipo = document.getElementById(`motivo-tipo-operacion-container-${index}`);
-        const lineaMotivoTipo = document.getElementById(`motivo-tipo-linea-${index}`);
-        const motivoSolo = document.getElementById(`motivo-solo-${index}`);
-        
-        if (containerMotivoTipo && lineaMotivoTipo && motivoSolo) {
-            if (lugar === 'SantoDomingo') {
-                // ✅ MOSTRAR SOLO SANTO DOMINGO
-                lineaMotivoTipo.style.display = 'flex';
-                motivoSolo.style.display = 'none';
-                // ✅ HABILITAR EL SELECT VISIBLE Y DESHABILITAR EL OCULTO
-                lineaMotivoTipo.querySelector('select').disabled = false;
-                motivoSolo.querySelector('select').disabled = true;
-            } else {
-                // ✅ MOSTRAR SOLO FUNZA / OTROS
-                lineaMotivoTipo.style.display = 'none';
-                motivoSolo.style.display = 'block';
-                // ✅ HABILITAR EL SELECT VISIBLE Y DESHABILITAR EL OCULTO
-                lineaMotivoTipo.querySelector('select').disabled = true;
-                motivoSolo.querySelector('select').disabled = false;
-            }
-        }
-    });
+    if (containerMotivoTipo && lineaMotivoTipo && motivoSolo) {
+      const lugar = document.getElementById('lugar').value;
+      if (lugar === 'SantoDomingo') {
+        lineaMotivoTipo.style.display = 'flex';
+        motivoSolo.style.display = 'none';
+      } else {
+        lineaMotivoTipo.style.display = 'none';
+        motivoSolo.style.display = 'block';
+      }
+    }
+  });
 }
 
 // ✅ FUNCIÓN CORREGIDA: Validar cantidad a borrar
