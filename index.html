@@ -4921,76 +4921,35 @@ function enviarFormulario(event) {
   });
 }
 
+// ✅ ENVIAR CORREO CON EMAILJS (CORREGIDO - RETORNA PROMISE)
 function enviarCorreoEmailJS(data) {
-  // ✅ Preparar vehículos para el email
-  const vehiculosEmail = data.datos_vehiculos.map(v => ({
-    motivo: v.motivo || 'N/A',
-    muelle: v.muelle || 'N/A',
-    placa: v.placa || 'N/A',
-    destino: v.destino || 'N/A',
-    cajas: v.cajas || '0',
-    tipo_carga: v.tipo_carga || 'N/A'
-  }));
-  
-  // ✅ Preparar productos para el email
-  const productosEmail = [];
-  data.datos_vehiculos.forEach(v => {
-    if (v.productos_escaneados && v.productos_escaneados.length > 0) {
-      v.productos_escaneados.forEach(prod => {
-        productosEmail.push({
-          codigo_producto: prod.codigo || 'N/A',
-          nombre_producto: prod.nombre || 'N/A',
-          cantidad_cajas: prod.cantidad || '0'
-        });
-      });
-    }
-  });
-  
-  // ✅ Preparar novedades para el email
-  const novedadesEmail = [];
-  data.datos_vehiculos.forEach(v => {
-    if (v.novedades && v.novedades.length > 0) {
-      v.novedades.forEach(nov => {
-        novedadesEmail.push({
-          tipo_novedad: nov.tipo || 'N/A',
-          descripcion: nov.descripcion || 'Sin descripción'
-        });
-      });
-    }
-  });
-  
-  // ✅ Obtener hora actual
-  const ahora = new Date();
-  const hora = ahora.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
-  
-  // ✅ Parámetros para la plantilla de EmailJS
-  const templateParams = {
-    fecha: data.fecha,
-    lugar: data.lugar,
-    turno: data.turno,
-    coordinador: data.coordinador,
-    respo_diligen: data.respo_diligen,
-    total_vehiculos: data.datos_vehiculos.length,
-    cajas_totales: data.cajas_totales,
-    total_personas: data.total_personas,
-    vehiculos: vehiculosEmail,
-    productos: productosEmail,
-    novedades: novedadesEmail,
-    hora: hora
-  };
-  
-  console.log('📧 Enviando email con parámetros:', templateParams);
-  
-  // ✅ Enviar correo
-  emailjs.send(
-    'service_7fe29nl',
-    'template_xey3tlm',
-    templateParams
-  )
-  .then(function(response) {
-    console.log('✅ Correo enviado exitosamente!', response.status, response.text);
-  }, function(error) {
-    console.error('❌ Error al enviar correo:', error);
+  return new Promise((resolve, reject) => {
+    // ✅ Parámetros para la plantilla de EmailJS
+    const templateParams = {
+      fecha: data.fecha,
+      lugar: data.lugar,
+      turno: data.turno,
+      respo_diligen: data.respo_diligen,
+      total_vehiculos: data.datos_vehiculos.length,
+      cajas_totales: data.cajas_totales,
+      total_personas: data.total_personas
+    };
+    
+    console.log('📧 Enviando correo con EmailJS...', templateParams);
+    
+    // ✅ Enviar correo
+    emailjs.send(
+      'service_7fe29nl',      // ✅ Tu Service ID
+      'template_xey3tlm',     // ✅ Tu Template ID
+      templateParams
+    )
+    .then(function(response) {
+      console.log('✅ Correo enviado exitosamente!', response.status, response.text);
+      resolve(response);
+    }, function(error) {
+      console.error('❌ Error al enviar correo:', error);
+      reject(error);
+    });
   });
 }
         
