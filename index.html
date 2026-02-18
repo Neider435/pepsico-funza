@@ -4921,7 +4921,7 @@ function enviarFormulario(event) {
   });
 }
 
-// ✅ ENVIAR CORREO CON EMAILJS (CORREGIDO - HTML SE RENDERIZA)
+// ✅ ENVIAR CORREO CON EMAILJS (CORREGIDO - PRODUCTOS POR VEHÍCULO)
 function enviarCorreoEmailJS(data) {
   return new Promise((resolve, reject) => {
     try {
@@ -4965,10 +4965,12 @@ function enviarCorreoEmailJS(data) {
       }
       vehiculosHTML += '</tbody></table>';
 
-      // ✅ FORMATEAR PRODUCTOS COMO TABLA HTML
+      // ✅ FORMATEAR PRODUCTOS COMO TABLA HTML (CON VEHÍCULO IDENTIFICADO)
       let productosHTML = '<table style="width:100%; border-collapse:collapse; margin-top:10px;">';
       productosHTML += '<thead><tr style="background:#001855; color:white;">';
       productosHTML += '<th style="padding:10px; border:1px solid #ddd;">#</th>';
+      productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Vehículo</th>';
+      productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Placa</th>';
       productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Código</th>';
       productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Nombre Producto</th>';
       productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Cantidad Cajas</th>';
@@ -4977,22 +4979,35 @@ function enviarCorreoEmailJS(data) {
       let productoIndex = 0;
       if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
         data.datos_vehiculos.forEach((v, vIndex) => {
+          // ✅ VERIFICAR SI EL VEHÍCULO TIENE PRODUCTOS ESCANEADOS
           if (v.productos_escaneados && v.productos_escaneados.length > 0) {
             v.productos_escaneados.forEach((prod, pIndex) => {
               productoIndex++;
               const bg = productoIndex % 2 === 0 ? '#f8f9fa' : 'white';
               productosHTML += '<tr style="background:' + bg + ';">';
               productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + productoIndex + '</td>';
+              productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:#001855;">' + (vIndex + 1) + '</td>';
+              productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-family:monospace;">' + (v.placa || 'N/A') + '</td>';
               productosHTML += '<td style="padding:8px; border:1px solid #ddd; font-family:monospace;">' + (prod.codigo || prod.referencia || 'N/A') + '</td>';
               productosHTML += '<td style="padding:8px; border:1px solid #ddd;">' + (prod.nombre || 'N/A') + '</td>';
               productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:#C76E00;">' + (prod.cantidad || '0') + '</td>';
               productosHTML += '</tr>';
             });
+          } else {
+            // ✅ MOSTRAR FILA CUANDO NO HAY PRODUCTOS PARA ESE VEHÍCULO
+            productoIndex++;
+            const bg = productoIndex % 2 === 0 ? '#f8f9fa' : 'white';
+            productosHTML += '<tr style="background:' + bg + ';">';
+            productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + productoIndex + '</td>';
+            productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:#001855;">' + (vIndex + 1) + '</td>';
+            productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-family:monospace;">' + (v.placa || 'N/A') + '</td>';
+            productosHTML += '<td style="padding:8px; border:1px solid #ddd; font-family:monospace; color:#6c757d;" colspan="3">Sin productos escaneados</td>';
+            productosHTML += '</tr>';
           }
         });
       }
       if (productoIndex === 0) {
-        productosHTML += '<tr><td colspan="4" style="padding:15px; text-align:center; color:#6c757d;">No hay productos escaneados</td></tr>';
+        productosHTML += '<tr><td colspan="6" style="padding:15px; text-align:center; color:#6c757d;">No hay productos escaneados</td></tr>';
       }
       productosHTML += '</tbody></table>';
 
@@ -5006,10 +5021,12 @@ function enviarCorreoEmailJS(data) {
           .join(' ');
       }
 
-      // ✅ FORMATEAR NOVEDADES COMO TABLA HTML
+      // ✅ FORMATEAR NOVEDADES COMO TABLA HTML (CON VEHÍCULO IDENTIFICADO)
       let novedadesHTML = '<table style="width:100%; border-collapse:collapse; margin-top:10px;">';
       novedadesHTML += '<thead><tr style="background:#001855; color:white;">';
       novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">#</th>';
+      novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">Vehículo</th>';
+      novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">Placa</th>';
       novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">Tipo Novedad</th>';
       novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">Descripción</th>';
       novedadesHTML += '</tr></thead><tbody>';
@@ -5024,6 +5041,8 @@ function enviarCorreoEmailJS(data) {
               const tipoFormateado = formatearTipoNovedad(nov.tipo);
               novedadesHTML += '<tr style="background:' + bg + ';">';
               novedadesHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + novedadIndex + '</td>';
+              novedadesHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:#001855;">' + (vIndex + 1) + '</td>';
+              novedadesHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-family:monospace;">' + (v.placa || 'N/A') + '</td>';
               novedadesHTML += '<td style="padding:8px; border:1px solid #ddd; font-weight:bold; color:#C76E00;">' + tipoFormateado + '</td>';
               novedadesHTML += '<td style="padding:8px; border:1px solid #ddd;">' + (nov.descripcion || 'Sin descripción') + '</td>';
               novedadesHTML += '</tr>';
@@ -5032,7 +5051,7 @@ function enviarCorreoEmailJS(data) {
         });
       }
       if (novedadIndex === 0) {
-        novedadesHTML += '<tr><td colspan="3" style="padding:15px; text-align:center; color:#6c757d;">No hay novedades registradas</td></tr>';
+        novedadesHTML += '<tr><td colspan="5" style="padding:15px; text-align:center; color:#6c757d;">No hay novedades registradas</td></tr>';
       }
       novedadesHTML += '</tbody></table>';
 
