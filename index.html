@@ -4929,81 +4929,123 @@ function enviarCorreoEmailJS(data) {
         throw new Error('EmailJS no está cargado. Verifica el script.');
       }
 
-      // ✅ FORMATEAR DATOS DE VEHÍCULOS COMO TEXTO LEGIBLE
-      let vehiculosTexto = '';
+      // ✅ FORMATEAR VEHÍCULOS COMO TABLA HTML
+      let vehiculosHTML = '<table style="width:100%; border-collapse:collapse; margin-top:10px;">';
+      vehiculosHTML += '<thead><tr style="background:#001855; color:white;">';
+      vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">#</th>';
+      vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Motivo</th>';
+      vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Muelle</th>';
+      vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Placa</th>';
+      vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Destino</th>';
+      vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Cajas</th>';
+      vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Tipo Vehículo</th>';
+      vehiculosHTML += '</tr></thead><tbody>';
+      
       if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
         data.datos_vehiculos.forEach((v, index) => {
-          vehiculosTexto += `🚛 VEHÍCULO ${index + 1}\n`;
-          vehiculosTexto += `   Motivo: ${v.motivo || 'N/A'}\n`;
-          vehiculosTexto += `   Muelle: ${v.muelle || v.otro_muelle_num || 'N/A'}\n`;
-          vehiculosTexto += `   Placa: ${v.placa || 'N/A'}\n`;
-          vehiculosTexto += `   Destino: ${v.destino || v.origen || 'N/A'}\n`;
-          vehiculosTexto += `   Cajas: ${v.cajas || v.total_cajas_escaneadas || '0'}\n`;
-          vehiculosTexto += `   Tipo Vehículo: ${v.tipo_vehi || 'N/A'}\n`;
-          vehiculosTexto += `   Tipo Operación: ${v.tipo_operacion || 'N/A'}\n`;
-          vehiculosTexto += `--------------------------\n`;
+          const muelle = v.muelle === 'otro' ? (v.otro_muelle_num || 'N/A') : (v.muelle || 'N/A');
+          const destino = v.destino || v.origen || 'N/A';
+          const cajas = v.cajas || v.total_cajas_escaneadas || '0';
+          const tipoVehiculo = v.tipo_vehi || 'N/A';
+          const motivo = v.motivo ? v.motivo.charAt(0).toUpperCase() + v.motivo.slice(1) : 'N/A';
+          
+          vehiculosHTML += '<tr style="background:' + (index % 2 === 0 ? '#f8f9fa' : 'white') + ';">';
+          vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + (index + 1) + '</td>';
+          vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd;">' + motivo + '</td>';
+          vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + muelle + '</td>';
+          vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + (v.placa || 'N/A') + '</td>';
+          vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd;">' + destino + '</td>';
+          vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + cajas + '</td>';
+          vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd;">' + tipoVehiculo + '</td>';
+          vehiculosHTML += '</tr>';
         });
       } else {
-        vehiculosTexto = 'No hay vehículos registrados';
+        vehiculosHTML += '<tr><td colspan="7" style="padding:15px; text-align:center; color:#6c757d;">No hay vehículos registrados</td></tr>';
       }
+      vehiculosHTML += '</tbody></table>';
 
-      // ✅ FORMATEAR DATOS DE PRODUCTOS COMO TEXTO LEGIBLE
-      let productosTexto = '';
+      // ✅ FORMATEAR PRODUCTOS COMO TABLA HTML
+      let productosHTML = '<table style="width:100%; border-collapse:collapse; margin-top:10px;">';
+      productosHTML += '<thead><tr style="background:#001855; color:white;">';
+      productosHTML += '<th style="padding:10px; border:1px solid #ddd;">#</th>';
+      productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Código</th>';
+      productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Nombre Producto</th>';
+      productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Cantidad Cajas</th>';
+      productosHTML += '</tr></thead><tbody>';
+      
+      let productoIndex = 0;
       if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
         data.datos_vehiculos.forEach((v, vIndex) => {
           if (v.productos_escaneados && v.productos_escaneados.length > 0) {
-            productosTexto += `📦 VEHÍCULO ${vIndex + 1}:\n`;
             v.productos_escaneados.forEach((prod, pIndex) => {
-              productosTexto += `   ${pIndex + 1}. Código: ${prod.codigo || prod.referencia || 'N/A'}\n`;
-              productosTexto += `      Nombre: ${prod.nombre || 'N/A'}\n`;
-              productosTexto += `      Cantidad: ${prod.cantidad || '0'} cajas\n`;
+              productoIndex++;
+              const bg = productoIndex % 2 === 0 ? '#f8f9fa' : 'white';
+              productosHTML += '<tr style="background:' + bg + ';">';
+              productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + productoIndex + '</td>';
+              productosHTML += '<td style="padding:8px; border:1px solid #ddd; font-family:monospace;">' + (prod.codigo || prod.referencia || 'N/A') + '</td>';
+              productosHTML += '<td style="padding:8px; border:1px solid #ddd;">' + (prod.nombre || 'N/A') + '</td>';
+              productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:#C76E00;">' + (prod.cantidad || '0') + '</td>';
+              productosHTML += '</tr>';
             });
-            productosTexto += `--------------------------\n`;
           }
         });
       }
-      if (productosTexto === '') {
-        productosTexto = 'No hay productos escaneados';
+      if (productoIndex === 0) {
+        productosHTML += '<tr><td colspan="4" style="padding:15px; text-align:center; color:#6c757d;">No hay productos escaneados</td></tr>';
+      }
+      productosHTML += '</tbody></table>';
+
+      // ✅ FUNCIÓN PARA FORMATEAR TIPO DE NOVEDAD (QUITAR GUIONES Y CAPITALIZAR)
+      function formatearTipoNovedad(tipo) {
+        if (!tipo) return 'N/A';
+        return tipo
+          .replace(/_/g, ' ')  // ✅ Reemplazar guiones por espacios
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ');
       }
 
-      // ✅ FORMATEAR DATOS DE NOVEDADES COMO TEXTO LEGIBLE
-      let novedadesTexto = '';
+      // ✅ FORMATEAR NOVEDADES COMO TABLA HTML
+      let novedadesHTML = '<table style="width:100%; border-collapse:collapse; margin-top:10px;">';
+      novedadesHTML += '<thead><tr style="background:#001855; color:white;">';
+      novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">#</th>';
+      novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">Tipo Novedad</th>';
+      novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">Descripción</th>';
+      novedadesHTML += '</tr></thead><tbody>';
+      
+      let novedadIndex = 0;
       if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
         data.datos_vehiculos.forEach((v, vIndex) => {
           if (v.novedades && v.novedades.length > 0) {
-            novedadesTexto += `⚠️ VEHÍCULO ${vIndex + 1}:\n`;
             v.novedades.forEach((nov, nIndex) => {
-              novedadesTexto += `   ${nIndex + 1}. Tipo: ${nov.tipo || 'N/A'}\n`;
-              novedadesTexto += `      Descripción: ${nov.descripcion || 'Sin descripción'}\n`;
-              if (nov.foto_url) {
-                novedadesTexto += `      Foto: ${nov.foto_url}\n`;
-              }
+              novedadIndex++;
+              const bg = novedadIndex % 2 === 0 ? '#f8f9fa' : 'white';
+              const tipoFormateado = formatearTipoNovedad(nov.tipo);
+              novedadesHTML += '<tr style="background:' + bg + ';">';
+              novedadesHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + novedadIndex + '</td>';
+              novedadesHTML += '<td style="padding:8px; border:1px solid #ddd; font-weight:bold; color:#C76E00;">' + tipoFormateado + '</td>';
+              novedadesHTML += '<td style="padding:8px; border:1px solid #ddd;">' + (nov.descripcion || 'Sin descripción') + '</td>';
+              novedadesHTML += '</tr>';
             });
-            novedadesTexto += `--------------------------\n`;
           }
         });
       }
-      if (novedadesTexto === '') {
-        novedadesTexto = 'No hay novedades registradas';
+      if (novedadIndex === 0) {
+        novedadesHTML += '<tr><td colspan="3" style="padding:15px; text-align:center; color:#6c757d;">No hay novedades registradas</td></tr>';
       }
+      novedadesHTML += '</tbody></table>';
 
-      // ✅ PARÁMETROS PARA LA PLANTILLA DE EMAILJS (VARIABLES PLANAS, NO ANIDADAS)
+      // ✅ PARÁMETROS PARA LA PLANTILLA DE EMAILJS (SOLO LOS CAMPOS REQUERIDOS)
       const templateParams = {
-        // ✅ INFORMACIÓN DE REGISTRO
+        // ✅ INFORMACIÓN DE REGISTRO (SOLO ESTOS 3 CAMPOS)
         fecha: data.fecha || 'N/A',
         coordinador: data.coordinador || data.coordinador_otro || 'N/A',
         turno: data.turno || 'N/A',
-        lugar: data.lugar || 'N/A',
-        respo_diligen: data.respo_diligen || 'N/A',
-        lider_pepsico: data.lider_pepsico || data.lider_pepsico_otro || 'N/A',
-        total_personas: data.total_personas || '0',
-        cajas_totales: data.cajas_totales || '0',
-        total_vehiculos: data.datos_vehiculos ? data.datos_vehiculos.length : '0',
         
-        // ✅ DATOS FORMATEADOS COMO TEXTO (PARA EVITAR ERROR DE VARIABLES CORROMPIDAS)
-        vehiculos_detalle: vehiculosTexto,
-        productos_detalle: productosTexto,
-        novedades_detalle: novedadesTexto
+        // ✅ TABLAS HTML CON LOS DATOS
+        vehiculos_tabla: vehiculosHTML,
+        productos_tabla: productosHTML,
+        novedades_tabla: novedadesHTML
       };
 
       console.log('📧 Enviando correo con EmailJS...', templateParams);
