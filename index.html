@@ -4921,6 +4921,7 @@ function enviarFormulario(event) {
   });
 }
 
+// ✅ ENVIAR CORREO CON EMAILJS (CORREGIDO - HTML SE RENDERIZA)
 function enviarCorreoEmailJS(data) {
   return new Promise((resolve, reject) => {
     try {
@@ -4999,7 +5000,7 @@ function enviarCorreoEmailJS(data) {
       function formatearTipoNovedad(tipo) {
         if (!tipo) return 'N/A';
         return tipo
-          .replace(/_/g, ' ')  // ✅ Reemplazar guiones por espacios
+          .replace(/_/g, ' ')
           .split(' ')
           .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
           .join(' ');
@@ -5035,7 +5036,7 @@ function enviarCorreoEmailJS(data) {
       }
       novedadesHTML += '</tbody></table>';
 
-      // ✅ PARÁMETROS PARA LA PLANTILLA DE EMAILJS (SOLO LOS CAMPOS REQUERIDOS)
+      // ✅ PARÁMETROS PARA LA PLANTILLA DE EMAILJS
       const templateParams = {
         // ✅ INFORMACIÓN DE REGISTRO (SOLO ESTOS 3 CAMPOS)
         fecha: data.fecha || 'N/A',
