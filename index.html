@@ -4887,25 +4887,30 @@ function enviarFormulario(event) {
     }
     return response.json();
   })
-  .then(result => {
-  if (result.success) {
-    // ✅ Eliminar datos de localStorage
-    localStorage.removeItem('pepsico_data');
-    
-    // ✅ ENVIAR CORREO (SIN ESPERAR - NO BLOQUEA LA REDIRECCIÓN)
-    enviarCorreoEmailJS(formData)
-      .then(() => {
-        console.log('✅ Proceso de email completado');
-      })
-      .catch(() => {
-        console.warn('⚠️ Email falló pero el registro se guardó');
-      });
-    
-    // ✅ Redirigir inmediatamente (no esperar el email)
-    window.location.href = 'aceptacion.html';
-  } else {
-    throw new Error(result.error || 'Error desconocido');
-  }
+  .then(async result => {
+if (result.success) {
+// ✅ Eliminar datos de localStorage
+localStorage.removeItem('pepsico_data');
+
+// ✅ ENVIAR CORREO Y ESPERAR (con timeout de 5 segundos)
+console.log('📧 Enviando correo antes de redirigir...');
+try {
+  await Promise.race([
+    enviarCorreoEmailJS(formData),
+    new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Timeout')), 5000)
+    )
+  ]);
+  console.log('✅ Proceso de correo completado');
+} catch (emailError) {
+  console.warn('⚠️ Email falló o timeout, pero el registro se guardó:', emailError);
+}
+
+// ✅ Redirigir después de intentar enviar el correo
+setTimeout(() => {
+  window.location.href = 'aceptacion.html';
+}, 500);
+}
 })
   .catch(error => {
     console.error('Error:', error);
@@ -4915,25 +4920,58 @@ function enviarFormulario(event) {
   });
 }
 
-// ✅ ENVIAR CORREO CON EMAILJS (CORREGIDO)
-function enviarCorreoEmailJS(data) {
+// ✅ ENVIAR CORREO CON EMAILJS (VERSIÓN COMPLETA)
+async function enviarCorreoEmailJS(data) {
+  console.log('📧 Iniciando envío de correo...');
+  
   // ✅ VERIFICAR QUE EMAILJS ESTÉ DISPONIBLE
   if (typeof emailjs === 'undefined') {
     console.error('❌ EmailJS no está cargado. Saltando envío de correo.');
-    return Promise.resolve(); // Retornar Promise resuelta para no romper el flujo
+    return Promise.resolve();
   }
-
+  
   // ✅ Construir resumen de novedades (última registrada)
   let novedadesResumen = 'No hay novedades registradas';
+  let novedadesDetalle = '';
   if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
+    data.datos_vehiculos.forEach((vehiculo, vIndex) => {
+      if (vehiculo.novedades && vehiculo.novedades.length > 0) {
+        vehiculo.novedades.forEach(novedad => {
+          novedadesDetalle += `<li><strong>Vehículo ${vIndex + 1}:</strong> ${novedad.tipo || 'N/A'} - ${novedad.descripcion || 'Sin descripción'}</li>`;
+        });
+      }
+    });
+    
     const ultimoVehiculo = data.datos_vehiculos[data.datos_vehiculos.length - 1];
     if (ultimoVehiculo.novedades && ultimoVehiculo.novedades.length > 0) {
       const ultimaNovedad = ultimoVehiculo.novedades[ultimoVehiculo.novedades.length - 1];
       novedadesResumen = `<strong>${ultimaNovedad.tipo || 'N/A'}</strong>: ${ultimaNovedad.descripcion || 'Sin descripción'}`;
     }
   }
-
-  // ✅ Construir tabla de productos escaneados
+  
+  // ✅ Construir tabla de vehículos
+  let vehiculosTabla = '';
+  if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
+    vehiculosTabla = '<table style="width: 100%; border-collapse: collapse;">';
+    vehiculosTabla += '<thead><tr style="background-color: #001855; color: white;"><th style="padding: 10px; border: 1px solid #ddd;">#</th><th style="padding: 10px; border: 1px solid #ddd;">Motivo</th><th style="padding: 10px; border: 1px solid #ddd;">Placa</th><th style="padding: 10px; border: 1px solid #ddd;">Muelle</th><th style="padding: 10px; border: 1px solid #ddd;">Tipo Carga</th><th style="padding: 10px; border: 1px solid #ddd;">Cajas</th></tr></thead><tbody>';
+    
+    data.datos_vehiculos.forEach((vehiculo, index) => {
+      vehiculosTabla += `
+        <tr style="border-bottom: 1px solid #ddd;">
+          <td style="padding: 8px; text-align: center;">${index + 1}</td>
+          <td style="padding: 8px;">${vehiculo.motivo || 'N/A'}</td>
+          <td style="padding: 8px;">${vehiculo.placa || 'N/A'}</td>
+          <td style="padding: 8px;">${vehiculo.muelle || 'N/A'}</td>
+          <td style="padding: 8px;">${vehiculo.tipo_carga || 'N/A'}</td>
+          <td style="padding: 8px; text-align: center;">${vehiculo.cajas || 0}</td>
+        </tr>
+      `;
+    });
+    
+    vehiculosTabla += '</tbody></table>';
+  }
+  
+  // ✅ Construir tabla de productos
   let productosTabla = '<p>No hay productos escaneados</p>';
   let totalProductos = 0;
   if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
@@ -4943,8 +4981,8 @@ function enviarCorreoEmailJS(data) {
         vehiculo.productos_escaneados.forEach(prod => {
           productosHTML += `
             <tr style="border-bottom: 1px solid #ddd;">
-              <td style="padding: 8px; text-align: left;">${prod.codigo || 'N/A'}</td>
-              <td style="padding: 8px; text-align: left;">${prod.nombre || 'N/A'}</td>
+              <td style="padding: 8px;">${prod.codigo || 'N/A'}</td>
+              <td style="padding: 8px;">${prod.nombre || 'N/A'}</td>
               <td style="padding: 8px; text-align: center;">${prod.cantidad || 0}</td>
             </tr>
           `;
@@ -4958,104 +4996,66 @@ function enviarCorreoEmailJS(data) {
         <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
           <thead>
             <tr style="background-color: #001855; color: white;">
-              <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Código</th>
-              <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Producto</th>
-              <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Cajas</th>
+              <th style="padding: 10px; border: 1px solid #ddd;">Código</th>
+              <th style="padding: 10px; border: 1px solid #ddd;">Producto</th>
+              <th style="padding: 10px; border: 1px solid #ddd;">Cajas</th>
             </tr>
           </thead>
-          <tbody>
-            ${productosHTML}
-          </tbody>
+          <tbody>${productosHTML}</tbody>
         </table>
         <p style="margin-top: 10px; font-weight: bold;">Total Cajas: ${totalProductos}</p>
       `;
     }
   }
-
-  // ✅ Construir tabla de vehículos
-  let vehiculosTabla = '';
-  if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
-    let vehiculosHTML = '';
-    data.datos_vehiculos.forEach((vehiculo, index) => {
-      vehiculosHTML += `
-        <tr style="border-bottom: 1px solid #ddd;">
-          <td style="padding: 8px; text-align: center;">${index + 1}</td>
-          <td style="padding: 8px; text-align: left;">${vehiculo.motivo || 'N/A'}</td>
-          <td style="padding: 8px; text-align: left;">${vehiculo.muelle || 'N/A'}</td>
-          <td style="padding: 8px; text-align: left;">${vehiculo.placa || 'N/A'}</td>
-          <td style="padding: 8px; text-align: left;">${vehiculo.destino || vehiculo.origen || 'N/A'}</td>
-          <td style="padding: 8px; text-align: center;">${vehiculo.cajas || 0}</td>
-          <td style="padding: 8px; text-align: left;">${vehiculo.tipo_carga || 'N/A'}</td>
-        </tr>
-      `;
-    });
-    
-    vehiculosTabla = `
-      <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-        <thead>
-          <tr style="background-color: #001855; color: white;">
-            <th style="padding: 10px; border: 1px solid #ddd;">#</th>
-            <th style="padding: 10px; border: 1px solid #ddd;">Motivo</th>
-            <th style="padding: 10px; border: 1px solid #ddd;">Muelle</th>
-            <th style="padding: 10px; border: 1px solid #ddd;">Placa</th>
-            <th style="padding: 10px; border: 1px solid #ddd;">Destino/Origen</th>
-            <th style="padding: 10px; border: 1px solid #ddd;">Cajas</th>
-            <th style="padding: 10px; border: 1px solid #ddd;">Tipo Carga</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${vehiculosHTML}
-        </tbody>
-      </table>
-    `;
-  }
-
+  
   // ✅ Parámetros para la plantilla de EmailJS
   const templateParams = {
+    // ✅ INFORMACIÓN BÁSICA
     fecha: data.fecha || 'N/A',
-    coordinador: data.coordinador || 'N/A',
-    turno: data.turno || 'N/A',
     lugar: data.lugar || 'N/A',
-    novedades_resumen: novedadesResumen,
-    productos_html: productosTabla,
-    total_productos: totalProductos,
-    vehiculos_html: vehiculosTabla,
+    turno: data.turno || 'N/A',
+    respo_diligen: data.respo_diligen || 'N/A',
+    coordinador: data.coordinador || 'N/A',
+    lider_pepsico: data.lider_pepsico || 'N/A',
+    
+    // ✅ TOTALES
     total_vehiculos: data.datos_vehiculos ? data.datos_vehiculos.length : 0,
-    total_cajas: data.cajas_totales || 0,
+    cajas_totales: data.cajas_totales || 0,
     total_personas: data.total_personas || 0,
+    total_productos: totalProductos,
+    
+    // ✅ NOVEDADES
+    novedades_resumen: novedadesResumen,
+    novedades_detalle: novedadesDetalle || 'No hay novedades',
+    
+    // ✅ TABLAS HTML
+    vehiculos_html: vehiculosTabla,
+    productos_html: productosTabla,
+    
+    // ✅ LOGO
     logo_url: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThhtC2IdvEjLP-jZjP8eNii-Vp2ZvND-_XeA&s',
+    
+    // ✅ MENSAJE
     mensaje: `Registro completado exitosamente. Total de vehículos: ${data.datos_vehiculos ? data.datos_vehiculos.length : 0}, Total de cajas: ${data.cajas_totales || 0}`
   };
-
-  console.log('📧 Enviando correo con parámetros:', templateParams);
-
-  // ✅ Enviar correo CON VERIFICACIÓN DE PROMISE
+  
+  console.log('📧 Parámetros del correo:', templateParams);
+  
+  // ✅ Enviar correo CON PROMESA
   try {
-    const emailPromise = emailjs.send(
-      'service_7fe29nl',
-      'template_xey3tlm',
+    const response = await emailjs.send(
+      'service_7fe29nl',      // ⚠️ Tu Service ID
+      'template_xey3tlm',     // ⚠️ Tu Template ID
       templateParams
     );
     
-    // ✅ VERIFICAR QUE SEA UNA PROMISE VÁLIDA
-    if (emailPromise && typeof emailPromise.then === 'function') {
-      return emailPromise
-        .then(function(response) {
-          console.log('✅ Correo enviado exitosamente!', response.status, response.text);
-          return response;
-        })
-        .catch(function(error) {
-          console.error('❌ Error al enviar correo:', error);
-          // ✅ NO MOSTRAR ALERTA - El registro ya se guardó
-          return null;
-        });
-    } else {
-      console.warn('⚠️ EmailJS no retornó una Promise válida');
-      return Promise.resolve();
-    }
+    console.log('✅ Correo enviado exitosamente!', response.status, response.text);
+    return response;
+    
   } catch (error) {
-    console.error('❌ Error excepcional en EmailJS:', error);
-    return Promise.resolve();
+    console.error('❌ Error al enviar correo:', error);
+    // ✅ NO mostrar alerta - el registro ya se guardó
+    return null;
   }
 }
         
