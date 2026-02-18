@@ -4892,23 +4892,11 @@ function enviarFormulario(event) {
     // ✅ Eliminar datos de localStorage
     localStorage.removeItem('pepsico_data');
     
-    // ✅ ENVIAR CORREO CON EMAILJS (ESPERAR A QUE TERMINE)
-    enviarCorreoEmailJS(formData)
-      .then(() => {
-        console.log('✅ Correo enviado, redirigiendo...');
-        // ✅ Redirigir SOLO después de que el correo se envíe
-        setTimeout(() => {
-          window.location.href = 'aceptacion.html';
-        }, 1000); // ✅ Pequeña pausa para asegurar que se envíe
-      })
-      .catch((emailError) => {
-        console.error('❌ Error al enviar correo:', emailError);
-        // ✅ AUNQUE FALLÉ EL CORREO, REDIRIGIR (los datos ya se guardaron)
-        alert('⚠️ El registro se guardó correctamente, pero hubo un error al enviar el correo.');
-        setTimeout(() => {
-          window.location.href = 'aceptacion.html';
-        }, 1000);
-      });
+    // ✅ ENVIAR CORREO CON EMAILJS (ANTES DE REDIRIGIR)
+    enviarCorreoEmailJS(formData);
+    
+    // ✅ Redirigir a aceptacion.html
+    window.location.href = 'aceptacion.html';
   } else {
     throw new Error(result.error || 'Error desconocido');
   }
@@ -4921,35 +4909,128 @@ function enviarFormulario(event) {
   });
 }
 
-// ✅ ENVIAR CORREO CON EMAILJS (CORREGIDO - RETORNA PROMISE)
+// ✅ ENVIAR CORREO CON EMAILJS (COMPLETO - TODOS LOS DATOS)
 function enviarCorreoEmailJS(data) {
-  return new Promise((resolve, reject) => {
-    // ✅ Parámetros para la plantilla de EmailJS
-    const templateParams = {
-      fecha: data.fecha,
-      lugar: data.lugar,
-      turno: data.turno,
-      respo_diligen: data.respo_diligen,
-      total_vehiculos: data.datos_vehiculos.length,
-      cajas_totales: data.cajas_totales,
-      total_personas: data.total_personas
-    };
-    
-    console.log('📧 Enviando correo con EmailJS...', templateParams);
-    
-    // ✅ Enviar correo
-    emailjs.send(
-      'service_7fe29nl',      // ✅ Tu Service ID
-      'template_xey3tlm',     // ✅ Tu Template ID
-      templateParams
-    )
-    .then(function(response) {
-      console.log('✅ Correo enviado exitosamente!', response.status, response.text);
-      resolve(response);
-    }, function(error) {
-      console.error('❌ Error al enviar correo:', error);
-      reject(error);
-    });
+  // ✅ Construir HTML de vehículos
+  let vehiculosHTML = '';
+  data.datos_vehiculos.forEach((v, i) => {
+    vehiculosHTML += `
+      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #001855; margin-bottom: 15px;">
+        <h4 style="margin: 0 0 10px 0; color: #001855;">🚛 Vehículo #${i + 1}</h4>
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 5px 0; width: 120px;"><strong style="color: #001855;">Motivo:</strong></td>
+            <td style="padding: 5px 0;">${v.motivo || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 5px 0;"><strong style="color: #001855;">Muelle:</strong></td>
+            <td style="padding: 5px 0;">${v.muelle || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 5px 0;"><strong style="color: #001855;">Placa:</strong></td>
+            <td style="padding: 5px 0;">${v.placa || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 5px 0;"><strong style="color: #001855;">Destino:</strong></td>
+            <td style="padding: 5px 0;">${v.destino || v.origen || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 5px 0;"><strong style="color: #001855;">Cajas:</strong></td>
+            <td style="padding: 5px 0;">${v.cajas || '0'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 5px 0;"><strong style="color: #001855;">Tipo Carga:</strong></td>
+            <td style="padding: 5px 0;">${v.tipo_carga || 'N/A'}</td>
+          </tr>
+        </table>
+      </div>
+    `;
+  });
+
+  // ✅ Construir HTML de productos
+  let productosHTML = '';
+  data.datos_vehiculos.forEach((v, i) => {
+    if (v.productos_escaneados && v.productos_escaneados.length > 0) {
+      productosHTML += `
+        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+          <h4 style="margin: 0 0 10px 0; color: #856404;">📦 Vehículo #${i + 1} - Productos</h4>
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: #856404; color: white;">
+                <th style="padding: 8px; text-align: left;">Código</th>
+                <th style="padding: 8px; text-align: left;">Producto</th>
+                <th style="padding: 8px; text-align: center;">Cajas</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      v.productos_escaneados.forEach(prod => {
+        productosHTML += `
+          <tr style="border-bottom: 1px solid #dee2e6;">
+            <td style="padding: 8px;">${prod.codigo || 'N/A'}</td>
+            <td style="padding: 8px;">${prod.nombre || 'N/A'}</td>
+            <td style="padding: 8px; text-align: center;">${prod.cantidad || '0'}</td>
+          </tr>
+        `;
+      });
+      productosHTML += `
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+  });
+
+  // ✅ Construir HTML de novedades
+  let novedadesHTML = '';
+  data.datos_vehiculos.forEach((v, i) => {
+    if (v.novedades && v.novedades.length > 0) {
+      novedadesHTML += `
+        <div style="background: #f8d7da; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+          <h4 style="margin: 0 0 10px 0; color: #721c24;">⚠️ Vehículo #${i + 1} - Novedades</h4>
+      `;
+      v.novedades.forEach((nov, j) => {
+        novedadesHTML += `
+          <div style="background: white; padding: 10px; border-radius: 5px; margin-bottom: 10px;">
+            <strong style="color: #721c24;">Tipo:</strong> ${nov.tipo || 'N/A'}<br>
+            <strong style="color: #721c24;">Descripción:</strong> ${nov.descripcion || 'Sin descripción'}
+          </div>
+        `;
+      });
+      novedadesHTML += `
+        </div>
+      `;
+    }
+  });
+
+  // ✅ Parámetros para la plantilla de EmailJS
+  const templateParams = {
+    fecha: data.fecha || 'N/A',
+    lugar: data.lugar || 'N/A',
+    turno: data.turno || 'N/A',
+    coordinador: data.coordinador || 'N/A',
+    respo_diligen: data.respo_diligen || 'N/A',
+    total_vehiculos: data.datos_vehiculos.length || 0,
+    cajas_totales: data.cajas_totales || 0,
+    total_personas: data.total_personas || 0,
+    vehiculos_html: vehiculosHTML,
+    productos_html: productosHTML || '<p style="color: #6c757d;">No hay productos escaneados</p>',
+    novedades_html: novedadesHTML || '<p style="color: #6c757d;">No hay novedades reportadas</p>'
+  };
+
+  console.log('📧 Enviando correo con EmailJS...', templateParams);
+
+  // ✅ Enviar correo
+  emailjs.send(
+    'service_7fe29nl',      // ✅ Tu Service ID
+    'template_xey3tlm',     // ✅ Tu Template ID
+    templateParams
+  )
+  .then(function(response) {
+    console.log('✅ Correo enviado exitosamente!', response.status, response.text);
+  }, function(error) {
+    console.error('❌ Error al enviar correo:', error);
+    // ✅ NO mostrar alerta para no interrumpir el flujo
   });
 }
         
