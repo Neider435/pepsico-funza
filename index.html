@@ -2323,6 +2323,13 @@ style="background-color: #f8f9fa; font-weight: bold; color: #C76E00;">
   </div>
 </div>
             `;
+            // ✅ MOSTRAR FOTO GUARDADA SI EXISTE
+if (datos.foto_url) {
+  const previewFoto = document.getElementById(previewFotoId);
+  if (previewFoto) {
+    previewFoto.innerHTML = `<img src="${datos.foto_url}" style="max-width: 100%; border-radius: 8px; border: 2px solid #001855;">`;
+  }
+}
             
             registro.innerHTML = html;
             contenedor.appendChild(registro);
@@ -4758,110 +4765,107 @@ function mostrarFeedbackPicking(mensaje, vIndex, tipo = 'info') {
         // ============================================
 
 function guardarProgreso() {
-  const form = document.forms['formulario-pepsico'];
-  if (!form) return;
-  
-  const formData = new FormData(form);
-  const data = {};
-  
-  formData.forEach((value, key) => {
-    if (!(value instanceof File) && key !== 'form-name') data[key] = value;
-  });
-  
-  // ✅ CAPTURAR NOMBRES DEL PERSONAL, JUSTIFICACIONES Y NOVEDADES POR VEHÍCULO
-  const vehiculos = document.querySelectorAll('.registro-vehiculo');
-  vehiculos.forEach((_, vIndex) => {
-    // Capturar nombres del personal
-    const totalPersonas = parseInt(document.querySelector(`input[name="vehiculo_${vIndex}_personas"]`)?.value) || 0;
-    for (let p = 1; p <= totalPersonas; p++) {
-      const nombreInput = document.querySelector(`input[name="vehiculo_${vIndex}_nombre_persona_${p}"]`);
-      if (nombreInput) {
-        data[`vehiculo_${vIndex}_nombre_persona_${p}`] = nombreInput.value || '';
-      }
-    }
+    const form = document.forms['formulario-pepsico'];
+    if (!form) return;
     
-    // ✅ ============================================
-    // ✅ AQUÍ AGREGAS EL CÓDIGO DE LAS FOTOS
-    // ✅ ============================================
-    const fotoInicio = document.getElementById(`url-inicio-${vIndex}`)?.value || '';
-    const fotoDurante = document.getElementById(`url-durante-${vIndex}`)?.value || '';
-    const fotoFin = document.getElementById(`url-fin-${vIndex}`)?.value || '';
+    const formData = new FormData(form);
+    const data = {};
     
-    vehiculosData[vIndex].foto_inicio_url = fotoInicio;
-    vehiculosData[vIndex].foto_durante_url = fotoDurante;
-    vehiculosData[vIndex].foto_fin_url = fotoFin;
-    // ✅ ============================================
-    
-    // ✅ CAPTURAR JUSTIFICACIONES POR VEHÍCULO
-    const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${vIndex}`);
-    if (justificacionesContenedor) {
-      const justificaciones = justificacionesContenedor.querySelectorAll('.justificacion-group');
-      const justificacionesData = [];
-      
-      justificaciones.forEach((justificacion, jIndex) => {
-        const motivo = justificacion.querySelector(`select[name="vehiculo_${vIndex}_justificacion_${jIndex}"]`)?.value || '';
-        const otro_motivo = justificacion.querySelector(`input[name="vehiculo_${vIndex}_otro_justificacion_${jIndex}"]`)?.value || '';
-        const tiempo_inicio = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_inicio_${jIndex}"]`)?.value || '';
-        const tiempo_fin = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_final_${jIndex}"]`)?.value || '';
-        
-        justificacionesData.push({
-          justificacion: motivo,
-          otro_justificacion: otro_motivo,
-          tiempo_muerto_inicio: tiempo_inicio,
-          tiempo_muerto_final: tiempo_fin
-        });
-      });
-      
-      data[`_justificaciones_${vIndex}`] = justificacionesData;
-    }
-    
-    // ✅ CAPTURAR NOVEDADES POR VEHÍCULO
-    const novedadesContenedor = document.getElementById(`novedades-contenedor-${vIndex}`);
-    if (novedadesContenedor) {
-      const novedades = novedadesContenedor.querySelectorAll('.novedad-group');
-      const novedadesData = [];
-      
-      novedades.forEach((novedad, nIndex) => {
-        const tipo = novedad.querySelector(`select[name="vehiculo_${vIndex}_tipo_novedad_${nIndex}"]`)?.value || '';
-        const descripcion = novedad.querySelector(`textarea[name="vehiculo_${vIndex}_descripcion_novedad_${nIndex}"]`)?.value || '';
-        const foto_url = novedad.querySelector(`input[name="vehiculo_${vIndex}_foto_novedad_${nIndex}_url"]`)?.value || '';
-        
-        novedadesData.push({
-          tipo: tipo,
-          descripcion: descripcion,
-          foto_url: foto_url
-        });
-      });
-      
-      data[`_novedades_${vIndex}`] = novedadesData;
-    }
-  }); // ← ✅ ESTE ES EL CIERRE DEL forEach DE VEHÍCULOS
-  
-  // ✅ GUARDAR PARADAS DE OPERACIÓN
-  const paradasData = [];
-  const paradasContainer = document.getElementById('operacion-contenedor');
-  const paradas = paradasContainer.querySelectorAll('.parada-group');
-  
-  paradas.forEach((parada, index) => {
-    const inicio = parada.querySelector(`input[name="parada_inicio_operacion_${index}"]`)?.value || '';
-    const fin = parada.querySelector(`input[name="parada_fin_operacion_${index}"]`)?.value || '';
-    const motivo = parada.querySelector(`select[name="parada_motivo_operacion_${index}"]`)?.value || '';
-    const otro_motivo = parada.querySelector(`input[name="parada_otro_motivo_operacion_${index}"]`)?.value || '';
-    
-    paradasData.push({
-      inicio: inicio,
-      fin: fin,
-      motivo: motivo,
-      otro_motivo: otro_motivo
+    formData.forEach((value, key) => {
+        if (!(value instanceof File) && key !== 'form-name') data[key] = value;
     });
-  });
-  
-  data._numVehiculos = vehiculosData.length;
-  data._paradasDetalle = paradasData;
-  data._productosEscaneados = productosEscaneadosPorVehiculo;
-  
-  console.log('💾 Guardando progreso:', data);
-  localStorage.setItem('pepsico_data', JSON.stringify(data));
+    
+    const vehiculos = document.querySelectorAll('.registro-vehiculo');
+    vehiculos.forEach((_, vIndex) => {
+        // ✅ CAPTURAR FOTO PRINCIPAL DEL VEHÍCULO
+        const fotoUrlInput = document.getElementById(`foto_url_${vIndex}`);
+        if (fotoUrlInput) {
+            data[`vehiculo_${vIndex}_foto_url`] = fotoUrlInput.value || '';
+        }
+        
+        // ✅ ============================================
+        // ✅ CAPTURAR LAS 3 FOTOS (INICIO, DURANTE, FIN)
+        // ✅ ============================================
+        const fotoInicio = document.getElementById(`url-inicio-${vIndex}`)?.value || '';
+        const fotoDurante = document.getElementById(`url-durante-${vIndex}`)?.value || '';
+        const fotoFin = document.getElementById(`url-fin-${vIndex}`)?.value || '';
+        
+        // ✅ GUARDAR EN data (NO en vehiculosData)
+        data[`vehiculo_${vIndex}_foto_inicio_url`] = fotoInicio;
+        data[`vehiculo_${vIndex}_foto_durante_url`] = fotoDurante;
+        data[`vehiculo_${vIndex}_foto_fin_url`] = fotoFin;
+        // ✅ ============================================
+        
+        // ✅ CAPTURAR JUSTIFICACIONES POR VEHÍCULO
+        const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${vIndex}`);
+        if (justificacionesContenedor) {
+            const justificaciones = justificacionesContenedor.querySelectorAll('.justificacion-group');
+            const justificacionesData = [];
+            
+            justificaciones.forEach((justificacion, jIndex) => {
+                const motivo = justificacion.querySelector(`select[name="vehiculo_${vIndex}_justificacion_${jIndex}"]`)?.value || '';
+                const otro_motivo = justificacion.querySelector(`input[name="vehiculo_${vIndex}_otro_justificacion_${jIndex}"]`)?.value || '';
+                const tiempo_inicio = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_inicio_${jIndex}"]`)?.value || '';
+                const tiempo_fin = justificacion.querySelector(`input[name="vehiculo_${vIndex}_tiempo_muerto_final_${jIndex}"]`)?.value || '';
+                
+                justificacionesData.push({
+                    justificacion: motivo,
+                    otro_justificacion: otro_motivo,
+                    tiempo_muerto_inicio: tiempo_inicio,
+                    tiempo_muerto_final: tiempo_fin
+                });
+            });
+            
+            data[`_justificaciones_${vIndex}`] = justificacionesData;
+        }
+        
+        // ✅ CAPTURAR NOVEDADES POR VEHÍCULO
+        const novedadesContenedor = document.getElementById(`novedades-contenedor-${vIndex}`);
+        if (novedadesContenedor) {
+            const novedades = novedadesContenedor.querySelectorAll('.novedad-group');
+            const novedadesData = [];
+            
+            novedades.forEach((novedad, nIndex) => {
+                const tipo = novedad.querySelector(`select[name="vehiculo_${vIndex}_tipo_novedad_${nIndex}"]`)?.value || '';
+                const descripcion = novedad.querySelector(`textarea[name="vehiculo_${vIndex}_descripcion_novedad_${nIndex}"]`)?.value || '';
+                const foto_url = novedad.querySelector(`input[name="vehiculo_${vIndex}_foto_novedad_${nIndex}_url"]`)?.value || '';
+                
+                novedadesData.push({
+                    tipo: tipo,
+                    descripcion: descripcion,
+                    foto_url: foto_url
+                });
+            });
+            
+            data[`_novedades_${vIndex}`] = novedadesData;
+        }
+    }); // ← ✅ AQUÍ SÍ CIERRA EL forEach DE VEHÍCULOS
+    
+    // ✅ GUARDAR PARADAS DE OPERACIÓN
+    const paradasData = [];
+    const paradasContainer = document.getElementById('operacion-contenedor');
+    const paradas = paradasContainer.querySelectorAll('.parada-group');
+    
+    paradas.forEach((parada, index) => {
+        const inicio = parada.querySelector(`input[name="parada_inicio_operacion_${index}"]`)?.value || '';
+        const fin = parada.querySelector(`input[name="parada_fin_operacion_${index}"]`)?.value || '';
+        const motivo = parada.querySelector(`select[name="parada_motivo_operacion_${index}"]`)?.value || '';
+        const otro_motivo = parada.querySelector(`input[name="parada_otro_motivo_operacion_${index}"]`)?.value || '';
+        
+        paradasData.push({
+            inicio: inicio,
+            fin: fin,
+            motivo: motivo,
+            otro_motivo: otro_motivo
+        });
+    });
+    
+    data._numVehiculos = vehiculosData.length;
+    data._paradasDetalle = paradasData;
+    data._productosEscaneados = productosEscaneadosPorVehiculo;
+    
+    console.log('💾 Guardando progreso:', data);
+    localStorage.setItem('pepsico_data', JSON.stringify(data));
 }
 
 
@@ -5347,8 +5351,7 @@ function enviarCorreoEmailJS(data) {
         // ============================================
         // INICIALIZACIÓN AL CARGAR LA PÁGINA
         // ============================================
-
-        document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async function() {
   const form = document.querySelector('form');
   const savedData = localStorage.getItem('pepsico_data');
 
@@ -5399,8 +5402,6 @@ function enviarCorreoEmailJS(data) {
         tipo_operacion: data[`vehiculo_${i}_tipo_operacion`] || ''
       };
 
-      
-
       // ✅ Cargar nombres del personal desde localStorage
       for (let j = 1; ; j++) {
         const nombreKey = `vehiculo_${i}_nombre_persona_${j}`;
@@ -5412,7 +5413,24 @@ function enviarCorreoEmailJS(data) {
       }
       vehiculosData.push(vObj);
       crearVehiculoHTML(document.getElementById('vehiculos-contenedor'), i, vObj);
-      
+
+      // ✅ RESTAURAR FOTO PRINCIPAL DEL VEHÍCULO
+      if (vObj.foto_url) {
+        const previewFoto = document.getElementById(`preview_foto_${i}`);
+        if (previewFoto) {
+          previewFoto.innerHTML = `<img src="${vObj.foto_url}" style="max-width: 100%; border-radius: 8px; border: 2px solid #001855; margin-top: 10px;">`;
+        }
+      }
+
+      // ✅ RESTAURAR LAS 3 FOTOS (INICIO, DURANTE, FIN)
+      if (data[`vehiculo_${i}_foto_inicio_url`] || data[`vehiculo_${i}_foto_durante_url`] || data[`vehiculo_${i}_foto_fin_url`]) {
+        restaurarFotosVehiculo(i, {
+          foto_inicio_url: data[`vehiculo_${i}_foto_inicio_url`] || '',
+          foto_durante_url: data[`vehiculo_${i}_foto_durante_url`] || '',
+          foto_fin_url: data[`vehiculo_${i}_foto_fin_url`] || ''
+        });
+      }
+
       // ✅ Restaurar valor de tipo de operación
       if (vObj.tipo_operacion) {
         const tipoOperacionSelect = document.getElementById(`tipo-operacion-${i}`);
@@ -5421,150 +5439,142 @@ function enviarCorreoEmailJS(data) {
         }
       }
 
-      if (data[`vehiculo_${i}_foto_inicio_url`] || data[`vehiculo_${i}_foto_durante_url`] || data[`vehiculo_${i}_foto_fin_url`]) {
-          restaurarFotosVehiculo(i, {
-              foto_inicio_url: data[`vehiculo_${i}_foto_inicio_url`] || '',
-              foto_durante_url: data[`vehiculo_${i}_foto_durante_url`] || '',
-              foto_fin_url: data[`vehiculo_${i}_foto_fin_url`] || ''
-          });
-      }
-      
-const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${i}`);
-if (justificacionesContenedor && data[`_justificaciones_${i}`]) {
-  justificacionesContenedor.innerHTML = '';
-  
-  // ✅ LOG DE DEPURACIÓN
-  console.log(`📥 Restaurando justificaciones Vehículo ${i}:`, data[`_justificaciones_${i}`]);
-  
-  data[`_justificaciones_${i}`].forEach((justificacion, jIndex) => {
-    const div = document.createElement('div');
-    div.className = 'justificacion-group';
-    div.dataset.index = jIndex;
-    
-    const botonEliminar = document.createElement('button');
-    botonEliminar.type = 'button';
-    botonEliminar.className = 'btn-eliminar';
-    botonEliminar.textContent = 'Eliminar';
-    botonEliminar.onclick = function() {
-      div.remove();
-      guardarProgreso();
-    };
-    
-    const dInicio = `muerto-inicio-${i}-${jIndex}`;
-    const dFin = `muerto-final-${i}-${jIndex}`;
-    
-    // ✅ USAR EXACTAMENTE LOS MISMOS NOMBRES QUE EN guardarProgreso()
-    const motivoValor = justificacion.justificacion || '';              // ✅ 'justificacion' NO 'motivo'
-    const otroMotivoValor = justificacion.otro_justificacion || '';     // ✅ 'otro_justificacion' NO 'otro_motivo'
-    const tiempoInicioValor = justificacion.tiempo_muerto_inicio || ''; // ✅ 'tiempo_muerto_inicio' NO 'tiempo_inicio'
-    const tiempoFinValor = justificacion.tiempo_muerto_final || '';     // ✅ 'tiempo_muerto_final' NO 'tiempo_fin'
-    
-    div.innerHTML = `
-      <div class="time-row">
-        <div>
-          <label class="time-label">Tiempo Muerto Inicio:</label>
-          <input type="tel" name="vehiculo_${i}_tiempo_muerto_inicio_${jIndex}" class="time-input-masked"
-              placeholder="HH:MM" maxlength="5" value="${tiempoInicioValor}"
-              onblur="applyTimeMask(this, '${dInicio}')">
-          <span id="${dInicio}" class="time-display"></span>
-        </div>
-        <div>
-          <label class="time-label">Tiempo Muerto Final:</label>
-          <input type="tel" name="vehiculo_${i}_tiempo_muerto_final_${jIndex}" class="time-input-masked"
-              placeholder="HH:MM" maxlength="5" value="${tiempoFinValor}"
-              onblur="applyTimeMask(this, '${dFin}')">
-          <span id="${dFin}" class="time-display"></span>
-        </div>
-      </div>
-      <label>Motivo:</label>
-      <select name="vehiculo_${i}_justificacion_${jIndex}" id="justificacion-select-${i}-${jIndex}">
-        <option value="">Seleccione motivo</option>
-        <option value="faltante_producto" ${motivoValor === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
-        <option value="liberacion_calidad" ${motivoValor === 'liberacion_calidad' ? 'selected' : ''}>Liberacion de calidad</option>
-        <option value="Daños" ${motivoValor === 'Daños' ? 'selected' : ''}>Daños (electricos, muelle, montacargas, etc.)</option>
-        <option value="otro" ${motivoValor === 'otro' ? 'selected' : ''}>Otro</option>
-      </select>
-      <input type="text" name="vehiculo_${i}_otro_justificacion_${jIndex}" placeholder="Especifique la incidencia" class="otro-input" 
-             value="${otroMotivoValor}" 
-             style="${motivoValor === 'otro' ? 'display: block;' : 'display: none;'}">
-    `;
-    
-    div.appendChild(botonEliminar);
-    justificacionesContenedor.appendChild(div);
-    
-    // ✅ Configurar eventos DESPUÉS de añadir al DOM
-    const motivoSelect = div.querySelector(`#justificacion-select-${i}-${jIndex}`);
-    const otroInput = div.querySelector(`input[name="vehiculo_${i}_otro_justificacion_${jIndex}"]`);
-    
-    if (motivoSelect && otroInput) {
-      motivoSelect.addEventListener('change', function() {
-        if (this.value === 'otro') {
-          otroInput.style.display = 'block';
-          otroInput.required = true;
-        } else {
-          otroInput.style.display = 'none';
-          otroInput.required = false;
-          otroInput.value = '';
-        }
-        guardarProgreso();
-      });
-    }
-  });
-}
+      // ✅ RESTAURAR JUSTIFICACIONES POR VEHÍCULO
+      const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${i}`);
+      if (justificacionesContenedor && data[`_justificaciones_${i}`]) {
+        justificacionesContenedor.innerHTML = '';
 
-// ✅ RESTAURAR NOVEDADES POR VEHÍCULO
-const novedadesContenedor = document.getElementById(`novedades-contenedor-${i}`);
-if (novedadesContenedor && data[`_novedades_${i}`]) {
-  novedadesContenedor.innerHTML = '';
-  
-  // ✅ LOG DE DEPURACIÓN
-  console.log(`📥 Restaurando novedades Vehículo ${i}:`, data[`_novedades_${i}`]);
-  
-  data[`_novedades_${i}`].forEach((novedad, nIndex) => {
-    const div = document.createElement('div');
-    div.className = 'novedad-group';
-    div.dataset.index = nIndex;
-    
-    const botonEliminar = document.createElement('button');
-    botonEliminar.type = 'button';
-    botonEliminar.className = 'btn-eliminar';
-    botonEliminar.textContent = 'Eliminar';
-    botonEliminar.onclick = function() {
-      div.remove();
-      guardarProgreso();
-    };
-    
-    // ✅ USAR EXACTAMENTE LOS MISMOS NOMBRES QUE EN guardarProgreso()
-    const tipoValor = novedad.tipo || '';
-    const descripcionValor = novedad.descripcion || '';
-    const fotoUrlValor = novedad.foto_url || '';
-    
-    div.innerHTML = `
-      <label>Tipo de Novedad:</label>
-      <select name="vehiculo_${i}_tipo_novedad_${nIndex}">
-        <option value="">Seleccione tipo</option>
-        <option value="cajas_rotas" ${tipoValor === 'cajas_rotas' ? 'selected' : ''}>Cajas rotas</option>
-        <option value="faltante_producto" ${tipoValor === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
-        <option value="sobrante_producto" ${tipoValor === 'sobrante_producto' ? 'selected' : ''}>Sobrante de producto</option>
-        <option value="estibas_malas" ${tipoValor === 'estibas_malas' ? 'selected' : ''}>Estibas malas</option>
-        <option value="otro" ${tipoValor === 'otro' ? 'selected' : ''}>Otro</option>
-      </select>
-      
-      <label>Descripción:</label>
-      <textarea name="vehiculo_${i}_descripcion_novedad_${nIndex}" placeholder="Describa la novedad">${descripcionValor}</textarea>
-      
-      <label>Foto de la Novedad:</label>
-      <div class="preview-foto" style="margin-top: 10px;">
-        ${fotoUrlValor ? `<img src="${fotoUrlValor}" style="max-width: 100%; border-radius: 5px; border: 2px solid #001855;">` : ''}
-      </div>
-      <input type="hidden" name="vehiculo_${i}_foto_novedad_${nIndex}_url" value="${fotoUrlValor}">
-    `;
-    
-    div.appendChild(botonEliminar);
-    novedadesContenedor.appendChild(div);
-  });
-}
-      
+        // ✅ LOG DE DEPURACIÓN
+        console.log(`📥 Restaurando justificaciones Vehículo ${i}:`, data[`_justificaciones_${i}`]);
+
+        data[`_justificaciones_${i}`].forEach((justificacion, jIndex) => {
+          const div = document.createElement('div');
+          div.className = 'justificacion-group';
+          div.dataset.index = jIndex;
+
+          const botonEliminar = document.createElement('button');
+          botonEliminar.type = 'button';
+          botonEliminar.className = 'btn-eliminar';
+          botonEliminar.textContent = 'Eliminar';
+          botonEliminar.onclick = function() {
+            div.remove();
+            guardarProgreso();
+          };
+
+          const dInicio = `muerto-inicio-${i}-${jIndex}`;
+          const dFin = `muerto-final-${i}-${jIndex}`;
+
+          // ✅ USAR EXACTAMENTE LOS MISMOS NOMBRES QUE EN guardarProgreso()
+          const motivoValor = justificacion.justificacion || '';
+          const otroMotivoValor = justificacion.otro_justificacion || '';
+          const tiempoInicioValor = justificacion.tiempo_muerto_inicio || '';
+          const tiempoFinValor = justificacion.tiempo_muerto_final || '';
+
+          div.innerHTML = `
+            <div class="time-row">
+              <div>
+                <label class="time-label">Tiempo Muerto Inicio:</label>
+                <input type="tel" name="vehiculo_${i}_tiempo_muerto_inicio_${jIndex}" class="time-input-masked"
+                    placeholder="HH:MM" maxlength="5" value="${tiempoInicioValor}"
+                    onblur="applyTimeMask(this, '${dInicio}')">
+                <span id="${dInicio}" class="time-display"></span>
+              </div>
+              <div>
+                <label class="time-label">Tiempo Muerto Final:</label>
+                <input type="tel" name="vehiculo_${i}_tiempo_muerto_final_${jIndex}" class="time-input-masked"
+                    placeholder="HH:MM" maxlength="5" value="${tiempoFinValor}"
+                    onblur="applyTimeMask(this, '${dFin}')">
+                <span id="${dFin}" class="time-display"></span>
+              </div>
+            </div>
+            <label>Motivo:</label>
+            <select name="vehiculo_${i}_justificacion_${jIndex}" id="justificacion-select-${i}-${jIndex}">
+              <option value="">Seleccione motivo</option>
+              <option value="faltante_producto" ${motivoValor === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
+              <option value="liberacion_calidad" ${motivoValor === 'liberacion_calidad' ? 'selected' : ''}>Liberacion de calidad</option>
+              <option value="Daños" ${motivoValor === 'Daños' ? 'selected' : ''}>Daños (electricos, muelle, montacargas, etc.)</option>
+              <option value="otro" ${motivoValor === 'otro' ? 'selected' : ''}>Otro</option>
+            </select>
+            <input type="text" name="vehiculo_${i}_otro_justificacion_${jIndex}" placeholder="Especifique la incidencia" class="otro-input" 
+                   value="${otroMotivoValor}" 
+                   style="${motivoValor === 'otro' ? 'display: block;' : 'display: none;'}">
+          `;
+
+          div.appendChild(botonEliminar);
+          justificacionesContenedor.appendChild(div);
+
+          // ✅ Configurar eventos DESPUÉS de añadir al DOM
+          const motivoSelect = div.querySelector(`#justificacion-select-${i}-${jIndex}`);
+          const otroInput = div.querySelector(`input[name="vehiculo_${i}_otro_justificacion_${jIndex}"]`);
+
+          if (motivoSelect && otroInput) {
+            motivoSelect.addEventListener('change', function() {
+              if (this.value === 'otro') {
+                otroInput.style.display = 'block';
+                otroInput.required = true;
+              } else {
+                otroInput.style.display = 'none';
+                otroInput.required = false;
+                otroInput.value = '';
+              }
+              guardarProgreso();
+            });
+          }
+        });
+      }
+
+      // ✅ RESTAURAR NOVEDADES POR VEHÍCULO
+      const novedadesContenedor = document.getElementById(`novedades-contenedor-${i}`);
+      if (novedadesContenedor && data[`_novedades_${i}`]) {
+        novedadesContenedor.innerHTML = '';
+
+        // ✅ LOG DE DEPURACIÓN
+        console.log(`📥 Restaurando novedades Vehículo ${i}:`, data[`_novedades_${i}`]);
+
+        data[`_novedades_${i}`].forEach((novedad, nIndex) => {
+          const div = document.createElement('div');
+          div.className = 'novedad-group';
+          div.dataset.index = nIndex;
+
+          const botonEliminar = document.createElement('button');
+          botonEliminar.type = 'button';
+          botonEliminar.className = 'btn-eliminar';
+          botonEliminar.textContent = 'Eliminar';
+          botonEliminar.onclick = function() {
+            div.remove();
+            guardarProgreso();
+          };
+
+          // ✅ USAR EXACTAMENTE LOS MISMOS NOMBRES QUE EN guardarProgreso()
+          const tipoValor = novedad.tipo || '';
+          const descripcionValor = novedad.descripcion || '';
+          const fotoUrlValor = novedad.foto_url || '';
+
+          div.innerHTML = `
+            <label>Tipo de Novedad:</label>
+            <select name="vehiculo_${i}_tipo_novedad_${nIndex}">
+              <option value="">Seleccione tipo</option>
+              <option value="cajas_rotas" ${tipoValor === 'cajas_rotas' ? 'selected' : ''}>Cajas rotas</option>
+              <option value="faltante_producto" ${tipoValor === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
+              <option value="sobrante_producto" ${tipoValor === 'sobrante_producto' ? 'selected' : ''}>Sobrante de producto</option>
+              <option value="estibas_malas" ${tipoValor === 'estibas_malas' ? 'selected' : ''}>Estibas malas</option>
+              <option value="otro" ${tipoValor === 'otro' ? 'selected' : ''}>Otro</option>
+            </select>
+
+            <label>Descripción:</label>
+            <textarea name="vehiculo_${i}_descripcion_novedad_${nIndex}" placeholder="Describa la novedad">${descripcionValor}</textarea>
+
+            <label>Foto de la Novedad:</label>
+            <div class="preview-foto" style="margin-top: 10px;">
+              ${fotoUrlValor ? `<img src="${fotoUrlValor}" style="max-width: 100%; border-radius: 5px; border: 2px solid #001855;">` : ''}
+            </div>
+            <input type="hidden" name="vehiculo_${i}_foto_novedad_${nIndex}_url" value="${fotoUrlValor}">
+          `;
+
+          div.appendChild(botonEliminar);
+          novedadesContenedor.appendChild(div);
+        });
+      }
     }
 
     // ✅ PASO 4: Poblar muelles DESPUÉS de crear los vehículos
@@ -5583,7 +5593,7 @@ if (novedadesContenedor && data[`_novedades_${i}`]) {
     const operacionContenedor = document.getElementById('operacion-contenedor');
     if (operacionContenedor) {
       operacionContenedor.innerHTML = '';
-      
+
       if (data._paradasDetalle && data._paradasDetalle.length > 0) {
         data._paradasDetalle.forEach((parada, index) => {
           agregarCampoParada('operacion', {
@@ -5607,7 +5617,7 @@ if (novedadesContenedor && data[`_novedades_${i}`]) {
     }
 
     actualizarTotalCajas();
-    
+
     // ✅ Cargar productos escaneados desde localStorage
     if (data._productosEscaneados) {
       productosEscaneadosPorVehiculo = data._productosEscaneados;
@@ -5615,7 +5625,7 @@ if (novedadesContenedor && data[`_novedades_${i}`]) {
         mostrarResumenProductos(parseInt(vIndex));
       });
     }
-    
+
     await cargarBaseDatosProductos();
     generarCamposNombres();
   } else {
@@ -5630,7 +5640,7 @@ if (novedadesContenedor && data[`_novedades_${i}`]) {
   form.addEventListener('submit', enviarFormulario);
   form.addEventListener('input', guardarProgreso);
   form.addEventListener('change', guardarProgreso);
-  
+
   document.getElementById('lider_pepsico').addEventListener('change', function() {
     this.dataset.manualChange = 'true';
   });
