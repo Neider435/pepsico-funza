@@ -4889,20 +4889,18 @@ function enviarFormulario(event) {
   })
   .then(result => {
   if (result.success) {
-    // ✅ Eliminar datos de localStorage
     localStorage.removeItem('pepsico_data');
     
-    // ✅ ENVIAR CORREO CON EMAILJS (ESPERAR A QUE TERMINE)
-    enviarCorreoEmailJS(formData)
+    // ✅ ESPERAR A QUE EL CORREO SE ENVÍE ANTES DE REDIRIGIR
+    return enviarCorreoEmailJS(formData)
       .then(() => {
         console.log('✅ Correo enviado, redirigiendo...');
-        // ✅ Redirigir a aceptacion.html
         window.location.href = 'aceptacion.html';
       })
       .catch((emailError) => {
         console.error('❌ Error al enviar correo:', emailError);
-        // ✅ AUNQUE FALLE EL CORREO, REDIRIGIR (los datos ya se guardaron)
-        alert('⚠️ El registro se guardó, pero hubo un error al enviar el correo.');
+        // ✅ AUNQUE FALLÉ EL CORREO, REDIRIGIR (los datos ya se guardaron en MySQL)
+        alert('⚠️ El registro se guardó correctamente, pero hubo un error al enviar el correo.');
         window.location.href = 'aceptacion.html';
       });
   } else {
@@ -4917,216 +4915,89 @@ function enviarFormulario(event) {
   });
 }
 
-
-
 // ✅ ENVIAR CORREO CON EMAILJS (CORREGIDO)
 function enviarCorreoEmailJS(data) {
-  // ✅ Construir HTML de vehículos
-  let vehiculosHTML = '';
-  data.datos_vehiculos.forEach((vehiculo, index) => {
-    vehiculosHTML += `
-      <div style="background: #ffffff; padding: 15px; margin: 10px 0; border-radius: 5px; border: 1px solid #ddd;">
-        <strong>🚚 Vehículo #${index + 1}</strong><br>
-        • Motivo: ${vehiculo.motivo || 'N/A'}<br>
-        • Muelle: ${vehiculo.muelle || 'N/A'}<br>
-        • Placa: ${vehiculo.placa || 'N/A'}<br>
-        • Destino: ${vehiculo.destino || vehiculo.origen || 'N/A'}<br>
-        • Cajas: ${vehiculo.cajas || '0'}<br>
-        • Tipo Carga: ${vehiculo.tipo_carga || 'N/A'}
-      </div>
-    `;
-    
-    // ✅ Agregar novedades si existen
-    if (vehiculo.novedades && vehiculo.novedades.length > 0) {
-      const ultimaNovedad = vehiculo.novedades[vehiculo.novedades.length - 1];
-      vehiculosHTML += `
-        <div style="background: #fff3cd; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #ffc107;">
-          <strong>⚠️ NOVEDAD - Vehículo #${index + 1} (${vehiculo.placa || 'N/A'})</strong><br>
-          • Tipo: ${ultimaNovedad.tipo || 'N/A'}<br>
-          • Descripción: ${ultimaNovedad.descripcion || 'Sin descripción'}<br>
-          ${ultimaNovedad.foto_url ? '• Foto: ✅ Disponible' : ''}
-        </div>
-      `;
+  return new Promise((resolve, reject) => {
+    // ✅ Verificar que EmailJS esté cargado
+    if (typeof emailjs === 'undefined') {
+      console.error('❌ EmailJS no está cargado');
+      reject(new Error('EmailJS no está disponible'));
+      return;
     }
-  });
-  
-  // ✅ Construir fecha de envío
-  const fechaEnvio = new Date().toLocaleString('es-CO', {
-    timeZone: 'America/Bogota',
-    dateStyle: 'full',
-    timeStyle: 'short'
-  });
-  
-  // ✅ Construir URL del logo (usa una URL pública o base64)
-  const logoURL = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThhtC2IdvEjLP-jZjP8eNii-Vp2ZvND-_XeA&s';
-  
-  // ✅ HTML completo pre-formateado
-  const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          line-height: 1.6;
-          color: #333;
-          max-width: 800px;
-          margin: 0 auto;
-          padding: 20px;
-          background-color: #f4f4f4;
+    
+    // ✅ Formatear datos de vehículos como texto (EmailJS no soporta arrays complejos)
+    let vehiculosTexto = '';
+    if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
+      data.datos_vehiculos.forEach((v, i) => {
+        vehiculosTexto += `🚗 VEHÍCULO ${i + 1}:\n`;
+        vehiculosTexto += `   Motivo: ${v.motivo || 'N/A'}\n`;
+        vehiculosTexto += `   Muelle: ${v.muelle || 'N/A'}\n`;
+        vehiculosTexto += `   Placa: ${v.placa || 'N/A'}\n`;
+        vehiculosTexto += `   Destino: ${v.destino || 'N/A'}\n`;
+        vehiculosTexto += `   Cajas: ${v.cajas || '0'}\n`;
+        vehiculosTexto += `   Tipo Vehículo: ${v.tipo_vehi || 'N/A'}\n\n`;
+      });
+    }
+    
+    // ✅ Formatear datos de productos
+    let productosTexto = '';
+    if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
+      data.datos_vehiculos.forEach((v, i) => {
+        if (v.productos_escaneados && v.productos_escaneados.length > 0) {
+          productosTexto += `🚗 VEHÍCULO ${i + 1}:\n`;
+          v.productos_escaneados.forEach((prod, j) => {
+            productosTexto += `   ${j + 1}. ${prod.nombre || prod.codigo} - ${prod.cantidad} cajas\n`;
+          });
+          productosTexto += '\n';
         }
-        .container {
-          background-color: #ffffff;
-          padding: 30px;
-          border-radius: 10px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      });
+    }
+    
+    // ✅ Formatear datos de novedades
+    let novedadesTexto = '';
+    if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
+      data.datos_vehiculos.forEach((v, i) => {
+        if (v.novedades && v.novedades.length > 0) {
+          novedadesTexto += `🚗 VEHÍCULO ${i + 1}:\n`;
+          v.novedades.forEach((nov, j) => {
+            novedadesTexto += `   ${j + 1}. ${nov.tipo || 'N/A'} - ${nov.descripcion || 'Sin descripción'}\n`;
+          });
+          novedadesTexto += '\n';
         }
-        .header {
-          text-align: center;
-          padding-bottom: 20px;
-          border-bottom: 3px solid #001855;
-          margin-bottom: 20px;
-        }
-        .logo {
-          max-width: 200px;
-          height: auto;
-          margin-bottom: 10px;
-        }
-        .title {
-          color: #001855;
-          font-size: 24px;
-          margin: 10px 0;
-        }
-        .section {
-          margin: 20px 0;
-          padding: 15px;
-          background-color: #f8f9fa;
-          border-radius: 5px;
-          border-left: 4px solid #001855;
-        }
-        .section-title {
-          color: #001855;
-          font-size: 18px;
-          font-weight: bold;
-          margin-bottom: 10px;
-        }
-        .info-row {
-          margin: 8px 0;
-          padding: 5px 0;
-          border-bottom: 1px solid #e0e0e0;
-        }
-        .info-label {
-          font-weight: bold;
-          color: #555;
-        }
-        .info-value {
-          color: #001855;
-          font-weight: 600;
-        }
-        .footer {
-          text-align: center;
-          margin-top: 30px;
-          padding-top: 20px;
-          border-top: 2px solid #001855;
-          color: #666;
-          font-size: 14px;
-        }
-        .badge {
-          display: inline-block;
-          padding: 4px 12px;
-          background-color: #001855;
-          color: white;
-          border-radius: 15px;
-          font-size: 12px;
-          font-weight: bold;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <img src="${logoURL}" alt="Pepsico Logo" class="logo">
-          <h1 class="title">📋 Nuevo Registro - Pepsico Funza</h1>
-          <p class="badge">📅 ${fechaEnvio}</p>
-        </div>
-
-        <div class="section">
-          <div class="section-title">📋 INFORMACIÓN DE REGISTRO</div>
-          <div class="info-row">
-            <span class="info-label">📅 Fecha:</span>
-            <span class="info-value">${data.fecha || 'N/A'}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">👤 Coordinador:</span>
-            <span class="info-value">${data.coordinador || 'N/A'}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">🕐 Turno:</span>
-            <span class="info-value">${data.turno || 'N/A'}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">📍 Lugar:</span>
-            <span class="info-value">${data.lugar || 'N/A'}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">📝 Responsable:</span>
-            <span class="info-value">${data.respo_diligen || 'N/A'}</span>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-title">🚚 VEHÍCULOS (${data.datos_vehiculos.length})</div>
-          ${vehiculosHTML}
-        </div>
-
-        <div class="section">
-          <div class="section-title">📊 RESUMEN GENERAL</div>
-          <div class="info-row">
-            <span class="info-label">👥 Total Personas:</span>
-            <span class="info-value">${data.total_personas || '0'}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">📦 Total Cajas:</span>
-            <span class="info-value">${data.cajas_totales || '0'}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">🚚 Total Vehículos:</span>
-            <span class="info-value">${data.datos_vehiculos.length}</span>
-          </div>
-        </div>
-
-        <div class="footer">
-          <p>🏢 <strong>Pepsico Funza - Sistema de Registro</strong></p>
-          <p>📧 Este correo fue enviado automáticamente</p>
-          <p>© 2025 Todos los derechos reservados</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-  
-  // ✅ Parámetros simples para EmailJS (SOLO variables básicas)
-  const templateParams = {
-    to_name: 'Neider Adruman Rincon Rojas',
-    from_name: 'Pepsico Funza - Sistema',
-    message: 'Nuevo registro completado exitosamente',
-    html_content: htmlContent  // ✅ HTML completo pre-formateado
-  };
-  
-  console.log('📧 Enviando correo con EmailJS...', templateParams);
-  
-  // ✅ Enviar correo
-  emailjs.send(
-    'service_7fe29nl',
-    'template_xey3tlm',
-    templateParams
-  )
-  .then(function(response) {
-    console.log('✅ Correo enviado exitosamente!', response.status, response.text);
-  }, function(error) {
-    console.error('❌ Error al enviar correo:', error);
-    alert('⚠️ El registro se guardó, pero hubo un error al enviar el correo.');
+      });
+    }
+    
+    // ✅ Parámetros para la plantilla de EmailJS
+    const templateParams = {
+      fecha: data.fecha || 'N/A',
+      coordinador: data.coordinador || 'N/A',
+      turno: data.turno || 'N/A',
+      lugar: data.lugar || 'N/A',
+      respo_diligen: data.respo_diligen || 'N/A',
+      total_vehiculos: data.datos_vehiculos ? data.datos_vehiculos.length : 0,
+      cajas_totales: data.cajas_totales || '0',
+      total_personas: data.total_personas || '0',
+      vehiculos_info: vehiculosTexto,      // ✅ NUEVO: Texto formateado
+      productos_info: productosTexto,      // ✅ NUEVO: Texto formateado
+      novedades_info: novedadesTexto       // ✅ NUEVO: Texto formateado
+    };
+    
+    console.log('📧 Enviando correo con EmailJS...', templateParams);
+    
+    // ✅ Enviar correo
+    emailjs.send(
+      'service_7fe29nl',      // ✅ Tu Service ID
+      'template_xey3tlm',     // ✅ Tu Template ID
+      templateParams
+    )
+    .then(function(response) {
+      console.log('✅ Correo enviado exitosamente!', response.status, response.text);
+      resolve(response);
+    })
+    .catch(function(error) {
+      console.error('❌ Error al enviar correo:', error);
+      reject(error);
+    });
   });
 }
         
@@ -5438,7 +5309,7 @@ if (novedadesContenedor && data[`_novedades_${i}`]) {
       (function() {
         // ⚠️ REEMPLAZA CON TU PUBLIC KEY DE EMAILJS
         emailjs.init("phGvKdtm9DCeZFCcE");
+        console.log('✅ EmailJS inicializado');
       })();
     </script>
-    
 </body>
