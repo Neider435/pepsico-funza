@@ -3996,25 +3996,34 @@ function mostrarResumenProductos(vIndex) {
 }
 
 // ✅ HACER VISIBLES LOS CAMPOS DE MOTIVO ANTES DE VALIDAR
-// ✅ HACER VISIBLES LOS CAMPOS DE MOTIVO ANTES DE VALIDAR
+// ✅ FUNCIÓN CORREGIDA: Asegura visibilidad estricta antes de validar
 function mostrarCamposMotivo() {
-  const registros = document.querySelectorAll('.registro-vehiculo');
-  registros.forEach((reg, index) => {
-    const containerMotivoTipo = document.getElementById(`motivo-tipo-operacion-container-${index}`);
-    const lineaMotivoTipo = document.getElementById(`motivo-tipo-linea-${index}`);
-    const motivoSolo = document.getElementById(`motivo-solo-${index}`);
+    const lugar = document.getElementById('lugar').value;
+    const registros = document.querySelectorAll('.registro-vehiculo');
     
-    if (containerMotivoTipo && lineaMotivoTipo && motivoSolo) {
-      const lugar = document.getElementById('lugar').value;
-      if (lugar === 'SantoDomingo') {
-        lineaMotivoTipo.style.display = 'flex';
-        motivoSolo.style.display = 'none';
-      } else {
-        lineaMotivoTipo.style.display = 'none';
-        motivoSolo.style.display = 'block';
-      }
-    }
-  });
+    registros.forEach((reg, index) => {
+        const containerMotivoTipo = document.getElementById(`motivo-tipo-operacion-container-${index}`);
+        const lineaMotivoTipo = document.getElementById(`motivo-tipo-linea-${index}`);
+        const motivoSolo = document.getElementById(`motivo-solo-${index}`);
+        
+        if (containerMotivoTipo && lineaMotivoTipo && motivoSolo) {
+            if (lugar === 'SantoDomingo') {
+                // ✅ MOSTRAR SOLO SANTO DOMINGO
+                lineaMotivoTipo.style.display = 'flex';
+                motivoSolo.style.display = 'none';
+                // ✅ HABILITAR EL SELECT VISIBLE Y DESHABILITAR EL OCULTO
+                lineaMotivoTipo.querySelector('select').disabled = false;
+                motivoSolo.querySelector('select').disabled = true;
+            } else {
+                // ✅ MOSTRAR SOLO FUNZA / OTROS
+                lineaMotivoTipo.style.display = 'none';
+                motivoSolo.style.display = 'block';
+                // ✅ HABILITAR EL SELECT VISIBLE Y DESHABILITAR EL OCULTO
+                lineaMotivoTipo.querySelector('select').disabled = true;
+                motivoSolo.querySelector('select').disabled = false;
+            }
+        }
+    });
 }
 
 // ✅ FUNCIÓN CORREGIDA: Validar cantidad a borrar
