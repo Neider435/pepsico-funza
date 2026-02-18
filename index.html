@@ -1797,7 +1797,7 @@ function crearVehiculoHTML(contenedor, vIndex, datos = {}) {
         <div id="motivo-tipo-linea-${vIndex}" style="display: none; gap: 20px; align-items: flex-start;">
           <div style="flex: 1;">
             <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Motivo:</label>
-            <select id="${motivoSelectId}-sd" name="vehiculo_${vIndex}_motivo"
+            <select id="${motivoSelectId}" name="vehiculo_${vIndex}_motivo"
               style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;"
               onchange="alternarDestinoRemitente(this, ${vIndex}); manejarOtroCampo(this);">
               <option value="">Seleccione</option>
@@ -1821,7 +1821,7 @@ function crearVehiculoHTML(contenedor, vIndex, datos = {}) {
         </div>
         <div id="motivo-solo-${vIndex}" style="display: block;">
           <label style="margin-top:5px; display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Motivo:</label>
-          <select id="${motivoSelectId}-funza" name="vehiculo_${vIndex}_motivo" required
+          <select id="${motivoSelectId}" name="vehiculo_${vIndex}_motivo" required
             onchange="alternarDestinoRemitente(this, ${vIndex}); manejarOtroCampo(this);">
             <option value="">Seleccione</option>
             <option value="cargue" ${datos.motivo === 'cargue' ? 'selected' : ''}>Cargue</option>
