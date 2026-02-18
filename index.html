@@ -1272,11 +1272,14 @@ function actualizarMuellesPorLugar() {
   const registros = contenedor.querySelectorAll('.registro-vehiculo');
   
   registros.forEach((registro, index) => {
-    const muelleSelect = registro.querySelector(`#muelle-select-${index}`);
-    const otroMuelleInput = registro.querySelector(`#otro_muelle_${index}`);
+    // ✅ BUSCAR POR ID EXACTO
+    const muelleSelect = document.getElementById(`muelle-select-${index}`);
+    const otroMuelleInput = document.getElementById(`otro_muelle_${index}`);
+    
     if (muelleSelect) {
       const valorActual = muelleSelect.value;
       muelleSelect.innerHTML = '<option value="">Seleccione</option>';
+      
       muelles.forEach(muelle => {
         const option = document.createElement('option');
         option.value = muelle.value;
@@ -1286,13 +1289,13 @@ function actualizarMuellesPorLugar() {
         }
         muelleSelect.appendChild(option);
       });
+      
       manejarOtroMuelle(index);
     }
   });
   
   // ✅ ACTUALIZAR TIPO DE OPERACIÓN CUANDO CAMBIE EL LUGAR
   actualizarTipoOperacionPorLugar();
-  
   guardarProgreso();
 }
 
@@ -1491,16 +1494,17 @@ function manejarOtroMuelle(vIndex) {
             }
         }
 
-        function agregarRegistroVehiculo() {
-            const vIndex = vehiculosData.length;
-            vehiculosData.push({});
-            
-            const contenedor = document.getElementById('vehiculos-contenedor');
-            crearVehiculoHTML(contenedor, vIndex, {});
-            
-            actualizarTotalCajas();
-            guardarProgreso();
-        }
+function agregarRegistroVehiculo() {
+  const vIndex = vehiculosData.length;
+  vehiculosData.push({});
+  const contenedor = document.getElementById('vehiculos-contenedor');
+  crearVehiculoHTML(contenedor, vIndex, {});
+  actualizarTotalCajas();
+  guardarProgreso();
+  
+  // ✅ NUEVO: Actualizar muelles para el nuevo vehículo
+  actualizarMuellesPorLugar();
+}
         
 
         function sincronizarVehiculosDesdeDOM() {
@@ -1923,8 +1927,9 @@ function actualizarTipoOperacionPorLugar() {
                   <!-- Muelle -->
                   <div style="flex: 1;">
                     <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Muelle:</label>
+                    <!-- ✅ DEBE TENER ESTE ID EXACTO -->
                     <select name="vehiculo_${vIndex}_muelle" id="muelle-select-${vIndex}" required onchange="manejarOtroMuelle(${vIndex})"
-                            style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
+                        style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 1em; box-sizing: border-box;">
                       <option value="">Seleccione</option>
                       <!-- Los muelles se generarán dinámicamente -->
                     </select>
