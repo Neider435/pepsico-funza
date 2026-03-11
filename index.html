@@ -5116,7 +5116,8 @@ function enviarFormulario(event) {
   submitBtn.textContent = 'Enviando...';
   
   // ✅ PASO 13: Enviar a Railway (MySQL)
-  fetch(RAILWAY_API_URL, {
+ fetch(API_URL, {
+     
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -5656,4 +5657,5 @@ document.addEventListener('DOMContentLoaded', async function() {
     </script>
     
 </body>
+
 
