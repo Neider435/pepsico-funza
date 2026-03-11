@@ -310,33 +310,6 @@ app.post('/api/registro', async (req, res) => {
         console.log(`ℹ️ No se guardaron paradas de operación (sin datos)`);
       }
     }
-
-    // ✅ ENDPOINT DE PRUEBA SMTP
-app.get('/test-smtp', async (req, res) => {
-  try {
-    const nodemailer = require('nodemailer');
-    
-    const transporter = nodemailer.createTransport({
-      host: 'smtp-relay.brevo.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.BREVO_LOGIN,
-        pass: process.env.BREVO_PASSWORD
-      }
-    });
-    
-    await transporter.verify();
-    res.json({ success: true, message: '✅ Conexión SMTP exitosa' });
-  } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: '❌ Error SMTP',
-      error: error.message,
-      code: error.code
-    });
-  }
-});
     
     // Confirmar transacción
     await connection.commit();
