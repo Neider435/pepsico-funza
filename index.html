@@ -5113,7 +5113,7 @@
     console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
     
     // ✅ PASO 11: URL CORREGIDA (SIN ESPACIOS)
-    const RAILWAY_API_URL = 'https://inlotransformspepsico-production.up.railway.app/api/registro';
+    const API_URL = 'https://pepsico-api.onrender.com/api/registro';
     
     // ✅ PASO 12: Mostrar mensaje de carga
     const submitBtn = document.querySelector('button[type="submit"]');
@@ -5122,7 +5122,7 @@
     submitBtn.textContent = 'Enviando...';
     
     // ✅ PASO 13: Enviar a Railway (MySQL)
-    fetch(RAILWAY_API_URL, {
+    fetch(API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -5662,3 +5662,4 @@
       </script>
       
   </body>
+
