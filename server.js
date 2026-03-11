@@ -44,15 +44,24 @@ const pool = mysql.createPool({
 
 // ✅ FUNCIÓN: Enviar correo con Nodemailer + Brevo
 async function enviarCorreoNodemailer(data, registroId) {
-  // Configurar transporter con Brevo
+  const nodemailer = require('nodemailer');
+  
+  // ✅ CONFIGURACIÓN CORREGIDA PARA BREVO
   const transporter = nodemailer.createTransport({
     host: 'smtp-relay.brevo.com',
-    port: 587,
-    secure: false,
+    port: 465,  // ✅ Cambiar a 465 (SSL) en lugar de 587
+    secure: true,  // ✅ true para puerto 465
     auth: {
       user: process.env.BREVO_LOGIN,
       pass: process.env.BREVO_PASSWORD
-    }
+    },
+    // ✅ Agregar configuración TLS para evitar timeout
+    tls: {
+      rejectUnauthorized: false  // ✅ Permite conexión en entornos cloud
+    },
+    // ✅ Timeouts más largos para Render free tier
+    connectionTimeout: 10000,  // 10 segundos
+    socketTimeout: 10000
   });
 
   // Formatear vehículos como tabla HTML
@@ -265,12 +274,17 @@ async function enviarCorreoNodemailer(data, registroId) {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
-    console.log('✅ Email enviado exitosamente con Nodemailer');
+    console.log('📧 Intentando enviar email a:', mailOptions.to);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Email enviado exitosamente:', info.messageId);
     return true;
   } catch (error) {
-    console.error('❌ Error al enviar email:', error);
-    return false;
+    console.error('❌ Error detallado al enviar email:', {
+      message: error.message,
+      code: error.code,
+      command: error.command
+    });
+    return false;  // ✅ No fallar todo el registro si el email falla
   }
 }
 
@@ -494,7 +508,7 @@ app.post('/api/registro', async (req, res) => {
       id: registroId,
       emailEnviado: emailEnviado
     });
-        
+
   } catch (error) {
     console.error('❌ Error al guardar:', error);
     
