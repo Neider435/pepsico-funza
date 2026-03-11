@@ -42,34 +42,6 @@ const pool = mysql.createPool({
   }
 })();
 
-// ✅ ENDPOINT DE PRUEBA SMTP (eliminar después)
-app.get('/test-email', async (req, res) => {
-  const nodemailer = require('nodemailer');
-  
-  const transporter = nodemailer.createTransport({
-    host: 'smtp-relay.brevo.com',
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.BREVO_LOGIN,
-      pass: process.env.BREVO_PASSWORD
-    },
-    tls: { rejectUnauthorized: false }
-  });
-
-  try {
-    await transporter.verify();
-    res.json({ success: true, message: '✅ Conexión SMTP exitosa' });
-  } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: '❌ Error de conexión',
-      error: error.message,
-      code: error.code
-    });
-  }
-});
-
 // ✅ FUNCIÓN: Enviar correo con Nodemailer + Brevo
 async function enviarCorreoNodemailer(data, registroId) {
   const nodemailer = require('nodemailer');
