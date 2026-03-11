@@ -16,16 +16,18 @@ console.log('PASSWORD:', process.env.MYSQLPASSWORD ? '✅ DEFINIDO (oculto)' : '
 console.log('DATABASE:', process.env.MYSQLDATABASE || '❌ NO DEFINIDO');
 console.log('=======================================');
 
-// Conexión a MySQL
 const pool = mysql.createPool({
   host: process.env.MYSQLHOST,
   user: process.env.MYSQLUSER,
   password: process.env.MYSQLPASSWORD,
   database: process.env.MYSQLDATABASE,
-  port: process.env.MYSQLPORT,
+  port: process.env.MYSQLPORT || 4000,  // ⚠️ TiDB usa puerto 4000
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  ssl: {
+    rejectUnauthorized: true
+  }
 });
 
 // ✅ TEST DE CONEXIÓN AL INICIAR
