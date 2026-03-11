@@ -5107,8 +5107,7 @@ function enviarFormulario(event) {
   console.log('📝 Datos que se enviarán a MySQL:');
   console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
   
-  // ✅ PASO 11: URL CORREGIDA (SIN ESPACIOS)
-  const RAILWAY_API_URL = 'https://pepsico-funza-production-b0f5.up.railway.app/api/registro';
+  const API_URL = 'https://pepsico-api.onrender.com/api/registro';
   
   // ✅ PASO 12: Mostrar mensaje de carga
   const submitBtn = document.querySelector('button[type="submit"]');
@@ -5657,3 +5656,4 @@ document.addEventListener('DOMContentLoaded', async function() {
     </script>
     
 </body>
+
