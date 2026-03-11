@@ -42,35 +42,41 @@ const pool = mysql.createPool({
   }
 })();
 
-// ✅ FUNCIÓN PARA ENVIAR EMAIL CON NODEMAILER + BREVO
 async function enviarCorreoNodemailer(data, registroId) {
   const nodemailer = require('nodemailer');
   
-  console.log('📧 Intentando enviar correo electrónico a:', process.env.EMAIL_DESTINO);
+  console.log('📧 Intentando enviar correo a:', process.env.EMAIL_DESTINO);
   
-  // Configurar transporter con Brevo
+  // ✅ CONFIGURACIÓN OPTIMIZADA PARA BREVO + RENDER
   const transporter = nodemailer.createTransport({
-    host: process.env.BREVO_SMTP_HOST || 'smtp-relay.brevo.com',
-    port: parseInt(process.env.BREVO_SMTP_PORT) || 587,
-    secure: false, // false para 587, true para 465
+    host: 'smtp-relay.brevo.com',
+    port: 587,  // ✅ Usar 587 con STARTTLS (más compatible con Render)
+    secure: false,  // ✅ false para puerto 587
     auth: {
       user: process.env.BREVO_LOGIN,
       pass: process.env.BREVO_PASSWORD
     },
     tls: {
-      rejectUnauthorized: false // Para evitar errores de certificado
+      rejectUnauthorized: false,  // ✅ Evitar errores de certificado
+      minVersion: 'TLSv1.2'
     },
-    connectionTimeout: 10000, // 10 segundos
-    socketTimeout: 10000
+    // ✅ Timeouts más largos para Render free tier
+    connectionTimeout: 20000,  // 20 segundos
+    socketTimeout: 20000,
+    greetingTimeout: 10000
   });
 
-  // Verificar conexión
   try {
-    await transporter.verify();
-    console.log('✅ Conexión SMTP verificada exitosamente');
-  } catch (error) {
-    console.error('❌ Error verificando conexión SMTP:', error.message);
-    throw error;
+    // ✅ Verificar conexión con timeout
+    await Promise.race([
+      transporter.verify(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
+    ]);
+    console.log('✅ Conexión SMTP verificada');
+  } catch (verifyError) {
+    console.warn('⚠️ No se pudo verificar SMTP (pero continuando):', verifyError.message);
+    // ✅ NO lanzar error, continuar sin email
+    return false;
   }
 
   // Email HTML (usa tu plantilla)
@@ -89,17 +95,20 @@ async function enviarCorreoNodemailer(data, registroId) {
     `
   };
 
+  const mailOptions = {
+    from: `"Inlotrans - PepsiCo" <${process.env.BREVO_LOGIN}>`,
+    to: process.env.EMAIL_DESTINO,
+    subject: `📋 Registro PepsiCo - ${data.fecha} - Turno ${data.turno}`,
+    html: htmlTemplate  // Tu plantilla HTML completa
+  };
+
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Email enviado exitosamente:', info.messageId);
+    console.log('✅ Email enviado:', info.messageId);
     return true;
   } catch (error) {
-    console.error('❌ Error detallado al enviar email:', {
-      message: error.message,
-      code: error.code,
-      command: error.command,
-      stack: error.stack
-    });
+    console.warn('⚠️ Email no enviado (pero registro guardado):', error.message);
+    // ✅ IMPORTANTE: Retornar false pero NO lanzar error
     return false;
   }
 }
@@ -312,18 +321,27 @@ app.post('/api/registro', async (req, res) => {
     }
     
     // Confirmar transacción
-    await connection.commit();
-    connection.release();
+    // Confirmar transacción
+await connection.commit();
+connection.release();
 
-    // ✅ ENVIAR CORREO CON NODEMAILER
-    const emailEnviado = await enviarCorreoNodemailer(req.body, registroId);
+// ✅ ENVIAR CORREO (NO BLOQUEANTE)
+// Usamos .catch() para que nunca falle el registro principal
+enviarCorreoNodemailer(req.body, registroId)
+  .then(emailEnviado => {
+    console.log('📧 Resultado email:', emailEnviado ? '✅ Enviado' : '⚠️ No enviado');
+  })
+  .catch(err => {
+    console.error('❌ Error en envío de email (ignorado):', err.message);
+  });
 
-    res.json({
-      success: true,
-      message: 'Registro guardado correctamente',
-      id: registroId,
-      emailEnviado: emailEnviado
-    });
+// ✅ RESPONDER INMEDIATAMENTE (sin esperar el email)
+res.json({
+  success: true,
+  message: 'Registro guardado correctamente',
+  id: registroId,
+  emailEnviado: 'pending'  // Indicamos que se está procesando
+});
 
   } catch (error) {
     console.error('❌ Error al guardar:', error);
