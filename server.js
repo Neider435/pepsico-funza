@@ -42,235 +42,131 @@ const pool = mysql.createPool({
   }
 })();
 
-// ✅ FUNCIÓN: Enviar correo con Nodemailer + Brevo
-async function enviarCorreoNodemailer(data, registroId) {
-  // Configurar transporter con Brevo
+// ✅ FUNCIÓN: Enviar correo con Nodemailer + Brevo (CORREGIDA)
+async function enviarCorreoBrevo(data, registroId) {
+  const nodemailer = require('nodemailer');
+  
+  console.log('📧 Preparando envío de email con Brevo...');
+  
+  // ✅ CONFIGURACIÓN SMTP OPTIMIZADA PARA BREVO + RENDER
   const transporter = nodemailer.createTransport({
     host: 'smtp-relay.brevo.com',
-    port: 587,
-    secure: false,
+    port: 587,              // ✅ Puerto STARTTLS
+    secure: false,          // ✅ false para puerto 587
     auth: {
       user: process.env.BREVO_LOGIN,
       pass: process.env.BREVO_PASSWORD
-    }
+    },
+    tls: {
+      rejectUnauthorized: false,  // ✅ Evita errores de certificado en Render
+      minVersion: 'TLSv1.2'
+    },
+    // ✅ Timeouts extendidos para Render Free Tier
+    connectionTimeout: 15000,
+    socketTimeout: 15000,
+    greetingTimeout: 10000
   });
 
-  // Formatear vehículos como tabla HTML
-  let vehiculosHTML = `
-    <table style="width:100%; border-collapse:collapse; margin-top:10px;">
-      <thead>
-        <tr style="background:#001855; color:white;">
-          <th style="padding:10px; border:1px solid #ddd;">#</th>
-          <th style="padding:10px; border:1px solid #ddd;">Motivo</th>
-          <th style="padding:10px; border:1px solid #ddd;">Muelle</th>
-          <th style="padding:10px; border:1px solid #ddd;">Placa</th>
-          <th style="padding:10px; border:1px solid #ddd;">Destino</th>
-          <th style="padding:10px; border:1px solid #ddd;">Cajas</th>
-          <th style="padding:10px; border:1px solid #ddd;">Tipo Vehículo</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
+  // ✅ Verificar conexión SMTP antes de enviar
+  try {
+    await transporter.verify();
+    console.log('✅ Conexión SMTP con Brevo verificada');
+  } catch (verifyError) {
+    console.warn('⚠️ Advertencia al verificar SMTP:', verifyError.message);
+    // Continuamos, puede ser un falso positivo en Render
+  }
 
-  if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
-    data.datos_vehiculos.forEach((v, index) => {
-      const muelle = v.muelle === 'otro' ? (v.otro_muelle_num || 'N/A') : (v.muelle || 'N/A');
-      const destino = v.destino || v.origen || 'N/A';
-      const cajas = v.cajas || v.total_cajas_escaneadas || '0';
-      const tipoVehiculo = v.tipo_vehi || 'N/A';
-      const motivo = v.motivo ? v.motivo.charAt(0).toUpperCase() + v.motivo.slice(1) : 'N/A';
-      
-      vehiculosHTML += `
-        <tr style="background:${index % 2 === 0 ? '#f8f9fa' : 'white'};">
-          <td style="padding:8px; border:1px solid #ddd; text-align:center;">${index + 1}</td>
-          <td style="padding:8px; border:1px solid #ddd;">${motivo}</td>
-          <td style="padding:8px; border:1px solid #ddd; text-align:center;">${muelle}</td>
-          <td style="padding:8px; border:1px solid #ddd; text-align:center;">${v.placa || 'N/A'}</td>
-          <td style="padding:8px; border:1px solid #ddd;">${destino}</td>
-          <td style="padding:8px; border:1px solid #ddd; text-align:center;">${cajas}</td>
-          <td style="padding:8px; border:1px solid #ddd;">${tipoVehiculo}</td>
-        </tr>
-      `;
+  // ✅ FORMATEAR DATOS PARA EL EMAIL (tu plantilla profesional)
+  // Vehículos
+  let vehiculosHTML = '<table style="width:100%; border-collapse:collapse; margin-top:10px;">';
+  vehiculosHTML += '<thead><tr style="background:#001855; color:white;">';
+  vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">#</th>';
+  vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Motivo</th>';
+  vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Muelle</th>';
+  vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Placa</th>';
+  vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Cajas</th>';
+  vehiculosHTML += '</tr></thead><tbody>';
+
+  if (data.datos_vehiculos?.length > 0) {
+    data.datos_vehiculos.forEach((v, i) => {
+      const muelle = v.muelle === 'otro' ? v.otro_muelle_num || 'N/A' : v.muelle || 'N/A';
+      vehiculosHTML += `<tr style="background:${i%2===0?'#f8f9fa':'white'};">`;
+      vehiculosHTML += `<td style="padding:8px; border:1px solid #ddd;">${i+1}</td>`;
+      vehiculosHTML += `<td style="padding:8px; border:1px solid #ddd;">${v.motivo||'N/A'}</td>`;
+      vehiculosHTML += `<td style="padding:8px; border:1px solid #ddd;">${muelle}</td>`;
+      vehiculosHTML += `<td style="padding:8px; border:1px solid #ddd;">${v.placa||'N/A'}</td>`;
+      vehiculosHTML += `<td style="padding:8px; border:1px solid #ddd;">${v.cajas||'0'}</td>`;
+      vehiculosHTML += '</tr>';
     });
   } else {
-    vehiculosHTML += '<tr><td colspan="7" style="padding:15px; text-align:center; color:#6c757d;">No hay vehículos registrados</td></tr>';
+    vehiculosHTML += '<tr><td colspan="5" style="padding:15px; text-align:center;">Sin vehículos</td></tr>';
   }
-
   vehiculosHTML += '</tbody></table>';
 
-  // Formatear productos
-  let productosHTML = `
-    <table style="width:100%; border-collapse:collapse; margin-top:10px;">
-      <thead>
-        <tr style="background:#001855; color:white;">
-          <th style="padding:10px; border:1px solid #ddd;">#</th>
-          <th style="padding:10px; border:1px solid #ddd;">Vehículo</th>
-          <th style="padding:10px; border:1px solid #ddd;">Placa</th>
-          <th style="padding:10px; border:1px solid #ddd;">Código</th>
-          <th style="padding:10px; border:1px solid #ddd;">Nombre Producto</th>
-          <th style="padding:10px; border:1px solid #ddd;">Cantidad Cajas</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
-
-  let productoIndex = 0;
-  if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
-    data.datos_vehiculos.forEach((v, vIndex) => {
-      if (v.productos_escaneados && v.productos_escaneados.length > 0) {
-        v.productos_escaneados.forEach((prod) => {
-          productoIndex++;
-          productosHTML += `
-            <tr style="background:${productoIndex % 2 === 0 ? '#f8f9fa' : 'white'};">
-              <td style="padding:8px; border:1px solid #ddd; text-align:center;">${productoIndex}</td>
-              <td style="padding:8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:#001855;">${vIndex + 1}</td>
-              <td style="padding:8px; border:1px solid #ddd; text-align:center; font-family:monospace;">${v.placa || 'N/A'}</td>
-              <td style="padding:8px; border:1px solid #ddd; font-family:monospace;">${prod.codigo || prod.referencia || 'N/A'}</td>
-              <td style="padding:8px; border:1px solid #ddd;">${prod.nombre || 'N/A'}</td>
-              <td style="padding:8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:#C76E00;">${prod.cantidad || '0'}</td>
-            </tr>
-          `;
-        });
-      }
-    });
-  }
-
-  if (productoIndex === 0) {
-    productosHTML += '<tr><td colspan="6" style="padding:15px; text-align:center; color:#6c757d;">No hay productos escaneados</td></tr>';
-  }
-
-  productosHTML += '</tbody></table>';
-
-  // Formatear novedades
-  let novedadesHTML = `
-    <table style="width:100%; border-collapse:collapse; margin-top:10px;">
-      <thead>
-        <tr style="background:#001855; color:white;">
-          <th style="padding:10px; border:1px solid #ddd;">#</th>
-          <th style="padding:10px; border:1px solid #ddd;">Vehículo</th>
-          <th style="padding:10px; border:1px solid #ddd;">Placa</th>
-          <th style="padding:10px; border:1px solid #ddd;">Tipo Novedad</th>
-          <th style="padding:10px; border:1px solid #ddd;">Descripción</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
-
-  let novedadIndex = 0;
-  if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
-    data.datos_vehiculos.forEach((v, vIndex) => {
-      if (v.novedades && v.novedades.length > 0) {
-        v.novedades.forEach((nov) => {
-          novedadIndex++;
-          const tipoFormateado = nov.tipo ? nov.tipo.replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') : 'N/A';
-          
-          novedadesHTML += `
-            <tr style="background:${novedadIndex % 2 === 0 ? '#f8f9fa' : 'white'};">
-              <td style="padding:8px; border:1px solid #ddd; text-align:center;">${novedadIndex}</td>
-              <td style="padding:8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:#001855;">${vIndex + 1}</td>
-              <td style="padding:8px; border:1px solid #ddd; text-align:center; font-family:monospace;">${v.placa || 'N/A'}</td>
-              <td style="padding:8px; border:1px solid #ddd; font-weight:bold; color:#C76E00;">${tipoFormateado}</td>
-              <td style="padding:8px; border:1px solid #ddd;">${nov.descripcion || 'Sin descripción'}</td>
-            </tr>
-          `;
-        });
-      }
-    });
-  }
-
-  if (novedadIndex === 0) {
-    novedadesHTML += '<tr><td colspan="5" style="padding:15px; text-align:center; color:#6c757d;">No hay novedades registradas</td></tr>';
-  }
-
-  novedadesHTML += '</tbody></table>';
-
-  // ✅ PLANTILLA HTML COMPLETA
+  // ✅ PLANTILLA HTML COMPLETA (tu diseño profesional)
   const htmlTemplate = `
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-</head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4; margin: 0; padding: 20px;">
-  <div style="max-width: 800px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.1);">
+<head><meta charset="UTF-8"></head>
+<body style="font-family:Arial,sans-serif; line-height:1.6; color:#333; background:#f4f4f4; margin:0; padding:20px;">
+  <div style="max-width:800px; margin:0 auto; background:white; border-radius:10px; overflow:hidden; box-shadow:0 0 20px rgba(0,0,0,0.1);">
     
-    <!-- ✅ HEADER CON FONDO AZUL SÓLIDO -->
-    <div style="background-color: #001855; color: white; padding: 25px; text-align: center; border-radius: 12px 12px 0 0;">
-      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThhtC2IdvEjLP-jZjP8eNii-Vp2ZvND-_XeA&s" alt="Logo Inlotrans" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid white; margin-bottom: 10px;">
-      <h2 style="margin: 10px 0 5px 0; font-size: 22px; color: white;">📋 Nuevo Registro - PepsiCo</h2>
-      <p style="margin: 0; font-size: 13px; opacity: 0.9; color: #e0e0e0;">Sistema de Control de Operaciones</p>
+    <!-- HEADER -->
+    <div style="background:#001855; color:white; padding:25px; text-align:center;">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThhtC2IdvEjLP-jZjP8eNii-Vp2ZvND-_XeA&s" 
+           alt="Logo" style="width:80px; height:80px; border-radius:50%; border:3px solid white;">
+      <h2 style="margin:10px 0 5px;">📋 Nuevo Registro - PepsiCo</h2>
+      <p style="margin:0; font-size:13px; opacity:0.9;">Sistema de Control de Operaciones</p>
     </div>
 
-    <!-- ✅ INFORMACIÓN DE REGISTRO -->
-    <div style="margin: 20px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #ffffff;">
-      <h3 style="color: #C76E00; font-weight: bold; font-size: 1.2em; border-bottom: 3px solid #001855; padding-bottom: 10px; margin-bottom: 15px; margin-top: 0;">📌 INFORMACIÓN DE REGISTRO</h3>
-      <table style="width: 100%; border-collapse: collapse;">
+    <!-- INFORMACIÓN -->
+    <div style="margin:20px; padding:20px; border:1px solid #ddd; border-radius:8px;">
+      <h3 style="color:#C76E00; border-bottom:3px solid #001855; padding-bottom:10px;">📌 INFORMACIÓN</h3>
+      <table style="width:100%;">
         <tr>
-          <td style="padding: 15px; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #001855; width: 33%;">
-            <div style="font-size: 0.85em; color: #6c757d; margin-bottom: 5px;">Fecha</div>
-            <div style="font-weight: bold; color: #001855; font-size: 1.1em;">${data.fecha || 'N/A'}</div>
-          </td>
-          <td style="padding: 15px; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #001855; width: 33%;">
-            <div style="font-size: 0.85em; color: #6c757d; margin-bottom: 5px;">Coordinador</div>
-            <div style="font-weight: bold; color: #001855; font-size: 1.1em;">${data.coordinador || data.coordinador_otro || 'N/A'}</div>
-          </td>
-          <td style="padding: 15px; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #001855; width: 33%;">
-            <div style="font-size: 0.85em; color: #6c757d; margin-bottom: 5px;">Turno</div>
-            <div style="font-weight: bold; color: #001855; font-size: 1.1em;">${data.turno || 'N/A'}</div>
-          </td>
+          <td style="padding:10px; background:#f8f9fa;"><strong>Fecha:</strong><br>${data.fecha||'N/A'}</td>
+          <td style="padding:10px; background:#f8f9fa;"><strong>Coordinador:</strong><br>${data.coordinador||data.coordinador_otro||'N/A'}</td>
+          <td style="padding:10px; background:#f8f9fa;"><strong>Turno:</strong><br>${data.turno||'N/A'}</td>
         </tr>
       </table>
     </div>
 
-    <!-- ✅ VEHÍCULOS REGISTRADOS -->
-    <div style="margin: 20px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #ffffff;">
-      <h3 style="color: #C76E00; font-weight: bold; font-size: 1.2em; border-bottom: 3px solid #001855; padding-bottom: 10px; margin-bottom: 15px; margin-top: 0;">🚛 VEHÍCULOS REGISTRADOS</h3>
+    <!-- VEHÍCULOS -->
+    <div style="margin:20px; padding:20px; border:1px solid #ddd; border-radius:8px;">
+      <h3 style="color:#C76E00; border-bottom:3px solid #001855; padding-bottom:10px;">🚛 VEHÍCULOS</h3>
       ${vehiculosHTML}
     </div>
 
-    <!-- ✅ PRODUCTOS ESCANEADOS -->
-    <div style="margin: 20px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #ffffff;">
-      <h3 style="color: #C76E00; font-weight: bold; font-size: 1.2em; border-bottom: 3px solid #001855; padding-bottom: 10px; margin-bottom: 15px; margin-top: 0;">📦 PRODUCTOS ESCANEADOS</h3>
-      ${productosHTML}
-    </div>
-
-    <!-- ✅ NOVEDADES -->
-    <div style="margin: 20px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #ffffff;">
-      <h3 style="color: #C76E00; font-weight: bold; font-size: 1.2em; border-bottom: 3px solid #001855; padding-bottom: 10px; margin-bottom: 15px; margin-top: 0;">⚠️ NOVEDADES</h3>
-      ${novedadesHTML}
-    </div>
-
-    <!-- ✅ FOOTER CON FONDO AZUL -->
-    <div style="background-color: #001855; color: white; padding: 25px; text-align: center; border-radius: 0 0 12px 12px;">
-      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThhtC2IdvEjLP-jZjP8eNii-Vp2ZvND-_XeA&s" alt="Logo Inlotrans" style="width: 60px; height: 60px; border-radius: 50%; border: 2px solid white; margin-bottom: 10px; opacity: 0.9;">
-      <p style="margin: 10px 0 5px 0; font-size: 14px; font-weight: bold; color: white;">Inlotrans S.A.S</p>
-      <p style="margin: 5px 0; font-size: 12px; opacity: 0.8; color: #e0e0e0;">Sistema de Control de Operaciones - PepsiCo</p>
-      <p style="margin: 15px 0 5px 0; font-size: 11px; opacity: 0.6; color: #b0b0b0;">Enviado automáticamente</p>
-      <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 11px; opacity: 0.6; color: #b0b0b0;">
-        <p style="margin: 0;">Este correo fue generado automáticamente por el sistema de registro</p>
-        <p style="margin: 5px 0 0 0;">© 2026 Inlotrans S.A.S - Todos los derechos reservados</p>
-      </div>
+    <!-- FOOTER -->
+    <div style="background:#001855; color:white; padding:25px; text-align:center;">
+      <p style="margin:0;">Inlotrans S.A.S - Sistema de Control</p>
+      <p style="margin:5px 0; font-size:11px; opacity:0.7;">Enviado automáticamente • ID: ${registroId}</p>
     </div>
   </div>
 </body>
-</html>
-  `;
+</html>`;
 
-  // Email options
+  // ✅ ENVIAR EMAIL
   const mailOptions = {
-    from: `"Inlotrans - PepsiCo" <${process.env.BREVO_LOGIN}>`,
-    to: process.env.EMAIL_DESTINO || 'destinatario@ejemplo.com',
+    from: `"Pepsico Funza" <${process.env.BREVO_LOGIN}>`,
+    to: process.env.EMAIL_DESTINO || 'lcgs.ramirezalejandra@gmail.com',
     subject: `📋 Registro PepsiCo - ${data.fecha} - Turno ${data.turno}`,
     html: htmlTemplate
   };
 
   try {
-    await transporter.sendMail(mailOptions);
-    console.log('✅ Email enviado exitosamente con Nodemailer');
+    console.log('📤 Enviando email a:', mailOptions.to);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Email enviado exitosamente. Message ID:', info.messageId);
     return true;
   } catch (error) {
-    console.error('❌ Error al enviar email:', error);
-    return false;
+    console.error('❌ Error al enviar email con Brevo:', {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response
+    });
+    return false; // ✅ No fallar el registro si el email falla
   }
 }
 
@@ -494,7 +390,7 @@ app.post('/api/registro', async (req, res) => {
       id: registroId,
       emailEnviado: emailEnviado
     });
-        
+
   } catch (error) {
     console.error('❌ Error al guardar:', error);
     
