@@ -23,5 +23,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
+  },
+  "dependencies": {
+    "resend": "^4.0.0"
   }
 }
