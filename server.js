@@ -48,17 +48,114 @@ async function enviarCorreoResend(data, registroId) {
   const resend = new Resend(process.env.RESEND_API_KEY);
 
   try {
-    // Formatear vehículos (igual que antes)
-    let vehiculosHTML = `...`; // Tu código actual
-    
-    // Formatear productos
-    let productosHTML = `...`; // Tu código actual
-    
-    // Formatear novedades  
-    let novedadesHTML = `...`; // Tu código actual
+    // ✅ FORMATEAR VEHÍCULOS COMO TABLA HTML
+    let vehiculosHTML = '<table style="width:100%; border-collapse:collapse; margin-top:10px;">';
+    vehiculosHTML += '<thead><tr style="background:#001855; color:white;">';
+    vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">#</th>';
+    vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Motivo</th>';
+    vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Muelle</th>';
+    vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Placa</th>';
+    vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Destino</th>';
+    vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Cajas</th>';
+    vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Tipo Vehículo</th>';
+    vehiculosHTML += '</tr></thead><tbody>';
 
+    if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
+      data.datos_vehiculos.forEach((v, index) => {
+        const muelle = v.muelle === 'otro' ? (v.otro_muelle_num || 'N/A') : (v.muelle || 'N/A');
+        const destino = v.destino || v.origen || 'N/A';
+        const cajas = v.cajas || v.total_cajas_escaneadas || '0';
+        const tipoVehiculo = v.tipo_vehi || 'N/A';
+        const motivo = v.motivo ? v.motivo.charAt(0).toUpperCase() + v.motivo.slice(1) : 'N/A';
+        
+        vehiculosHTML += '<tr style="background:' + (index % 2 === 0 ? '#f8f9fa' : 'white') + ';">';
+        vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + (index + 1) + '</td>';
+        vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd;">' + motivo + '</td>';
+        vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + muelle + '</td>';
+        vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + (v.placa || 'N/A') + '</td>';
+        vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd;">' + destino + '</td>';
+        vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + cajas + '</td>';
+        vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd;">' + tipoVehiculo + '</td>';
+        vehiculosHTML += '</tr>';
+      });
+    } else {
+      vehiculosHTML += '<tr><td colspan="7" style="padding:15px; text-align:center; color:#6c757d;">No hay vehículos registrados</td></tr>';
+    }
+    vehiculosHTML += '</tbody></table>';
+
+    // ✅ FORMATEAR PRODUCTOS COMO TABLA HTML
+    let productosHTML = '<table style="width:100%; border-collapse:collapse; margin-top:10px;">';
+    productosHTML += '<thead><tr style="background:#001855; color:white;">';
+    productosHTML += '<th style="padding:10px; border:1px solid #ddd;">#</th>';
+    productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Vehículo</th>';
+    productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Placa</th>';
+    productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Código</th>';
+    productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Nombre Producto</th>';
+    productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Cantidad Cajas</th>';
+    productosHTML += '</tr></thead><tbody>';
+
+    let productoIndex = 0;
+    if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
+      data.datos_vehiculos.forEach((v, vIndex) => {
+        if (v.productos_escaneados && v.productos_escaneados.length > 0) {
+          v.productos_escaneados.forEach((prod) => {
+            productoIndex++;
+            const bg = productoIndex % 2 === 0 ? '#f8f9fa' : 'white';
+            productosHTML += '<tr style="background:' + bg + ';">';
+            productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + productoIndex + '</td>';
+            productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:#001855;">' + (vIndex + 1) + '</td>';
+            productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-family:monospace;">' + (v.placa || 'N/A') + '</td>';
+            productosHTML += '<td style="padding:8px; border:1px solid #ddd; font-family:monospace;">' + (prod.codigo || prod.referencia || 'N/A') + '</td>';
+            productosHTML += '<td style="padding:8px; border:1px solid #ddd;">' + (prod.nombre || 'N/A') + '</td>';
+            productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:#C76E00;">' + (prod.cantidad || '0') + '</td>';
+            productosHTML += '</tr>';
+          });
+        }
+      });
+    }
+    if (productoIndex === 0) {
+      productosHTML += '<tr><td colspan="6" style="padding:15px; text-align:center; color:#6c757d;">No hay productos escaneados</td></tr>';
+    }
+    productosHTML += '</tbody></table>';
+
+    // ✅ FORMATEAR NOVEDADES COMO TABLA HTML
+    let novedadesHTML = '<table style="width:100%; border-collapse:collapse; margin-top:10px;">';
+    novedadesHTML += '<thead><tr style="background:#001855; color:white;">';
+    novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">#</th>';
+    novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">Vehículo</th>';
+    novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">Placa</th>';
+    novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">Tipo Novedad</th>';
+    novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">Descripción</th>';
+    novedadesHTML += '</tr></thead><tbody>';
+
+    let novedadIndex = 0;
+    if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
+      data.datos_vehiculos.forEach((v, vIndex) => {
+        if (v.novedades && v.novedades.length > 0) {
+          v.novedades.forEach((nov) => {
+            novedadIndex++;
+            const bg = novedadIndex % 2 === 0 ? '#f8f9fa' : 'white';
+            const tipoFormateado = nov.tipo ? nov.tipo.replace(/_/g, ' ').split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') : 'N/A';
+            
+            novedadesHTML += '<tr style="background:' + bg + ';">';
+            novedadesHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + novedadIndex + '</td>';
+            novedadesHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:#001855;">' + (vIndex + 1) + '</td>';
+            novedadesHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-family:monospace;">' + (v.placa || 'N/A') + '</td>';
+            novedadesHTML += '<td style="padding:8px; border:1px solid #ddd; font-weight:bold; color:#C76E00;">' + tipoFormateado + '</td>';
+            novedadesHTML += '<td style="padding:8px; border:1px solid #ddd;">' + (nov.descripcion || 'Sin descripción') + '</td>';
+            novedadesHTML += '</tr>';
+          });
+        }
+      });
+    }
+    if (novedadIndex === 0) {
+      novedadesHTML += '<tr><td colspan="5" style="padding:15px; text-align:center; color:#6c757d;">No hay novedades registradas</td></tr>';
+    }
+    novedadesHTML += '</tbody></table>';
+
+    // ✅ ENVIAR EMAIL CON RESEND
     const { data: emailData, error } = await resend.emails.send({
-      from: 'Pepsico Funza <onboarding@resend.dev>', // O tu dominio verificado
+      from: 'Pepsico Funza <onboarding@resend.dev>',
       to: [process.env.EMAIL_DESTINO],
       subject: `📋 Registro PepsiCo - ${data.fecha} - Turno ${data.turno}`,
       html: `
