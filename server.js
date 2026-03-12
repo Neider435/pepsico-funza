@@ -470,7 +470,3 @@ app.get('/test-brevo', async (req, res) => {
 app.listen(port, () => {
   console.log(`✅ Servidor corriendo en puerto ${port}`);
 });
-
-app.listen(port, () => {
-  console.log(`✅ Servidor corriendo en puerto ${port}`);
-});
