@@ -439,6 +439,38 @@ app.get('/health', async (req, res) => {
   }
 });
 
+// ✅ AGREGA AQUÍ EL ENDPOINT DE PRUEBA BREVO:
+app.get('/test-brevo', async (req, res) => {
+  const nodemailer = require('nodemailer');
+  
+  const transporter = nodemailer.createTransport({
+    host: 'smtp-relay.brevo.com',
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.BREVO_LOGIN,
+      pass: process.env.BREVO_PASSWORD
+    },
+    tls: { rejectUnauthorized: false }
+  });
+
+  try {
+    await transporter.verify();
+    res.json({ success: true, message: '✅ Conexión Brevo OK' });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      message: '❌ Error Brevo',
+      error: error.message,
+      code: error.code
+    });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`✅ Servidor corriendo en puerto ${port}`);
+});
+
 app.listen(port, () => {
   console.log(`✅ Servidor corriendo en puerto ${port}`);
 });
