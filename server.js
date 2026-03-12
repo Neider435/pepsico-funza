@@ -381,15 +381,22 @@ app.post('/api/registro', async (req, res) => {
     await connection.commit();
     connection.release();
 
-    // ✅ ENVIAR CORREO CON NODEMAILER
-    const emailEnviado = await enviarCorreoNodemailer(req.body, registroId);
+    // ✅ ENVIAR CORREO CON BREVO (NO BLOQUEANTE)
+    enviarCorreoBrevo(req.body, registroId)
+      .then(enviado => {
+        console.log('📧 Resultado email:', enviado ? '✅ Enviado' : '⚠️ No enviado');
+      })
+      .catch(err => {
+        console.error('❌ Error en envío de email (ignorado):', err.message);
+      });
 
+    // ✅ RESPONDER INMEDIATAMENTE
     res.json({
       success: true,
       message: 'Registro guardado correctamente',
       id: registroId,
-      emailEnviado: emailEnviado
-    });
+      emailStatus: 'processing'
+    })
 
   } catch (error) {
     console.error('❌ Error al guardar:', error);
