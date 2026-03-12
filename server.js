@@ -456,15 +456,15 @@ app.post('/api/registro', async (req, res) => {
     connection.release();
 
     // ✅ ENVIAR CORREO CON NODEMAILER
-    const emailEnviado = await enviarCorreoNodemailer(req.body, registroId);
-
+    const emailEnviado = await enviarCorreoResend(req.body, registroId);
+    
     res.json({
       success: true,
       message: 'Registro guardado correctamente',
       id: registroId,
       emailEnviado: emailEnviado
     });
-        
+
   } catch (error) {
     console.error('❌ Error al guardar:', error);
     
