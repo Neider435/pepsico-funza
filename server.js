@@ -149,100 +149,56 @@ function formatearNovedadesHTML(datos_vehiculos) {
   return html;
 }
 
-// ✅ FUNCIÓN: Enviar email con Resend (API REST - compatible con Render)
-async function enviarCorreoResend(data, registroId) {
-  if (!process.env.RESEND_API_KEY) {
-    console.warn('⚠️ RESEND_API_KEY no configurada - email no enviado');
-    return false;
+// ✅ FUNCIÓN: Enviar correo con Gmail + Nodemailer
+async function enviarCorreoGmail(data, registroId) {
+  const nodemailer = require('nodemailer');
+  
+  // Configurar transporter con Gmail
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASSWORD
+    }
+  });
+
+  // Formatear vehículos
+  let vehiculosHTML = '<table style="width:100%;border-collapse:collapse">';
+  vehiculosHTML += '<thead><tr style="background:#001855;color:white"><th style="padding:8px">#</th><th>Motivo</th><th>Muelle</th><th>Placa</th><th>Cajas</th></tr></thead><tbody>';
+  
+  if (data.datos_vehiculos?.length > 0) {
+    data.datos_vehiculos.forEach((v, i) => {
+      const muelle = v.muelle === 'otro' ? v.otro_muelle_num || 'N/A' : v.muelle || 'N/A';
+      vehiculosHTML += `<tr><td style="padding:8px;border:1px solid #ddd">${i+1}</td><td style="padding:8px;border:1px solid #ddd">${v.motivo||'N/A'}</td><td style="padding:8px;border:1px solid #ddd">${muelle}</td><td style="padding:8px;border:1px solid #ddd">${v.placa||'N/A'}</td><td style="padding:8px;border:1px solid #ddd">${v.cajas||'0'}</td></tr>`;
+    });
+  } else {
+    vehiculosHTML += '<tr><td colspan="5" style="padding:15px;text-align:center">Sin vehículos</td></tr>';
   }
+  vehiculosHTML += '</tbody></table>';
 
-  const resend = new Resend(process.env.RESEND_API_KEY);
-
-  const htmlTemplate = `
-<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"></head>
-<body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;background:#f4f4f4;margin:0;padding:20px">
-  <div style="max-width:800px;margin:0 auto;background:white;border-radius:10px;overflow:hidden;box-shadow:0 0 20px rgba(0,0,0,0.1)">
-    
-    <!-- HEADER -->
-    <div style="background:#001855;color:white;padding:25px;text-align:center">
-      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThhtC2IdvEjLP-jZjP8eNii-Vp2ZvND-_XeA&s" alt="Logo" style="width:80px;height:80px;border-radius:50%;border:3px solid white;margin-bottom:10px">
-      <h2 style="margin:10px 0 5px;font-size:22px;color:white">📋 Nuevo Registro - PepsiCo</h2>
-      <p style="margin:0;font-size:13px;opacity:0.9;color:#e0e0e0">Sistema de Control de Operaciones</p>
-    </div>
-
-    <!-- INFORMACIÓN -->
-    <div style="margin:20px;padding:20px;border:1px solid #ddd;border-radius:8px;background:#fff">
-      <h3 style="color:#C76E00;font-weight:bold;font-size:1.2em;border-bottom:3px solid #001855;padding-bottom:10px;margin:0 0 15px 0">📌 INFORMACIÓN DE REGISTRO</h3>
-      <table style="width:100%;border-collapse:collapse">
-        <tr>
-          <td style="padding:15px;background:#f8f9fa;border-radius:5px;border-left:4px solid #001855;width:33%">
-            <div style="font-size:0.85em;color:#6c757d;margin-bottom:5px">Fecha</div>
-            <div style="font-weight:bold;color:#001855;font-size:1.1em">${data.fecha || 'N/A'}</div>
-          </td>
-          <td style="padding:15px;background:#f8f9fa;border-radius:5px;border-left:4px solid #001855;width:33%">
-            <div style="font-size:0.85em;color:#6c757d;margin-bottom:5px">Coordinador</div>
-            <div style="font-weight:bold;color:#001855;font-size:1.1em">${data.coordinador || data.coordinador_otro || 'N/A'}</div>
-          </td>
-          <td style="padding:15px;background:#f8f9fa;border-radius:5px;border-left:4px solid #001855;width:33%">
-            <div style="font-size:0.85em;color:#6c757d;margin-bottom:5px">Turno</div>
-            <div style="font-weight:bold;color:#001855;font-size:1.1em">${data.turno || 'N/A'}</div>
-          </td>
-        </tr>
-      </table>
-    </div>
-
-    <!-- VEHÍCULOS -->
-    <div style="margin:20px;padding:20px;border:1px solid #ddd;border-radius:8px;background:#fff">
-      <h3 style="color:#C76E00;font-weight:bold;font-size:1.2em;border-bottom:3px solid #001855;padding-bottom:10px;margin:0 0 15px 0">🚛 VEHÍCULOS REGISTRADOS</h3>
-      ${formatearVehiculosHTML(data.datos_vehiculos)}
-    </div>
-
-    <!-- PRODUCTOS -->
-    <div style="margin:20px;padding:20px;border:1px solid #ddd;border-radius:8px;background:#fff">
-      <h3 style="color:#C76E00;font-weight:bold;font-size:1.2em;border-bottom:3px solid #001855;padding-bottom:10px;margin:0 0 15px 0">📦 PRODUCTOS ESCANEADOS</h3>
-      ${formatearProductosHTML(data.datos_vehiculos)}
-    </div>
-
-    <!-- NOVEDADES -->
-    <div style="margin:20px;padding:20px;border:1px solid #ddd;border-radius:8px;background:#fff">
-      <h3 style="color:#C76E00;font-weight:bold;font-size:1.2em;border-bottom:3px solid #001855;padding-bottom:10px;margin:0 0 15px 0">⚠️ NOVEDADES</h3>
-      ${formatearNovedadesHTML(data.datos_vehiculos)}
-    </div>
-
-    <!-- FOOTER -->
-    <div style="background:#001855;color:white;padding:25px;text-align:center;border-radius:0 0 10px 10px">
-      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThhtC2IdvEjLP-jZjP8eNii-Vp2ZvND-_XeA&s" alt="Logo" style="width:60px;height:60px;border-radius:50%;border:2px solid white;margin-bottom:10px;opacity:0.9">
-      <p style="margin:10px 0 5px;font-size:14px;font-weight:bold;color:white">Inlotrans S.A.S</p>
-      <p style="margin:5px 0;font-size:12px;opacity:0.8;color:#e0e0e0">Sistema de Control de Operaciones - PepsiCo</p>
-      <p style="margin:15px 0 5px;font-size:11px;opacity:0.6;color:#b0b0b0">Enviado automáticamente</p>
-      <div style="margin-top:15px;padding-top:15px;border-top:1px solid rgba(255,255,255,0.2);font-size:11px;opacity:0.6;color:#b0b0b0">
-        <p style="margin:0">Este correo fue generado automáticamente por el sistema de registro</p>
-        <p style="margin:5px 0 0 0">© 2026 Inlotrans S.A.S - Todos los derechos reservados</p>
-      </div>
-    </div>
-  </div>
-</body>
-</html>`;
+  const mailOptions = {
+    from: `"Pepsico Funza" <${process.env.GMAIL_USER}>`,
+    to: process.env.EMAIL_DESTINO,
+    subject: `📋 Registro PepsiCo - ${data.fecha} - Turno ${data.turno}`,
+    html: `
+      <h2>Registro Guardado Exitosamente</h2>
+      <p><strong>ID:</strong> ${registroId}</p>
+      <p><strong>Fecha:</strong> ${data.fecha}</p>
+      <p><strong>Turno:</strong> ${data.turno}</p>
+      <p><strong>Coordinador:</strong> ${data.coordinador || data.coordinador_otro || 'N/A'}</p>
+      <p><strong>Total Cajas:</strong> ${data.cajas_totales}</p>
+      <h3>Vehículos:</h3>
+      ${vehiculosHTML}
+      <p style="margin-top:20px;color:#666"><small>Enviado automáticamente - Inlotrans S.A.S</small></p>
+    `
+  };
 
   try {
-    const { data: emailData, error } = await resend.emails.send({
-      from: 'Pepsico Funza <onboarding@resend.dev>', // Cambia cuando verifiques tu dominio
-      to: [process.env.EMAIL_DESTINO || 'lcgs.ramirezalejandra@gmail.com'],
-      subject: `📋 Registro PepsiCo - ${data.fecha} - Turno ${data.turno}`,
-      html: htmlTemplate
-    });
-
-    if (error) {
-      console.error('❌ Error Resend:', error);
-      return false;
-    }
-
-    console.log('✅ Email enviado con Resend:', emailData?.id);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Email enviado con Gmail:', info.messageId);
     return true;
-  } catch (err) {
-    console.error('❌ Error al enviar email:', err.message);
+  } catch (error) {
+    console.error('❌ Error al enviar email con Gmail:', error.message);
     return false;
   }
 }
