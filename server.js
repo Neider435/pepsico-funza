@@ -319,15 +319,15 @@ app.post('/api/registro', async (req, res) => {
       }
     }
 
-    // ✅ Confirmar transacción
+    // Confirmar transacción
     await connection.commit();
     connection.release();
-
-    // ✅ Enviar email (NO bloqueante - no falla el registro si el email falla)
-    enviarCorreoResend(req.body, registroId).catch(err => {
-      console.error('❌ Error en envío de email (ignorado):', err.message);
+    
+    // ✅ ENVIAR CORREO CON GMAIL (NO BLOQUEANTE)
+    enviarCorreoGmail(req.body, registroId).catch(err => {
+      console.error('❌ Error en email:', err.message);
     });
-
+    
     res.json({
       success: true,
       message: 'Registro guardado correctamente',
