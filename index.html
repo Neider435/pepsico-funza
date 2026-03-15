@@ -2,14 +2,13 @@
   <html lang="es">
   <head>
       <meta charset="UTF-8">
-      <link rel="icon" href="prueba.png" type="image/png">
+      <link rel="icon" href="inlo.png?v=2" type="image/png">
     
     <title>Registro - Pepsico Funza</title>
       <title>Registro - Pepsico Funza</title>
       <style>
           body {
             font-family: Arial, sans-serif;
-            /* ✅ FONDO DE IMAGEN */
             background-image: url('fondo.jpg');
             background-size: cover;
             background-position: center;
@@ -312,7 +311,7 @@
   <body>
     <script>
     // ✅ Reemplaza 'TU_API_KEY_REAL_AQUI' con tu clave real de ImgBB
-    window.imgbbApiKey = 'fc623788a76c92b9ba83a21eccb73812';
+    window.imgbbApiKey = '41e6f103f6f307b39d499ee88f58528f';
   </script>
       <div class="logo-container">
           <img src="prueba.png" alt="Logo de la Empresa">
@@ -3353,18 +3352,15 @@
   }
 
 
-  // ✅ CERRAR OVERLAY DE NOVEDADES (CORREGIDO - Captura valores explícitamente)
+  // ✅ VERSIÓN CORREGIDA
   function cerrarNovedadesVehiculo(vIndex) {
     const contenedorOculto = document.getElementById(`novedades-contenedor-${vIndex}`);
     const contenedorOverlay = document.getElementById(`novedades-overlay-contenedor-${vIndex}`);
     const overlay = document.getElementById(`overlay-novedades-${vIndex}`);
-    
     if (!contenedorOculto || !contenedorOverlay || !overlay) return;
     
-    // Limpiar contenedor oculto
     contenedorOculto.innerHTML = '';
     
-    // ✅ Copiar novedades del overlay al contenedor oculto
     const novedadesOverlay = contenedorOverlay.querySelectorAll('.novedad-group');
     novedadesOverlay.forEach((novedadOverlay, index) => {
       const div = document.createElement('div');
@@ -3380,20 +3376,20 @@
         guardarProgreso();
       };
       
-      // ✅ CAPTURAR VALORES EXPLÍCITAMENTE (NO USAR cloneNode)
+      // ✅ CORREGIDO: Buscar por ID en lugar de name
       const tipoSelect = novedadOverlay.querySelector(`select[name="vehiculo_${vIndex}_tipo_novedad_${index}_overlay"]`);
       const descripcionTextarea = novedadOverlay.querySelector(`textarea[name="vehiculo_${vIndex}_descripcion_novedad_${index}_overlay"]`);
-      const fotoUrlInput = novedadOverlay.querySelector(`input[name="vehiculo_${vIndex}_foto_novedad_${index}_url_overlay"]`);
+      // ✅ CAMBIO: Usar ID en lugar de name
+      const fotoUrlInput = document.getElementById(`foto-novedad-${vIndex}-${index}-url-overlay`);
       
       const tipoValor = tipoSelect?.value || '';
       const descripcionValor = descripcionTextarea?.value || '';
       const fotoUrlValor = fotoUrlInput?.value || '';
       
-      // ✅ LOG DE DEPURACIÓN
       console.log(`💾 Guardando novedad ${index}:`, {
         tipo: tipoValor,
         descripcion: descripcionValor,
-        foto_url: fotoUrlValor
+        foto_url: fotoUrlValor  // ✅ Ahora debería mostrar la URL
       });
       
       div.innerHTML = `
@@ -3406,10 +3402,8 @@
           <option value="estibas_malas" ${tipoValor === 'estibas_malas' ? 'selected' : ''}>Estibas malas</option>
           <option value="otro" ${tipoValor === 'otro' ? 'selected' : ''}>Otro</option>
         </select>
-        
         <label>Descripción:</label>
         <textarea name="vehiculo_${vIndex}_descripcion_novedad_${index}" placeholder="Describa la novedad">${descripcionValor}</textarea>
-        
         <label>Foto de la Novedad:</label>
         <div class="preview-foto" style="margin-top: 10px;">
           ${fotoUrlValor ? `<img src="${fotoUrlValor}" style="max-width: 100%; border-radius: 5px; border: 2px solid #001855;">` : ''}
@@ -3421,14 +3415,9 @@
       contenedorOculto.appendChild(div);
     });
     
-    // Ocultar overlay
     overlay.style.display = 'none';
     document.body.style.overflow = 'auto';
-    
-    // ✅ Guardar progreso después de cerrar
     guardarProgreso();
-    
-    // ✅ LOG DE DEPURACIÓN
     console.log(`✅ Novedades guardadas para Vehículo ${vIndex + 1}`);
   }
 
@@ -5113,7 +5102,7 @@
     console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
     
     // ✅ PASO 11: URL CORREGIDA (SIN ESPACIOS)
-    const API_URL = 'https://pepsico-api.onrender.com/api/registro';
+    const API_URL = 'https://inlo-pepsico-api.onrender.com/api/registro';
     
     // ✅ PASO 12: Mostrar mensaje de carga
     const submitBtn = document.querySelector('button[type="submit"]');
