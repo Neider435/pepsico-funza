@@ -5397,6 +5397,11 @@ function sincronizarVehiculosDesdeDOM() {
           aprobado: data[`vehiculo_${i}_aprobado`] || '',
           tipo_operacion: data[`vehiculo_${i}_tipo_operacion`] || ''
         };
+        console.log(`📸 Vehículo ${i} restaurado:`, {
+        inicio: vObj.foto_inicio_url,
+        durante: vObj.foto_durante_url,
+        fin: vObj.foto_fin_url
+      });
 
         // ✅ Cargar nombres del personal desde localStorage
         for (let j = 1; ; j++) {
