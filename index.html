@@ -1588,6 +1588,9 @@
           const tipo = novedad.querySelector(`select[name="vehiculo_${i}_tipo_novedad_${nIndex}"]`)?.value || '';
           const descripcion = novedad.querySelector(`textarea[name="vehiculo_${i}_descripcion_novedad_${nIndex}"]`)?.value || '';
           const foto_url = novedad.querySelector(`input[name="vehiculo_${i}_foto_novedad_${nIndex}_url"]`)?.value || '';
+          const fotoInicio = document.getElementById(`url-inicio-${i}`)?.value || '';
+          const fotoDurante = document.getElementById(`url-durante-${i}`)?.value || '';
+          const fotoFin = document.getElementById(`url-fin-${i}`)?.value || '';
           
           novedadesData.push({
             tipo: tipo,
@@ -1617,6 +1620,9 @@
         nombres_personal: nombresPersonal,
         cajas: getValue(`vehiculo_${i}_cajas`),
         foto_url: getValue(`vehiculo_${i}_foto_url`),
+        foto_inicio_url: fotoInicio,
+        foto_durante_url: fotoDurante,
+        foto_fin_url: fotoFin,
         tipo_operacion: getValue(`vehiculo_${i}_tipo_operacion`) || '',
         interior_camion: interiorCamion,
         estado_carpa: estadoCarpa,
