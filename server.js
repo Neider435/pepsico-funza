@@ -107,16 +107,22 @@ app.post('/api/registro', async (req, res) => {
         `INSERT INTO vehiculos (
           registro_id, inicio, fin, motivo, otro_motivo, tipo_carga, muelle, otro_muelle_num,
           placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, otro_origen, personas, cajas,
-          foto_url, nombres_personal, tipo_operacion
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          foto_url, foto_inicio_url, foto_durante_url, foto_fin_url, nombres_personal, tipo_operacion
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           registroId,
           vehiculo.inicio || '', vehiculo.fin || '', vehiculo.motivo || '', vehiculo.otro_motivo || '',
           vehiculo.tipo_carga || '', vehiculo.muelle || '', vehiculo.otro_muelle_num || '',
           vehiculo.placa || '', vehiculo.tipo_vehi || '', vehiculo.otro_tipo || '',
           vehiculo.destino || '', vehiculo.otro_destino || '', vehiculo.origen || '', vehiculo.otro_origen || '',
-          vehiculo.personas || '', vehiculo.cajas || '', vehiculo.foto_url || '',
-          nombresJSON, vehiculo.tipo_operacion || ''
+          vehiculo.personas || '', vehiculo.cajas || '', 
+          vehiculo.foto_url || '', 
+          // ✅ NUEVOS PARÁMETROS
+          vehiculo.foto_inicio_url || '',
+          vehiculo.foto_durante_url || '',
+          vehiculo.foto_fin_url || '',
+          nombresJSON, 
+          vehiculo.tipo_operacion || ''
         ]
       );
       
