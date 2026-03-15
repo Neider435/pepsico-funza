@@ -5106,9 +5106,18 @@ function sincronizarVehiculosDesdeDOM() {
   
   console.log('📝 Datos que se enviarán a MySQL:');
   console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
+  console.log("DATOS VEHICULOS:", vehiculosData);
   
   // ✅ PASO 11: URL CORREGIDA (SIN ESPACIOS)
   const API_URL = 'https://inlo-pepsico-api.onrender.com/api/registro';
+
+  fetch(API_URL, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(formData)
+})
   
   // ✅ PASO 12: Mostrar mensaje de carga
   const submitBtn = document.querySelector('button[type="submit"]');
