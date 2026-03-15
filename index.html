@@ -5066,34 +5066,7 @@ function sincronizarVehiculosDesdeDOM() {
   }
   
   // ✅ PASO 10: Preparar datos para enviar (CORREGIDO)
-  // ✅ PASO 10: Preparar datos para enviar (CORREGIDO)
-
-// 1. Primero, mapeamos los vehículos existentes
-let vehiculosParaEnviar = vehiculosData.map((v, i) => {
-    // Aseguramos que tengan las propiedades básicas
-    if (v.tipo_operacion === undefined) v.tipo_operacion = '';
-    if (!v.novedades) v.novedades = [];
-    if (!v.justificaciones) v.justificaciones = [];
-    if (!v.tipo_carga) v.tipo_carga = '';
-    return v;
-});
-
-// 2. CORRECCIÓN CLAVE: Inyectar las URLs de las fotos en cada vehículo
-vehiculosParaEnviar.forEach((vehiculo, index) => {
-    // Recuperamos las URLs del formData usando los nombres dinámicos correctos
-    vehiculo.foto_inicio_url = formData[`vehiculo_${index}_foto_inicio_url`] || '';
-    vehiculo.foto_durante_url = formData[`vehiculo_${index}_foto_durante_url`] || '';
-    vehiculo.foto_fin_url = formData[`vehiculo_${index}_foto_fin_url`] || '';
-    
-    console.log(`📸 Vehículo ${index} fotos preparadas:`, {
-        inicio: vehiculo.foto_inicio_url,
-        durante: vehiculo.foto_durante_url,
-        fin: vehiculo.foto_fin_url
-    });
-});
-
-// 3. Construimos el objeto final a enviar
-const formData = {
+  const formData = {
     fecha: document.getElementById('fecha').value,
     lugar: document.getElementById('lugar').value,
     lider_asignado: document.getElementById('lider').value.toUpperCase(),
@@ -5105,36 +5078,31 @@ const formData = {
     total_personas: document.getElementById('total_personas').value,
     cajas_totales: document.getElementById('cajas_totales').value,
     respo_diligen: document.getElementById('responsable').value,
-    
-    // ✅ Procesamiento de vehículos (CON validación integrada)
     datos_vehiculos: vehiculosData.map((v, i) => {
-        // ✅ Validar y corregir tipo_operacion
-        if (v.tipo_operacion === undefined) {
-            console.warn(`⚠️ Vehículo ${i}: tipo_operacion es undefined, corrigiendo a ""`);
-            v.tipo_operacion = '';
-        }
-        // ✅ Asegurar que existan los arrays
-        v.novedades = v.novedades || [];
-        v.justificaciones = v.justificaciones || [];
-        // ✅ Asegurar tipo_carga
-        v.tipo_carga = v.tipo_carga || '';
-        return v;
+      // ✅ Verificar que tipo_operacion tenga valor
+      if (v.tipo_operacion === undefined) {
+        console.warn(`⚠️ Vehículo ${i}: tipo_operacion es undefined, corrigiendo a ""`);
+        v.tipo_operacion = '';
+      }
+      // ✅ Incluir novedades
+      v.novedades = v.novedades || [];
+      // ✅ Incluir justificaciones
+      v.justificaciones = v.justificaciones || [];
+      // ✅ Incluir tipo_carga
+      v.tipo_carga = v.tipo_carga || '';
+      return v;
     }),
-    
-    // ✅ Procesamiento de paradas de operación
     datos_paradas_operacion: Array.from(
-        document.querySelectorAll('#operacion-contenedor .parada-group')
+      document.querySelectorAll('#operacion-contenedor .parada-group')
     ).map(grupo => {
-        return {
-            inicio: grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '',
-            fin: grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '',
-            motivo: grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '',
-            otro_motivo: grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || ''
-        };
+      return {
+        inicio: grupo.querySelector(`input[name^="parada_inicio_operacion_"]`)?.value || '',
+        fin: grupo.querySelector(`input[name^="parada_fin_operacion_"]`)?.value || '',
+        motivo: grupo.querySelector(`select[name^="parada_motivo_operacion_"]`)?.value || '',
+        otro_motivo: grupo.querySelector(`input[name^="parada_otro_motivo_operacion_"]`)?.value || ''
+      };
     })
-};
-
-console.log('📝 Datos finales que se enviarán a MySQL:', JSON.stringify(datosFinales, null, 2));
+  };
   
   console.log('📝 Datos que se enviarán a MySQL:');
   console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
