@@ -4927,7 +4927,8 @@ function sincronizarVehiculosDesdeDOM() {
   // ============================================
   // ENVÍO DEL FORMULARIO (CORREGIDO)
   // ============================================
-  function enviarFormulario(event) {
+  // ✅ FUNCIÓN ENVÍO DEL FORMULARIO (COMPLETA Y CORREGIDA)
+function enviarFormulario(event) {
   event.preventDefault();
 
   console.log('📧 EmailJS cargado:', typeof emailjs !== 'undefined');
@@ -5066,6 +5067,32 @@ function sincronizarVehiculosDesdeDOM() {
   }
   
   // ✅ PASO 10: Preparar datos para enviar (CORREGIDO)
+  // Primero, procesamos los vehículos asegurando propiedades y agregando URLs de fotos
+  const vehiculosParaEnviar = vehiculosData.map((v, i) => {
+    // Aseguramos que tengan las propiedades básicas
+    if (v.tipo_operacion === undefined) {
+      console.warn(`⚠️ Vehículo ${i}: tipo_operacion es undefined, corrigiendo a ""`);
+      v.tipo_operacion = '';
+    }
+    if (!v.novedades) v.novedades = [];
+    if (!v.justificaciones) v.justificaciones = [];
+    if (!v.tipo_carga) v.tipo_carga = '';
+    
+    // ✅ Inyectar URLs de fotos desde los elementos del DOM
+    v.foto_inicio_url = document.getElementById(`url-inicio-${i}`)?.value || '';
+    v.foto_durante_url = document.getElementById(`url-durante-${i}`)?.value || '';
+    v.foto_fin_url = document.getElementById(`url-fin-${i}`)?.value || '';
+    
+    console.log(`📸 Vehículo ${i} fotos preparadas:`, {
+      inicio: v.foto_inicio_url?.substring(0, 50) + '...',
+      durante: v.foto_durante_url?.substring(0, 50) + '...',
+      fin: v.foto_fin_url?.substring(0, 50) + '...'
+    });
+    
+    return v;
+  });
+
+  // ✅ Construimos el objeto final a enviar
   const formData = {
     fecha: document.getElementById('fecha').value,
     lugar: document.getElementById('lugar').value,
@@ -5078,20 +5105,11 @@ function sincronizarVehiculosDesdeDOM() {
     total_personas: document.getElementById('total_personas').value,
     cajas_totales: document.getElementById('cajas_totales').value,
     respo_diligen: document.getElementById('responsable').value,
-    datos_vehiculos: vehiculosData.map((v, i) => {
-      // ✅ Verificar que tipo_operacion tenga valor
-      if (v.tipo_operacion === undefined) {
-        console.warn(`⚠️ Vehículo ${i}: tipo_operacion es undefined, corrigiendo a ""`);
-        v.tipo_operacion = '';
-      }
-      // ✅ Incluir novedades
-      v.novedades = v.novedades || [];
-      // ✅ Incluir justificaciones
-      v.justificaciones = v.justificaciones || [];
-      // ✅ Incluir tipo_carga
-      v.tipo_carga = v.tipo_carga || '';
-      return v;
-    }),
+    
+    // ✅ Vehículos procesados
+    datos_vehiculos: vehiculosParaEnviar,
+    
+    // ✅ Paradas de operación
     datos_paradas_operacion: Array.from(
       document.querySelectorAll('#operacion-contenedor .parada-group')
     ).map(grupo => {
@@ -5103,23 +5121,14 @@ function sincronizarVehiculosDesdeDOM() {
       };
     })
   };
+
+  console.log('📝 Datos finales que se enviarán a MySQL:');
+  console.log('Vehículos:', JSON.stringify(vehiculosParaEnviar, null, 2));
   
-  console.log('📝 Datos que se enviarán a MySQL:');
-  console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
-  console.log("DATOS VEHICULOS:", vehiculosData);
-  
-  // ✅ PASO 11: URL CORREGIDA (SIN ESPACIOS)
+  // ✅ PASO 11: URL DEL API (SIN ESPACIOS)
   const API_URL = 'https://inlo-pepsico-api.onrender.com/api/registro';
 
-  fetch(API_URL, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify(formData)
-})
-  
-  // ✅ PASO 12: Mostrar mensaje de carga
+  // ✅ PASO 12: Mostrar mensaje de carga y deshabilitar botón
   const submitBtn = document.querySelector('button[type="submit"]');
   const originalText = submitBtn.textContent;
   submitBtn.disabled = true;
@@ -5148,19 +5157,22 @@ function sincronizarVehiculosDesdeDOM() {
       
       // ✅ Enviar correo con EmailJS (NO BLOQUEANTE)
       enviarCorreoEmailJS(formData)
-        .then(() => console.log('✅ Correo enviado'))
+        .then(() => console.log('✅ Correo enviado exitosamente'))
         .catch(err => console.error('⚠️ Error al enviar correo:', err));
       
+      // ✅ Redirigir después de 1 segundo
       setTimeout(() => {
         window.location.href = 'aceptacion.html';
       }, 1000);
     } else {
-      throw new Error(result.error || 'Error desconocido');
+      throw new Error(result.error || 'Error desconocido del servidor');
     }
   })
   .catch(error => {
-    console.error('Error:', error);
+    console.error('❌ Error en el envío:', error);
     alert('❌ Error al guardar: ' + error.message + '\n\nPor favor, inténtalo de nuevo.');
+    
+    // ✅ Restaurar botón en caso de error
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
   });
