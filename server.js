@@ -7,7 +7,7 @@ const port = process.env.PORT || 3000;
 
 // ✅ Middleware
 app.use(cors());
-app.use(express.json({ limit: '50mb' })); // ✅ Para fotos en base64
+app.use(express.json({ limit: '50mb' }));
 
 // ===== LOGS DE VARIABLES DE ENTORNO =====
 console.log('=== VARIABLES DE ENTORNO AL INICIAR ===');
@@ -27,12 +27,10 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  ssl: {
-    rejectUnauthorized: true // Obligatorio para TiDB Cloud
-  }
+  ssl: { rejectUnauthorized: true }
 });
 
-// ✅ TEST DE CONEXIÓN AL INICIAR
+// ✅ TEST DE CONEXIÓN
 (async () => {
   try {
     const connection = await pool.getConnection();
@@ -43,18 +41,17 @@ const pool = mysql.createPool({
   }
 })();
 
-// ✅ ENDPOINT: Recibir y guardar datos del formulario
+// ✅ ENDPOINT PRINCIPAL
 app.post('/api/registro', async (req, res) => {
   let connection;
   
   try {
-    console.log('📥 Datos recibidos');
+    console.log('📥 Datos recibidos - Body keys:', Object.keys(req.body));
     
-    // Obtener conexión para transacción
     connection = await pool.getConnection();
     await connection.beginTransaction();
     
-    // ✅ Extraer datos del request
+    // ✅ Extraer datos (NOMBRES SIN ESPACIOS)
     const {
       fecha,
       lugar,
@@ -71,12 +68,10 @@ app.post('/api/registro', async (req, res) => {
       datos_paradas_operacion = []
     } = req.body;
 
-    // ✅ Validar campos obligatorios
     if (!fecha || !lugar) {
       throw new Error('Faltan campos obligatorios: fecha o lugar');
     }
 
-    // ✅ Limpiar respo_diligen (quitar puntos)
     const respoLimpio = (respo_diligen || '').replace(/\./g, '');
 
     // ✅ 1. Insertar registro principal
@@ -95,14 +90,23 @@ app.post('/api/registro', async (req, res) => {
     const registroId = regResult.insertId;
     console.log('✅ Registro principal creado con ID:', registroId);
 
-    // ✅ 2. Insertar vehículos y sus datos relacionados
+    // ✅ 2. Insertar vehículos
     for (const vehiculo of datos_vehiculos) {
-      // Preparar nombres_personal como JSON
       const nombresJSON = Array.isArray(vehiculo.nombres_personal) && vehiculo.nombres_personal.length > 0 
         ? JSON.stringify(vehiculo.nombres_personal) 
         : null;
 
-      // Insertar vehículo
+      // 🔍 DEBUG: Verificar URLs de fotos ANTES de insertar
+      console.log(`📸 Vehículo placa ${vehiculo.placa || 'N/A'} - URLs recibidas:`, {
+        foto_url: (vehiculo.foto_url || '').substring(0, 80),
+        foto_inicio_url: (vehiculo.foto_inicio_url || '').substring(0, 80),
+        foto_durante_url: (vehiculo.foto_durante_url || '').substring(0, 80),
+        foto_fin_url: (vehiculo.foto_fin_url || '').substring(0, 80),
+        tiene_inicio: !!vehiculo.foto_inicio_url,
+        tiene_durante: !!vehiculo.foto_durante_url,
+        tiene_fin: !!vehiculo.foto_fin_url
+      });
+
       const [vehResult] = await connection.query(
         `INSERT INTO vehiculos (
           registro_id, inicio, fin, motivo, otro_motivo, tipo_carga, muelle, otro_muelle_num,
@@ -117,7 +121,6 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.destino || '', vehiculo.otro_destino || '', vehiculo.origen || '', vehiculo.otro_origen || '',
           vehiculo.personas || '', vehiculo.cajas || '', 
           vehiculo.foto_url || '', 
-          // ✅ NUEVOS PARÁMETROS
           vehiculo.foto_inicio_url || '',
           vehiculo.foto_durante_url || '',
           vehiculo.foto_fin_url || '',
@@ -137,7 +140,6 @@ app.post('/api/registro', async (req, res) => {
             [vehiculoId, registroId, just.justificacion || '', just.otro_justificacion || '', just.tiempo_muerto_inicio || '', just.tiempo_muerto_final || '']
           );
         }
-        console.log(`✅ Justificaciones guardadas: ${vehiculo.justificaciones.length}`);
       }
 
       // ✅ Insertar novedades
@@ -148,28 +150,19 @@ app.post('/api/registro', async (req, res) => {
             [vehiculoId, registroId, nov.tipo || '', nov.descripcion || '', nov.foto_url || '']
           );
         }
-        console.log(`✅ Novedades guardadas: ${vehiculo.novedades.length}`);
       }
 
       // ✅ Insertar detalles de inspección
-      // ⚠️ IMPORTANTE: La columna en MySQL es "olores_extraños" (con ñ)
-      // Pero el valor viene del frontend como "vehiculo.olores_extranos" (sin ñ)
       await connection.query(
         `INSERT INTO detalles_vehiculos (
-          vehiculo_id, 
-          interior_camion, 
-          estado_carpa, 
-          olores_extraños, 
-          objetos_extraños, 
-          evidencias_plagas, 
-          estado_suelo, 
-          aprobado
+          vehiculo_id, interior_camion, estado_carpa, olores_extraños, 
+          objetos_extraños, evidencias_plagas, estado_suelo, aprobado
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           vehiculoId,
           vehiculo.interior_camion || null, 
           vehiculo.estado_carpa || null,
-          vehiculo.olores_extranos || null,  // ✅ Valor del frontend (sin ñ)
+          vehiculo.olores_extranos || null,
           vehiculo.objetos_extranos || null,
           vehiculo.evidencias_plagas || null, 
           vehiculo.estado_suelo || null,
@@ -185,11 +178,10 @@ app.post('/api/registro', async (req, res) => {
             [vehiculoId, registroId, prod.codigo || '', prod.referencia || '', prod.nombre || '', prod.cantidad || 0]
           );
         }
-        console.log(`✅ Productos escaneados: ${vehiculo.productos_escaneados.length}`);
       }
     }
 
-    // ✅ 3. Insertar paradas de operación (solo si tienen datos)
+    // ✅ 3. Insertar paradas de operación
     if (Array.isArray(datos_paradas_operacion) && datos_paradas_operacion.length > 0) {
       for (const parada of datos_paradas_operacion) {
         if (parada.inicio || parada.fin || parada.motivo || parada.otro_motivo) {
@@ -199,14 +191,11 @@ app.post('/api/registro', async (req, res) => {
           );
         }
       }
-      console.log(`✅ Paradas de operación guardadas`);
     }
 
-    // ✅ Confirmar transacción
     await connection.commit();
     connection.release();
 
-    // ✅ Responder éxito
     res.json({
       success: true,
       message: 'Registro guardado correctamente en MySQL',
@@ -216,7 +205,6 @@ app.post('/api/registro', async (req, res) => {
   } catch (error) {
     console.error('❌ Error al guardar:', error);
     
-    // ✅ Rollback en caso de error
     if (connection) {
       await connection.rollback();
       connection.release();
@@ -230,7 +218,7 @@ app.post('/api/registro', async (req, res) => {
   }
 });
 
-// ✅ Health check endpoint
+// ✅ Health check
 app.get('/health', async (req, res) => {
   try {
     const conn = await pool.getConnection();
@@ -249,7 +237,6 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// ✅ Iniciar servidor
 app.listen(port, () => {
   console.log(`✅ Servidor corriendo en puerto ${port}`);
 });
