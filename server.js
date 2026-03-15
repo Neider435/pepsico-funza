@@ -23,12 +23,12 @@ const pool = mysql.createPool({
   user: process.env.MYSQLUSER,
   password: process.env.MYSQLPASSWORD,
   database: process.env.MYSQLDATABASE,
-  port: process.env.MYSQLPORT || 4000, // ✅ TiDB usa puerto 4000
+  port: process.env.MYSQLPORT || 4000, 
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
   ssl: {
-    rejectUnauthorized: true // ✅ SSL obligatorio para TiDB Cloud
+    rejectUnauthorized: true // Obligatorio para TiDB Cloud
   }
 });
 
@@ -146,13 +146,27 @@ app.post('/api/registro', async (req, res) => {
       }
 
       // ✅ Insertar detalles de inspección
+      // ⚠️ IMPORTANTE: La columna en MySQL es "olores_extraños" (con ñ)
+      // Pero el valor viene del frontend como "vehiculo.olores_extranos" (sin ñ)
       await connection.query(
-        `INSERT INTO detalles_vehiculos (vehiculo_id, interior_camion, estado_carpa, olores_extraños, objetos_extraños, evidencias_plagas, estado_suelo, aprobado) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO detalles_vehiculos (
+          vehiculo_id, 
+          interior_camion, 
+          estado_carpa, 
+          olores_extraños, 
+          objetos_extraños, 
+          evidencias_plagas, 
+          estado_suelo, 
+          aprobado
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           vehiculoId,
-          vehiculo.interior_camion || null, vehiculo.estado_carpa || null,
-          vehiculo.olores_extranos || null, vehiculo.objetos_extranos || null,
-          vehiculo.evidencias_plagas || null, vehiculo.estado_suelo || null,
+          vehiculo.interior_camion || null, 
+          vehiculo.estado_carpa || null,
+          vehiculo.olores_extranos || null,  // ✅ Valor del frontend (sin ñ)
+          vehiculo.objetos_extranos || null,
+          vehiculo.evidencias_plagas || null, 
+          vehiculo.estado_suelo || null,
           vehiculo.aprobado || null
         ]
       );
