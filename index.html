@@ -1528,8 +1528,6 @@ function sincronizarVehiculosDesdeDOM() {
   for (let i = 0; i < registros.length; i++) {
     const reg = registros[i];
     if (vehiculosData[i] === undefined) vehiculosData[i] = {};
-    
-    // ✅ FUNCIÓN getValue CORREGIDA: Ignora campos ocultos y maneja overlays
     const getValue = (name) => {
       const elementos = reg.querySelectorAll(`[name="${name}"]`);
       // Buscar el primer elemento VISIBLE (no en overlay oculto)
@@ -1546,7 +1544,6 @@ function sincronizarVehiculosDesdeDOM() {
       return '';
     };
     
-    // ✅ Obtener datos de nombres del personal
     const nombresPersonal = [];
     const nombresContainer = reg.querySelector(`#nombres-personal-${i}`);
     if (nombresContainer) {
@@ -1556,7 +1553,6 @@ function sincronizarVehiculosDesdeDOM() {
       });
     }
     
-    // ✅ CAPTURAR DATOS DEL OVERLAY DE INSPECCIÓN
     const interiorCamion = document.getElementById(`interior_camion_${i}`)?.value || '';
     const estadoCarpa = document.getElementById(`estado_carpa_${i}`)?.value || '';
     const oloresExtranos = document.getElementById(`olores_extranos_${i}`)?.value || '';
@@ -1564,13 +1560,9 @@ function sincronizarVehiculosDesdeDOM() {
     const evidenciasPlagas = document.getElementById(`evidencias_plagas_${i}`)?.value || '';
     const estadoSuelo = document.getElementById(`estado_suelo_${i}`)?.value || '';
     const aprobado = document.getElementById(`aprobado_${i}`)?.value || '';
-    
-    // ✅ CAPTURAR LAS 3 FOTOS (INICIO, DURANTE, FIN) - FUERA DEL LOOP DE NOVEDADES
     const fotoInicio = document.getElementById(`url-inicio-${i}`)?.value || '';
     const fotoDurante = document.getElementById(`url-durante-${i}`)?.value || '';
     const fotoFin = document.getElementById(`url-fin-${i}`)?.value || '';
-    
-    // ✅ CAPTURAR JUSTIFICACIONES DEL VEHÍCULO
     const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${i}`);
     const justificacionesData = [];
     
@@ -1633,9 +1625,9 @@ function sincronizarVehiculosDesdeDOM() {
       cajas: getValue(`vehiculo_${i}_cajas`),
       foto_url: getValue(`vehiculo_${i}_foto_url`),
       // ✅ Fotos individuales del vehículo
-      foto_inicio_url: fotoInicio,
-      foto_durante_url: fotoDurante,
-      foto_fin_url: fotoFin,
+      foto_inicio_url: document.getElementById(`url-inicio-${i}`)?.value || '',
+      foto_durante_url: document.getElementById(`url-durante-${i}`)?.value || '',
+      foto_fin_url: document.getElementById(`url-fin-${i}`)?.value || '',
       tipo_operacion: getValue(`vehiculo_${i}_tipo_operacion`) || '',
       // ✅ Datos de inspección
       interior_camion: interiorCamion,
@@ -2558,20 +2550,11 @@ function sincronizarVehiculosDesdeDOM() {
           if (urlSubida) {
               urlInput.value = urlSubida;
               console.log(`✅ Foto ${tipo} subida correctamente:`, urlSubida);
-              
-              // ✅ Actualizar contador
               actualizarContadorFotos(vIndex);
-              
-              // ✅ Actualizar estado
               actualizarEstadoFotos(vIndex);
-              
-              // ✅ Guardar progreso
               guardarProgreso();
-              
-              // ✅ Mostrar notificación
               mostrarNotificacion(`✅ Foto de ${tipo} subida exitosamente`, 'success');
               
-              // ✅ Cambiar estilo del botón
               btn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
               btn.innerHTML = '✅ Completado';
           } else {
