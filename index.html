@@ -1515,138 +1515,155 @@
   }
           
 
-          function sincronizarVehiculosDesdeDOM() {
-    const contenedor = document.getElementById('vehiculos-contenedor');
-    const registros = contenedor.querySelectorAll('.registro-vehiculo');
+          // ✅ FUNCIÓN CORREGIDA Y OPTIMIZADA: Sincronizar vehículos desde DOM
+function sincronizarVehiculosDesdeDOM() {
+  const contenedor = document.getElementById('vehiculos-contenedor');
+  if (!contenedor) {
+    console.warn('⚠️ Contenedor de vehículos no encontrado');
+    return;
+  }
+  
+  const registros = contenedor.querySelectorAll('.registro-vehiculo');
+  
+  for (let i = 0; i < registros.length; i++) {
+    const reg = registros[i];
+    if (vehiculosData[i] === undefined) vehiculosData[i] = {};
     
-    for (let i = 0; i < registros.length; i++) {
-      const reg = registros[i];
-      if (vehiculosData[i] === undefined) vehiculosData[i] = {};
-      
-      // ✅ FUNCIÓN getValue CORREGIDA: Ignora campos ocultos
-      const getValue = name => {
-        const elementos = reg.querySelectorAll(`[name="${name}"]`);
-        // Buscar el primer elemento VISIBLE
-        for (let el of elementos) {
-          if (el.offsetParent !== null) { // ✅ Verifica si es visible
-            return el.value || '';
-          }
+    // ✅ FUNCIÓN getValue CORREGIDA: Ignora campos ocultos y maneja overlays
+    const getValue = (name) => {
+      const elementos = reg.querySelectorAll(`[name="${name}"]`);
+      // Buscar el primer elemento VISIBLE (no en overlay oculto)
+      for (let el of elementos) {
+        // Verifica si es visible: offsetParent !== null Y no está dentro de un overlay con display:none
+        if (el.offsetParent !== null && el.closest('[style*="display: none"]') === null) {
+          return el.value?.trim() || '';
         }
-        // Fallback: si ninguno es visible, tomar el primero
-        return elementos[0] ? elementos[0].value || '' : '';
-      };
-      
-      // ✅ Obtener datos de nombres del personal
-      const nombresPersonal = [];
-      const nombresContainer = reg.querySelector(`#nombres-personal-${i}`);
-      if (nombresContainer) {
-        const inputsNombres = nombresContainer.querySelectorAll('input[type="text"]');
-        inputsNombres.forEach((input, idx) => {
-          nombresPersonal.push(input.value || '');
-        });
       }
-      
-      // ✅ CAPTURAR DATOS DEL OVERLAY DE INSPECCIÓN
-      const interiorCamion = document.getElementById(`interior_camion_${i}`)?.value || '';
-      const estadoCarpa = document.getElementById(`estado_carpa_${i}`)?.value || '';
-      const oloresExtranos = document.getElementById(`olores_extranos_${i}`)?.value || '';
-      const objetosExtranos = document.getElementById(`objetos_extranos_${i}`)?.value || '';
-      const evidenciasPlagas = document.getElementById(`evidencias_plagas_${i}`)?.value || '';
-      const estadoSuelo = document.getElementById(`estado_suelo_${i}`)?.value || '';
-      const aprobado = document.getElementById(`aprobado_${i}`)?.value || '';
-
-
-      
-      // ✅ CAPTURAR JUSTIFICACIONES DEL VEHÍCULO
-      const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${i}`);
-      const justificacionesData = [];
-      
-      if (justificacionesContenedor) {
-        const justificaciones = justificacionesContenedor.querySelectorAll('.justificacion-group');
-        justificaciones.forEach((justificacion, jIndex) => {
-          const motivo = justificacion.querySelector(`select[name="vehiculo_${i}_justificacion_${jIndex}"]`)?.value || '';
-          const otro_motivo = justificacion.querySelector(`input[name="vehiculo_${i}_otro_justificacion_${jIndex}"]`)?.value || '';
-          const tiempo_inicio = justificacion.querySelector(`input[name="vehiculo_${i}_tiempo_muerto_inicio_${jIndex}"]`)?.value || '';
-          const tiempo_fin = justificacion.querySelector(`input[name="vehiculo_${i}_tiempo_muerto_final_${jIndex}"]`)?.value || '';
-          
-          justificacionesData.push({
-            justificacion: motivo,
-            otro_justificacion: otro_motivo,
-            tiempo_muerto_inicio: tiempo_inicio,
-            tiempo_muerto_final: tiempo_fin
-          });
-        });
+      // Fallback: si ninguno es visible, tomar el primero que tenga valor
+      for (let el of elementos) {
+        if (el.value?.trim()) return el.value.trim();
       }
-      
-      // ✅ CAPTURAR NOVEDADES DEL VEHÍCULO
-      const novedadesContenedor = document.getElementById(`novedades-contenedor-${i}`);
-      const novedadesData = [];
-      
-      if (novedadesContenedor) {
-        const novedades = novedadesContenedor.querySelectorAll('.novedad-group');
-        novedades.forEach((novedad, nIndex) => {
-          const tipo = novedad.querySelector(`select[name="vehiculo_${i}_tipo_novedad_${nIndex}"]`)?.value || '';
-          const descripcion = novedad.querySelector(`textarea[name="vehiculo_${i}_descripcion_novedad_${nIndex}"]`)?.value || '';
-          const foto_url = novedad.querySelector(`input[name="vehiculo_${i}_foto_novedad_${nIndex}_url"]`)?.value || '';
-          const fotoInicio = document.getElementById(`url-inicio-${i}`)?.value || '';
-          const fotoDurante = document.getElementById(`url-durante-${i}`)?.value || '';
-          const fotoFin = document.getElementById(`url-fin-${i}`)?.value || '';
-          
-          novedadesData.push({
-            tipo: tipo,
-            descripcion: descripcion,
-            foto_url: foto_url
-          });
-        });
-      }
-      
-      // ✅ ASIGNAR TODOS LOS DATOS AL VEHÍCULO
-      vehiculosData[i] = {
-        inicio: getValue(`vehiculo_${i}_inicio`),
-        fin: getValue(`vehiculo_${i}_fin`),
-        motivo: getValue(`vehiculo_${i}_motivo`),  // ✅ AHORA CAPTURA DEL VISIBLE
-        otro_motivo: getValue(`vehiculo_${i}_otro_motivo`),
-        tipo_carga: getValue(`vehiculo_${i}_tipo_carga`),
-        muelle: getValue(`vehiculo_${i}_muelle`),
-        otro_muelle_num: getValue(`vehiculo_${i}_otro_muelle_num`),
-        placa: getValue(`vehiculo_${i}_placa`),
-        tipo_vehi: getValue(`vehiculo_${i}_tipo_vehi`),
-        otro_tipo: getValue(`vehiculo_${i}_otro_tipo`),
-        destino: getValue(`vehiculo_${i}_destino`),
-        otro_destino: getValue(`vehiculo_${i}_otro_destino`),
-        origen: getValue(`vehiculo_${i}_origen`),
-        otro_origen: getValue(`vehiculo_${i}_otro_origen`),
-        personas: getValue(`vehiculo_${i}_personas`),
-        nombres_personal: nombresPersonal,
-        cajas: getValue(`vehiculo_${i}_cajas`),
-        foto_url: getValue(`vehiculo_${i}_foto_url`),
-        foto_inicio_url: fotoInicio,
-        foto_durante_url: fotoDurante,
-        foto_fin_url: fotoFin,
-        tipo_operacion: getValue(`vehiculo_${i}_tipo_operacion`) || '',
-        interior_camion: interiorCamion,
-        estado_carpa: estadoCarpa,
-        olores_extranos: oloresExtranos,
-        objetos_extranos: objetosExtranos,
-        evidencias_plagas: evidenciasPlagas,
-        estado_suelo: estadoSuelo,
-        aprobado: aprobado,
-        justificaciones: justificacionesData,
-        novedades: novedadesData
-      };
+      return '';
+    };
+    
+    // ✅ Obtener datos de nombres del personal
+    const nombresPersonal = [];
+    const nombresContainer = reg.querySelector(`#nombres-personal-${i}`);
+    if (nombresContainer) {
+      const inputsNombres = nombresContainer.querySelectorAll('input[type="text"]');
+      inputsNombres.forEach((input) => {
+        nombresPersonal.push(input.value?.trim() || '');
+      });
     }
     
-    // ✅ Depuración
-    console.log('📊 Datos de vehículos sincronizados:');
-    vehiculosData.forEach((v, i) => {
-      console.log(`Vehículo ${i}:`, {
-        placa: v.placa,
-        motivo: v.motivo,  // ✅ Verifica que tenga valor
-        tipo_carga: v.tipo_carga,
-        tipo_operacion: v.tipo_operacion
+    // ✅ CAPTURAR DATOS DEL OVERLAY DE INSPECCIÓN
+    const interiorCamion = document.getElementById(`interior_camion_${i}`)?.value || '';
+    const estadoCarpa = document.getElementById(`estado_carpa_${i}`)?.value || '';
+    const oloresExtranos = document.getElementById(`olores_extranos_${i}`)?.value || '';
+    const objetosExtranos = document.getElementById(`objetos_extranos_${i}`)?.value || '';
+    const evidenciasPlagas = document.getElementById(`evidencias_plagas_${i}`)?.value || '';
+    const estadoSuelo = document.getElementById(`estado_suelo_${i}`)?.value || '';
+    const aprobado = document.getElementById(`aprobado_${i}`)?.value || '';
+    
+    // ✅ CAPTURAR LAS 3 FOTOS (INICIO, DURANTE, FIN) - FUERA DEL LOOP DE NOVEDADES
+    const fotoInicio = document.getElementById(`url-inicio-${i}`)?.value || '';
+    const fotoDurante = document.getElementById(`url-durante-${i}`)?.value || '';
+    const fotoFin = document.getElementById(`url-fin-${i}`)?.value || '';
+    
+    // ✅ CAPTURAR JUSTIFICACIONES DEL VEHÍCULO
+    const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${i}`);
+    const justificacionesData = [];
+    
+    if (justificacionesContenedor) {
+      const justificaciones = justificacionesContenedor.querySelectorAll('.justificacion-group');
+      justificaciones.forEach((justificacion, jIndex) => {
+        const motivo = justificacion.querySelector(`select[name="vehiculo_${i}_justificacion_${jIndex}"]`)?.value || '';
+        const otro_motivo = justificacion.querySelector(`input[name="vehiculo_${i}_otro_justificacion_${jIndex}"]`)?.value || '';
+        const tiempo_inicio = justificacion.querySelector(`input[name="vehiculo_${i}_tiempo_muerto_inicio_${jIndex}"]`)?.value || '';
+        const tiempo_fin = justificacion.querySelector(`input[name="vehiculo_${i}_tiempo_muerto_final_${jIndex}"]`)?.value || '';
+        
+        justificacionesData.push({
+          justificacion: motivo,
+          otro_justificacion: otro_motivo,
+          tiempo_muerto_inicio: tiempo_inicio,
+          tiempo_muerto_final: tiempo_fin
+        });
       });
-    });
+    }
+    
+    // ✅ CAPTURAR NOVEDADES DEL VEHÍCULO
+    const novedadesContenedor = document.getElementById(`novedades-contenedor-${i}`);
+    const novedadesData = [];
+    
+    if (novedadesContenedor) {
+      const novedades = novedadesContenedor.querySelectorAll('.novedad-group');
+      novedades.forEach((novedad, nIndex) => {
+        const tipo = novedad.querySelector(`select[name="vehiculo_${i}_tipo_novedad_${nIndex}"]`)?.value || '';
+        const descripcion = novedad.querySelector(`textarea[name="vehiculo_${i}_descripcion_novedad_${nIndex}"]`)?.value || '';
+        // ✅ CORREGIDO: Buscar por ID específico para la URL de la foto de novedad
+        const foto_url = document.getElementById(`foto-novedad-${i}-${nIndex}-url-overlay`)?.value || 
+                        novedad.querySelector(`input[name="vehiculo_${i}_foto_novedad_${nIndex}_url"]`)?.value || '';
+        
+        novedadesData.push({
+          tipo: tipo,
+          descripcion: descripcion,
+          foto_url: foto_url
+        });
+      });
+    }
+    
+    // ✅ ASIGNAR TODOS LOS DATOS AL VEHÍCULO
+    vehiculosData[i] = {
+      inicio: getValue(`vehiculo_${i}_inicio`),
+      fin: getValue(`vehiculo_${i}_fin`),
+      motivo: getValue(`vehiculo_${i}_motivo`),
+      otro_motivo: getValue(`vehiculo_${i}_otro_motivo`),
+      tipo_carga: getValue(`vehiculo_${i}_tipo_carga`),
+      muelle: getValue(`vehiculo_${i}_muelle`),
+      otro_muelle_num: getValue(`vehiculo_${i}_otro_muelle_num`),
+      placa: getValue(`vehiculo_${i}_placa`),
+      tipo_vehi: getValue(`vehiculo_${i}_tipo_vehi`),
+      otro_tipo: getValue(`vehiculo_${i}_otro_tipo`),
+      destino: getValue(`vehiculo_${i}_destino`),
+      otro_destino: getValue(`vehiculo_${i}_otro_destino`),
+      origen: getValue(`vehiculo_${i}_origen`),
+      otro_origen: getValue(`vehiculo_${i}_otro_origen`),
+      personas: getValue(`vehiculo_${i}_personas`),
+      nombres_personal: nombresPersonal,
+      cajas: getValue(`vehiculo_${i}_cajas`),
+      foto_url: getValue(`vehiculo_${i}_foto_url`),
+      // ✅ Fotos individuales del vehículo
+      foto_inicio_url: fotoInicio,
+      foto_durante_url: fotoDurante,
+      foto_fin_url: fotoFin,
+      tipo_operacion: getValue(`vehiculo_${i}_tipo_operacion`) || '',
+      // ✅ Datos de inspección
+      interior_camion: interiorCamion,
+      estado_carpa: estadoCarpa,
+      olores_extranos: oloresExtranos,
+      objetos_extranos: objetosExtranos,
+      evidencias_plagas: evidenciasPlagas,
+      estado_suelo: estadoSuelo,
+      aprobado: aprobado,
+      // ✅ Arrays de justificaciones y novedades
+      justificaciones: justificacionesData,
+      novedades: novedadesData
+    };
   }
+  
+  // ✅ Depuración
+  console.log('📊 Datos de vehículos sincronizados:');
+  vehiculosData.forEach((v, i) => {
+    console.log(`Vehículo ${i}:`, {
+      placa: v.placa,
+      motivo: v.motivo,
+      tipo_carga: v.tipo_carga,
+      tipo_operacion: v.tipo_operacion,
+      justificaciones_count: v.justificaciones?.length || 0,
+      novedades_count: v.novedades?.length || 0
+    });
+  });
+}
           // ============================================
           // MANEJO DE CAMPOS "OTRO"
           // ============================================
