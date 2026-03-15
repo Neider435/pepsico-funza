@@ -5093,7 +5093,7 @@ vehiculosParaEnviar.forEach((vehiculo, index) => {
 });
 
 // 3. Construimos el objeto final a enviar
-const datosFinales = {
+const formData = {
     fecha: document.getElementById('fecha').value,
     lugar: document.getElementById('lugar').value,
     lider_asignado: document.getElementById('lider').value.toUpperCase(),
@@ -5105,7 +5105,23 @@ const datosFinales = {
     total_personas: document.getElementById('total_personas').value,
     cajas_totales: document.getElementById('cajas_totales').value,
     respo_diligen: document.getElementById('responsable').value,
-    datos_vehiculos: vehiculosParaEnviar, // Ahora sí incluyen las fotos
+    
+    // ✅ Procesamiento de vehículos (CON validación integrada)
+    datos_vehiculos: vehiculosData.map((v, i) => {
+        // ✅ Validar y corregir tipo_operacion
+        if (v.tipo_operacion === undefined) {
+            console.warn(`⚠️ Vehículo ${i}: tipo_operacion es undefined, corrigiendo a ""`);
+            v.tipo_operacion = '';
+        }
+        // ✅ Asegurar que existan los arrays
+        v.novedades = v.novedades || [];
+        v.justificaciones = v.justificaciones || [];
+        // ✅ Asegurar tipo_carga
+        v.tipo_carga = v.tipo_carga || '';
+        return v;
+    }),
+    
+    // ✅ Procesamiento de paradas de operación
     datos_paradas_operacion: Array.from(
         document.querySelectorAll('#operacion-contenedor .parada-group')
     ).map(grupo => {
