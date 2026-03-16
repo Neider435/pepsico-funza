@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
   <html lang="es">
   <head>
       <meta charset="UTF-8">
@@ -4777,53 +4777,10 @@ function sincronizarVehiculosDesdeDOM() {
       
       const vehiculos = document.querySelectorAll('.registro-vehiculo');
       vehiculos.forEach((_, vIndex) => {
-          // ✅ ASEGURAR QUE EXISTA EL OBJETO DEL VEHÍCULO
-          if (!vehiculosData[vIndex]) {
-              vehiculosData[vIndex] = {};
-          }
-          
-          // ✅ CAPTURAR DATOS BÁSICOS DEL VEHÍCULO
-          const placa = form.querySelector(`input[name="vehiculo_${vIndex}_placa"]`)?.value || '';
-          const tipo_vehi = form.querySelector(`select[name="vehiculo_${vIndex}_tipo"]`)?.value || '';
-          const otro_tipo = form.querySelector(`input[name="vehiculo_${vIndex}_otro_tipo"]`)?.value || '';
-          const destino = form.querySelector(`select[name="vehiculo_${vIndex}_destino"]`)?.value || '';
-          const otro_destino = form.querySelector(`input[name="vehiculo_${vIndex}_otro_destino"]`)?.value || '';
-          const origen = form.querySelector(`select[name="vehiculo_${vIndex}_origen"]`)?.value || '';
-          const otro_origen = form.querySelector(`input[name="vehiculo_${vIndex}_otro_origen"]`)?.value || '';
-          const personas = form.querySelector(`input[name="vehiculo_${vIndex}_personas"]`)?.value || '';
-          const cajas = form.querySelector(`input[name="vehiculo_${vIndex}_cajas"]`)?.value || '';
-          const muelle = form.querySelector(`select[name="vehiculo_${vIndex}_muelle"]`)?.value || '';
-          const otro_muelle_num = form.querySelector(`input[name="vehiculo_${vIndex}_otro_muelle_num"]`)?.value || '';
-          const tipo_carga = form.querySelector(`select[name="vehiculo_${vIndex}_tipo_carga"]`)?.value || '';
-          const inicio = form.querySelector(`input[name="vehiculo_${vIndex}_inicio"]`)?.value || '';
-          const fin = form.querySelector(`input[name="vehiculo_${vIndex}_fin"]`)?.value || '';
-          const motivo = form.querySelector(`select[name="vehiculo_${vIndex}_motivo"]`)?.value || '';
-          const otro_motivo = form.querySelector(`input[name="vehiculo_${vIndex}_otro_motivo"]`)?.value || '';
-          const tipo_operacion = form.querySelector(`select[name="vehiculo_${vIndex}_tipo_operacion"]`)?.value || '';
-          
-          // ✅ GUARDAR EN vehiculosData (NO en data)
-          vehiculosData[vIndex].placa = placa;
-          vehiculosData[vIndex].tipo_vehi = tipo_vehi;
-          vehiculosData[vIndex].otro_tipo = otro_tipo;
-          vehiculosData[vIndex].destino = destino;
-          vehiculosData[vIndex].otro_destino = otro_destino;
-          vehiculosData[vIndex].origen = origen;
-          vehiculosData[vIndex].otro_origen = otro_origen;
-          vehiculosData[vIndex].personas = personas;
-          vehiculosData[vIndex].cajas = cajas;
-          vehiculosData[vIndex].muelle = muelle;
-          vehiculosData[vIndex].otro_muelle_num = otro_muelle_num;
-          vehiculosData[vIndex].tipo_carga = tipo_carga;
-          vehiculosData[vIndex].inicio = inicio;
-          vehiculosData[vIndex].fin = fin;
-          vehiculosData[vIndex].motivo = motivo;
-          vehiculosData[vIndex].otro_motivo = otro_motivo;
-          vehiculosData[vIndex].tipo_operacion = tipo_operacion;
-          
           // ✅ CAPTURAR FOTO PRINCIPAL DEL VEHÍCULO
           const fotoUrlInput = document.getElementById(`foto_url_${vIndex}`);
           if (fotoUrlInput) {
-              vehiculosData[vIndex].foto_url = fotoUrlInput.value || '';
+              data[`vehiculo_${vIndex}_foto_url`] = fotoUrlInput.value || '';
           }
           
           // ✅ ============================================
@@ -4833,36 +4790,11 @@ function sincronizarVehiculosDesdeDOM() {
           const fotoDurante = document.getElementById(`url-durante-${vIndex}`)?.value || '';
           const fotoFin = document.getElementById(`url-fin-${vIndex}`)?.value || '';
           
-          // ✅ GUARDAR EN vehiculosData (CORRECCIÓN PRINCIPAL)
-          vehiculosData[vIndex].foto_inicio_url = fotoInicio;
-          vehiculosData[vIndex].foto_durante_url = fotoDurante;
-          vehiculosData[vIndex].foto_fin_url = fotoFin;
+          // ✅ GUARDAR EN data (NO en vehiculosData)
+          data[`vehiculo_${vIndex}_foto_inicio_url`] = fotoInicio;
+          data[`vehiculo_${vIndex}_foto_durante_url`] = fotoDurante;
+          data[`vehiculo_${vIndex}_foto_fin_url`] = fotoFin;
           // ✅ ============================================
-          
-          // ✅ CAPTURAR DETALLES DE INSPECCIÓN
-          const interiorCamion = form.querySelector(`select[name="vehiculo_${vIndex}_interior_camion"]`)?.value || null;
-          const estadoCarpa = form.querySelector(`select[name="vehiculo_${vIndex}_estado_carpa"]`)?.value || null;
-          const oloresExtraños = form.querySelector(`select[name="vehiculo_${vIndex}_olores_extranos"]`)?.value || null;
-          const objetosExtraños = form.querySelector(`select[name="vehiculo_${vIndex}_objetos_extranos"]`)?.value || null;
-          const evidenciasPlagas = form.querySelector(`select[name="vehiculo_${vIndex}_evidencias_plagas"]`)?.value || null;
-          const estadoSuelo = form.querySelector(`select[name="vehiculo_${vIndex}_estado_suelo"]`)?.value || null;
-          const aprobado = form.querySelector(`select[name="vehiculo_${vIndex}_aprobado"]`)?.value || null;
-          
-          vehiculosData[vIndex].interior_camion = interiorCamion;
-          vehiculosData[vIndex].estado_carpa = estadoCarpa;
-          vehiculosData[vIndex].olores_extraños = oloresExtraños;
-          vehiculosData[vIndex].objetos_extraños = objetosExtraños;
-          vehiculosData[vIndex].evidencias_plagas = evidenciasPlagas;
-          vehiculosData[vIndex].estado_suelo = estadoSuelo;
-          vehiculosData[vIndex].aprobado = aprobado;
-          
-          // ✅ CAPTURAR NOMRES DEL PERSONAL
-          const nombresPersonal = [];
-          const nombresInputs = document.querySelectorAll(`input[name="vehiculo_${vIndex}_nombre_personal[]"]`);
-          nombresInputs.forEach(input => {
-              if (input.value.trim()) nombresPersonal.push(input.value.trim());
-          });
-          vehiculosData[vIndex].nombres_personal = nombresPersonal;
           
           // ✅ CAPTURAR JUSTIFICACIONES POR VEHÍCULO
           const justificacionesContenedor = document.getElementById(`justificaciones-contenedor-${vIndex}`);
@@ -4884,7 +4816,7 @@ function sincronizarVehiculosDesdeDOM() {
                   });
               });
               
-              vehiculosData[vIndex].justificaciones = justificacionesData;
+              data[`_justificaciones_${vIndex}`] = justificacionesData;
           }
           
           // ✅ CAPTURAR NOVEDADES POR VEHÍCULO
@@ -4905,30 +4837,9 @@ function sincronizarVehiculosDesdeDOM() {
                   });
               });
               
-              vehiculosData[vIndex].novedades = novedadesData;
+              data[`_novedades_${vIndex}`] = novedadesData;
           }
-          
-          // ✅ CAPTURAR PRODUCTOS ESCANEADOS
-          if (productosEscaneadosPorVehiculo[vIndex]) {
-              vehiculosData[vIndex].productos_escaneados = productosEscaneadosPorVehiculo[vIndex];
-          }
-      });
-      
-      // ✅ GUARDAR DATOS BÁSICOS DEL FORMULARIO EN data
-      data.fecha = form.querySelector('input[name="fecha"]')?.value || '';
-      data.lugar = form.querySelector('select[name="lugar"]')?.value || '';
-      data.lider_asignado = form.querySelector('select[name="lider_asignado"]')?.value || '';
-      data.coordinador = form.querySelector('select[name="coordinador"]')?.value || '';
-      data.coordinador_otro = form.querySelector('input[name="coordinador_otro"]')?.value || '';
-      data.lider_pepsico = form.querySelector('select[name="lider_pepsico"]')?.value || '';
-      data.lider_pepsico_otro = form.querySelector('input[name="lider_pepsico_otro"]')?.value || '';
-      data.turno = form.querySelector('select[name="turno"]')?.value || '';
-      data.total_personas = form.querySelector('input[name="total_personas"]')?.value || '';
-      data.cajas_totales = form.querySelector('input[name="cajas_totales"]')?.value || '';
-      data.respo_diligen = form.querySelector('input[name="respo_diligen"]')?.value || '';
-      
-      // ✅ AGREGAR vehiculosData y paradas al objeto data
-      data.datos_vehiculos = vehiculosData;
+      }); // ← ✅ AQUÍ SÍ CIERRA EL forEach DE VEHÍCULOS
       
       // ✅ GUARDAR PARADAS DE OPERACIÓN
       const paradasData = [];
@@ -4949,16 +4860,11 @@ function sincronizarVehiculosDesdeDOM() {
           });
       });
       
-      data.datos_paradas_operacion = paradasData;
+      data._numVehiculos = vehiculosData.length;
+      data._paradasDetalle = paradasData;
+      data._productosEscaneados = productosEscaneadosPorVehiculo;
       
       console.log('💾 Guardando progreso:', data);
-      console.log('📸 Vehículos con fotos:', vehiculosData.map(v => ({
-          placa: v.placa,
-          foto_inicio: v.foto_inicio_url?.substring(0, 50),
-          foto_durante: v.foto_durante_url?.substring(0, 50),
-          foto_fin: v.foto_fin_url?.substring(0, 50)
-      })));
-      
       localStorage.setItem('pepsico_data', JSON.stringify(data));
   }
 
@@ -5202,16 +5108,24 @@ function sincronizarVehiculosDesdeDOM() {
   console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
   console.log("DATOS VEHICULOS:", vehiculosData);
   
-  // ✅ PASO 11: URL CORREGIDA (SIN ESPACIOS) ⚠️ IMPORTANTE
-  const API_URL = 'https://inlo-pepsico-api.onrender.com/api/registro'; // ✅ Sin espacios al final
+  // ✅ PASO 11: URL CORREGIDA (SIN ESPACIOS)
+  const API_URL = 'https://inlo-pepsico-api.onrender.com/api/registro';
 
+  fetch(API_URL, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(formData)
+})
+  
   // ✅ PASO 12: Mostrar mensaje de carga
   const submitBtn = document.querySelector('button[type="submit"]');
   const originalText = submitBtn.textContent;
   submitBtn.disabled = true;
   submitBtn.textContent = 'Enviando...';
   
-  // ✅ PASO 13: Enviar al API (MySQL) - ÚNICA LLAMADA CORRECTA
+  // ✅ PASO 13: Enviar al API (MySQL)
   fetch(API_URL, {
     method: 'POST',
     headers: {
@@ -5680,7 +5594,8 @@ function sincronizarVehiculosDesdeDOM() {
         }
       }
 
-      // ✅ RESTAURAR PARADAS DE OPERACIÓN
+      // ✅ RESTAURAR PARADAS DE OPERACIÓ
+N
       const operacionContenedor = document.getElementById('operacion-contenedor');
       if (operacionContenedor) {
         operacionContenedor.innerHTML = '';
