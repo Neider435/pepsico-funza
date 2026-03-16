@@ -1,134 +1,239 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
+// ✅ Middleware
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-console.log('🚀 [RENDER] Iniciando servidor...');
-console.log('MYSQLHOST:', process.env.MYSQLHOST ? '✅' : '❌');
+// ===== LOGS DE VARIABLES DE ENTORNO =====
+console.log('=== VARIABLES DE ENTORNO AL INICIAR ===');
+console.log('MYSQLHOST:', process.env.MYSQLHOST ? '✅' : '❌ NO DEFINIDO');
+console.log('MYSQLPORT:', process.env.MYSQLPORT || '4000');
+console.log('MYSQLUSER:', process.env.MYSQLUSER ? '✅' : '❌ NO DEFINIDO');
+console.log('MYSQLDATABASE:', process.env.MYSQLDATABASE ? '✅' : '❌ NO DEFINIDO');
+console.log('=======================================');
 
+// ===== CONEXIÓN A MYSQL/TIDB =====
 const pool = mysql.createPool({
   host: process.env.MYSQLHOST,
   user: process.env.MYSQLUSER,
   password: process.env.MYSQLPASSWORD,
   database: process.env.MYSQLDATABASE,
-  port: process.env.MYSQLPORT || 4000,
+  port: process.env.MYSQLPORT || 4000, 
   waitForConnections: true,
   connectionLimit: 10,
+  queueLimit: 0,
   ssl: { rejectUnauthorized: true }
 });
 
+// ✅ TEST DE CONEXIÓN
+(async () => {
+  try {
+    const connection = await pool.getConnection();
+    console.log('✅ Conexión a MySQL/TiDB exitosa');
+    connection.release();
+  } catch (error) {
+    console.error('❌ Error de conexión a MySQL:', error.message);
+  }
+})();
+
+// ✅ ENDPOINT PRINCIPAL
 app.post('/api/registro', async (req, res) => {
   let connection;
-  console.log('\n📥 [API] Nueva petición recibida');
-  
   try {
+    console.log('📥 Datos recibidos - Body keys:', Object.keys(req.body));
     connection = await pool.getConnection();
     await connection.beginTransaction();
 
+    // ✅ Extraer datos (CORREGIDO)
     const {
-      fecha, lugar, lider_asignado, coordinador, coordinador_otro,
-      lider_pepsico, lider_pepsico_otro, turno, total_personas,
-      cajas_totales, respo_diligen, datos_vehiculos = [], datos_paradas_operacion = []
-    } = req.body; // ✅ Sin espacios
+      fecha,
+      lugar,
+      lider_asignado,
+      coordinador,
+      coordinador_otro,
+      lider_pepsico,
+      lider_pepsico_otro,
+      turno,
+      total_personas,
+      cajas_totales,
+      respo_diligen,
+      datos_vehiculos = [],
+      datos_paradas_operacion = []
+    } = req.body; // ✅ CORREGIDO: sin espacio
 
-    if (!fecha || !lugar) throw new Error('Faltan campos obligatorios');
+    if (!fecha || !lugar) {
+      throw new Error('Faltan campos obligatorios: fecha o lugar');
+    }
 
-    // 1. Registro Principal
+    const respoLimpio = (respo_diligen || '').replace(/\./g, '');
+
+    // ✅ 1. Insertar registro principal (CORREGIDO)
     const [regResult] = await connection.query(
-      `INSERT INTO registros (fecha, lugar, lider_asignado, coordinador, coordinador_otro, lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales, respo_diligen) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [fecha, lugar, lider_asignado||'', coordinador||'', coordinador_otro||'', lider_pepsico||'', lider_pepsico_otro||'', turno||'', total_personas||'', cajas_totales||'', (respo_diligen||'').replace(/\./g, '')]
+      `INSERT INTO registros (
+        fecha, lugar, lider_asignado, coordinador, coordinador_otro,
+        lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales, respo_diligen
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        fecha, lugar, lider_asignado || '', coordinador || '', coordinador_otro || '',
+        lider_pepsico || '', lider_pepsico_otro || '', turno || '', 
+        total_personas || '', cajas_totales || '', respoLimpio
+      ]
     );
-    const registroId = regResult.insertId;
-    console.log('✅ Registro ID:', registroId);
 
-    // 2. Vehículos
+    const registroId = regResult.insertId; // ✅ CORREGIDO
+    console.log('✅ Registro principal creado con ID:', registroId);
+
+    // ✅ 2. Insertar vehículos
     for (const vehiculo of datos_vehiculos) {
-      console.log(`\n🚗 Procesando vehículo: ${vehiculo.placa}`);
-      
-      // 🔍 LOG CRÍTICO PARA DEBUG
-      console.log('📸 URLs recibidas en el objeto vehiculo:');
-      console.log('   - inicio:', vehiculo.foto_inicio_url ? '✅ PRESENTE' : '❌ AUSENTE (undefined)');
-      console.log('   - durante:', vehiculo.foto_durante_url ? '✅ PRESENTE' : '❌ AUSENTE (undefined)');
-      console.log('   - fin:', vehiculo.foto_fin_url ? '✅ PRESENTE' : '❌ AUSENTE (undefined)');
-
       const nombresJSON = Array.isArray(vehiculo.nombres_personal) && vehiculo.nombres_personal.length > 0 
-        ? JSON.stringify(vehiculo.nombres_personal) : null;
+        ? JSON.stringify(vehiculo.nombres_personal) 
+        : null;
 
+      // 🔍 DEBUG: Verificar URLs de fotos
+      console.log(`📸 Vehículo placa ${vehiculo.placa || 'N/A'} - URLs recibidas:`, {
+        foto_url: (vehiculo.foto_url || '').substring(0, 80),
+        foto_inicio_url: (vehiculo.foto_inicio_url || '').substring(0, 80),
+        foto_durante_url: (vehiculo.foto_durante_url || '').substring(0, 80),
+        foto_fin_url: (vehiculo.foto_fin_url || '').substring(0, 80),
+        tiene_inicio: !!vehiculo.foto_inicio_url,
+        tiene_durante: !!vehiculo.foto_durante_url,
+        tiene_fin: !!vehiculo.foto_fin_url
+      });
+
+      // ✅ INSERT CORREGIDO - foto_inicio_url sin espacios
       const [vehResult] = await connection.query(
-        `INSERT INTO vehiculos (registro_id, placa, foto_url, foto_inicio_url, foto_durante_url, foto_fin_url, inicio, fin, motivo, otro_motivo, tipo_carga, muelle, otro_muelle_num, tipo_vehi, otro_tipo, destino, otro_destino, origen, otro_origen, personas, cajas, nombres_personal, tipo_operacion) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO vehiculos (
+          registro_id, inicio, fin, motivo, otro_motivo, tipo_carga, muelle, otro_muelle_num,
+          placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, otro_origen, personas, cajas,
+          foto_url, foto_inicio_url, foto_durante_url, foto_fin_url, nombres_personal, tipo_operacion
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          registroId, 
-          vehiculo.placa||'', 
-          vehiculo.foto_url||'', 
-          vehiculo.foto_inicio_url||'',   // Aquí se guarda si llega bien
-          vehiculo.foto_durante_url||'',  // Aquí se guarda si llega bien
-          vehiculo.foto_fin_url||'',      // Aquí se guarda si llega bien
-          vehiculo.inicio||'', vehiculo.fin||'', vehiculo.motivo||'', vehiculo.otro_motivo||'',
-          vehiculo.tipo_carga||'', vehiculo.muelle||'', vehiculo.otro_muelle_num||'',
-          vehiculo.tipo_vehi||'', vehiculo.otro_tipo||'', vehiculo.destino||'', vehiculo.otro_destino||'',
-          vehiculo.origen||'', vehiculo.otro_origen||'', vehiculo.personas||'', vehiculo.cajas||'',
-          nombresJSON, vehiculo.tipo_operacion||''
+          registroId, // ✅ CORREGIDO
+          vehiculo.inicio || '', vehiculo.fin || '', vehiculo.motivo || '', vehiculo.otro_motivo || '',
+          vehiculo.tipo_carga || '', vehiculo.muelle || '', vehiculo.otro_muelle_num || '',
+          vehiculo.placa || '', vehiculo.tipo_vehi || '', vehiculo.otro_tipo || '',
+          vehiculo.destino || '', vehiculo.otro_destino || '', vehiculo.origen || '', vehiculo.otro_origen || '',
+          vehiculo.personas || '', vehiculo.cajas || '', 
+          vehiculo.foto_url || '', 
+          vehiculo.foto_inicio_url || '', // ✅ CORREGIDO
+          vehiculo.foto_durante_url || '', // ✅ CORREGIDO
+          vehiculo.foto_fin_url || '',
+          nombresJSON, 
+          vehiculo.tipo_operacion || ''
         ]
       );
       
       const vehiculoId = vehResult.insertId;
-      console.log('✅ Vehículo guardado ID:', vehiculoId);
+      console.log('✅ Vehículo creado con ID:', vehiculoId);
 
-      // Verificación post-insert
-      const [check] = await connection.query('SELECT foto_inicio_url, foto_durante_url, foto_fin_url FROM vehiculos WHERE id = ?', [vehiculoId]);
-      console.log('🔍 Lo que quedó en BD:', check[0]);
-
-      // Novedades (Estas sí te funcionaban)
-      if (Array.isArray(vehiculo.novedades)) {
-        for (const nov of vehiculo.novedades) {
-          await connection.query(`INSERT INTO novedades (vehiculo_id, registro_id, tipo_novedad, descripcion, foto_url) VALUES (?, ?, ?, ?, ?)`, 
-            [vehiculoId, registroId, nov.tipo||'', nov.descripcion||'', nov.foto_url||'']);
-        }
-      }
-      
-      // Justificaciones
-      if (Array.isArray(vehiculo.justificaciones)) {
+      // ✅ Insertar justificaciones (CORREGIDO)
+      if (Array.isArray(vehiculo.justificaciones) && vehiculo.justificaciones.length > 0) {
         for (const just of vehiculo.justificaciones) {
-          await connection.query(`INSERT INTO justificaciones (vehiculo_id, registro_id, justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_final) VALUES (?, ?, ?, ?, ?, ?)`, 
-            [vehiculoId, registroId, just.justificacion||'', just.otro_justificacion||'', just.tiempo_muerto_inicio||'', just.tiempo_muerto_final||'']);
+          await connection.query(
+            `INSERT INTO justificaciones (vehiculo_id, registro_id, justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_final) VALUES (?, ?, ?, ?, ?, ?)`,
+            [vehiculoId, registroId, just.justificacion || '', just.otro_justificacion || '', just.tiempo_muerto_inicio || '', just.tiempo_muerto_final || '']
+          );
         }
       }
 
-      // Detalles
-      await connection.query(`INSERT INTO detalles_vehiculos (vehiculo_id, interior_camion, estado_carpa, olores_extraños, objetos_extraños, evidencias_plagas, estado_suelo, aprobado) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [vehiculoId, vehiculo.interior_camion||null, vehiculo.estado_carpa||null, vehiculo.olores_extraños||null, vehiculo.objetos_extraños||null, vehiculo.evidencias_plagas||null, vehiculo.estado_suelo||null, vehiculo.aprobado||null]);
+      // ✅ Insertar novedades (CORREGIDO)
+      if (Array.isArray(vehiculo.novedades) && vehiculo.novedades.length > 0) {
+        for (const nov of vehiculo.novedades) {
+          await connection.query(
+            `INSERT INTO novedades (vehiculo_id, registro_id, tipo_novedad, descripcion, foto_url) VALUES (?, ?, ?, ?, ?)`,
+            [vehiculoId, registroId, nov.tipo || '', nov.descripcion || '', nov.foto_url || '']
+          );
+        }
+      }
+
+      // ✅ Insertar detalles de inspección (CORREGIDO)
+      await connection.query(
+        `INSERT INTO detalles_vehiculos (
+          vehiculo_id, interior_camion, estado_carpa, olores_extranos, 
+          objetos_extranos, evidencias_plagas, estado_suelo, aprobado
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          vehiculoId,
+          vehiculo.interior_camion || null, 
+          vehiculo.estado_carpa || null,
+          vehiculo.olores_extranos || null,
+          vehiculo.objetos_extranos || null,
+          vehiculo.evidencias_plagas || null, 
+          vehiculo.estado_suelo || null,
+          vehiculo.aprobado || null
+        ]
+      );
+
+      // ✅ Insertar productos escaneados (CORREGIDO)
+      if (Array.isArray(vehiculo.productos_escaneados) && vehiculo.productos_escaneados.length > 0) {
+        for (const prod of vehiculo.productos_escaneados) {
+          await connection.query(
+            `INSERT INTO num_producto (vehiculo_id, registro_id, codigo_producto, referencia, nombre_producto, cantidad_cajas) VALUES (?, ?, ?, ?, ?, ?)`,
+            [vehiculoId, registroId, prod.codigo || '', prod.referencia || '', prod.nombre || '', prod.cantidad || 0]
+          );
+        }
+      }
     }
 
-    // Paradas
-    if (Array.isArray(datos_paradas_operacion)) {
+    // ✅ 3. Insertar paradas de operación (CORREGIDO)
+    if (Array.isArray(datos_paradas_operacion) && datos_paradas_operacion.length > 0) {
       for (const parada of datos_paradas_operacion) {
-        await connection.query(`INSERT INTO paradas_operacion (registro_id, inicio, fin, motivo, otro_motivo) VALUES (?, ?, ?, ?, ?)`, 
-          [registroId, parada.inicio||null, parada.fin||null, parada.motivo||null, parada.otro_motivo||null]);
+        if (parada.inicio || parada.fin || parada.motivo || parada.otro_motivo) {
+          await connection.query(
+            `INSERT INTO paradas_operacion (registro_id, inicio, fin, motivo, otro_motivo) VALUES (?, ?, ?, ?, ?)`,
+            [registroId, parada.inicio || null, parada.fin || null, parada.motivo || null, parada.otro_motivo || null]
+          );
+        }
       }
     }
 
     await connection.commit();
     connection.release();
-    res.json({ success: true, id: registroId });
 
+    res.json({
+      success: true,
+      message: 'Registro guardado correctamente en MySQL',
+      id: registroId
+    });
   } catch (error) {
-    console.error('❌ ERROR:', error.message);
-    if (connection) { await connection.rollback(); connection.release(); }
-    res.status(500).json({ success: false, error: error.message });
+    console.error('❌ Error al guardar:', error);
+    if (connection) {
+      await connection.rollback();
+      connection.release();
+    }
+
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
+// ✅ Health check
 app.get('/health', async (req, res) => {
   try {
     const conn = await pool.getConnection();
     conn.release();
-    res.json({ status: 'ok' });
-  } catch (e) { res.status(500).json({ status: 'error', error: e.message }); }
+    res.json({
+      status: 'ok',
+      message: 'API y base de datos funcionando correctamente',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Base de datos NO accesible',
+      error: error.message
+    });
+  }
 });
 
-app.listen(port, '0.0.0.0', () => console.log(`✅ Servidor en puerto ${port}`));
+app.listen(port, () => {
+  console.log(`✅ Servidor corriendo en puerto ${port}`);
+});
