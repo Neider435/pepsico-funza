@@ -48,7 +48,7 @@ app.post('/api/registro', async (req, res) => {
     connection = await pool.getConnection();
     await connection.beginTransaction();
 
-    // ✅ Extraer datos (CORREGIDO - SIN ESPACIOS)
+    // ✅ Extraer datos (Limpio y sin espacios)
     const {
       fecha,
       lugar,
@@ -63,7 +63,7 @@ app.post('/api/registro', async (req, res) => {
       respo_diligen,
       datos_vehiculos = [],
       datos_paradas_operacion = []
-    } = req.body; // ✅ CORREGIDO
+    } = req.body;
 
     if (!fecha || !lugar) {
       throw new Error('Faltan campos obligatorios: fecha o lugar');
@@ -71,7 +71,7 @@ app.post('/api/registro', async (req, res) => {
 
     const respoLimpio = (respo_diligen || '').replace(/\./g, '');
 
-    // ✅ 1. Insertar registro principal (CORREGIDO)
+    // ✅ 1. Insertar registro principal
     const [regResult] = await connection.query(
       `INSERT INTO registros (
         fecha, lugar, lider_asignado, coordinador, coordinador_otro,
@@ -84,27 +84,32 @@ app.post('/api/registro', async (req, res) => {
       ]
     );
 
-    const registroId = regResult.insertId; // ✅ CORREGIDO
+    const registroId = regResult.insertId;
     console.log('✅ Registro principal creado con ID:', registroId);
 
-    // ✅ 2. Insertar vehículos (CORREGIDO)
+    // ✅ 2. Insertar vehículos
     for (const vehiculo of datos_vehiculos) {
+      
+      // 🔥 SOLUCIÓN MÁGICA: Mapeo automático de nombres de fotos
+      // Si viene 'foto_inicio' usa ese, si viene 'foto_inicio_url' usa ese.
+      const f_inicio = (vehiculo.foto_inicio || vehiculo.foto_inicio_url || '').trim();
+      const f_durante = (vehiculo.foto_durante || vehiculo.foto_durante_url || '').trim();
+      const f_fin = (vehiculo.foto_fin || vehiculo.foto_fin_url || '').trim();
+      const f_principal = (vehiculo.foto || vehiculo.foto_url || '').trim();
+
       const nombresJSON = Array.isArray(vehiculo.nombres_personal) && vehiculo.nombres_personal.length > 0 
         ? JSON.stringify(vehiculo.nombres_personal) 
         : null;
 
-      // 🔍 DEBUG: Verificar URLs de fotos
-      console.log(`📸 Vehículo placa ${vehiculo.placa || 'N/A'} - URLs recibidas:`, {
-        foto_url: (vehiculo.foto_url || '').substring(0, 80),
-        foto_inicio_url: (vehiculo.foto_inicio_url || '').substring(0, 80),
-        foto_durante_url: (vehiculo.foto_durante_url || '').substring(0, 80),
-        foto_fin_url: (vehiculo.foto_fin_url || '').substring(0, 80),
-        tiene_inicio: !!vehiculo.foto_inicio_url,
-        tiene_durante: !!vehiculo.foto_durante_url,
-        tiene_fin: !!vehiculo.foto_fin_url
+      // 🔍 DEBUG: Verificar URLs mapeadas
+      console.log(`📸 Vehículo placa ${vehiculo.placa || 'N/A'} - URLs procesadas:`, {
+        inicio: f_inicio.substring(0, 50),
+        durante: f_durante.substring(0, 50),
+        fin: f_fin.substring(0, 50),
+        tiene_datos: !!f_inicio || !!f_durante || !!f_fin
       });
 
-      // ✅ INSERT CORREGIDO - SIN ESPACIOS
+      // ✅ INSERT (Los nombres de columna en la DB siguen siendo _url, que es correcto)
       const [vehResult] = await connection.query(
         `INSERT INTO vehiculos (
           registro_id, inicio, fin, motivo, otro_motivo, tipo_carga, muelle, otro_muelle_num,
@@ -112,16 +117,16 @@ app.post('/api/registro', async (req, res) => {
           foto_url, foto_inicio_url, foto_durante_url, foto_fin_url, nombres_personal, tipo_operacion
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          registroId, // ✅ CORREGIDO
+          registroId,
           vehiculo.inicio || '', vehiculo.fin || '', vehiculo.motivo || '', vehiculo.otro_motivo || '',
           vehiculo.tipo_carga || '', vehiculo.muelle || '', vehiculo.otro_muelle_num || '',
           vehiculo.placa || '', vehiculo.tipo_vehi || '', vehiculo.otro_tipo || '',
           vehiculo.destino || '', vehiculo.otro_destino || '', vehiculo.origen || '', vehiculo.otro_origen || '',
           vehiculo.personas || '', vehiculo.cajas || '', 
-          vehiculo.foto_url || '', 
-          vehiculo.foto_inicio_url || '', // ✅ CORREGIDO
-          vehiculo.foto_durante_url || '', // ✅ CORREGIDO
-          vehiculo.foto_fin_url || '',
+          f_principal,   // ✅ Usamos la variable mapeada y limpiada
+          f_inicio,      // ✅ Usamos la variable mapeada y limpiada
+          f_durante,     // ✅ Usamos la variable mapeada y limpiada
+          f_fin,         // ✅ Usamos la variable mapeada y limpiada
           nombresJSON, 
           vehiculo.tipo_operacion || ''
         ]
@@ -130,7 +135,7 @@ app.post('/api/registro', async (req, res) => {
       const vehiculoId = vehResult.insertId;
       console.log('✅ Vehículo creado con ID:', vehiculoId);
 
-      // ✅ Insertar justificaciones (CORREGIDO)
+      // ✅ Insertar justificaciones
       if (Array.isArray(vehiculo.justificaciones) && vehiculo.justificaciones.length > 0) {
         for (const just of vehiculo.justificaciones) {
           await connection.query(
@@ -140,17 +145,17 @@ app.post('/api/registro', async (req, res) => {
         }
       }
 
-      // ✅ Insertar novedades (CORREGIDO)
+      // ✅ Insertar novedades
       if (Array.isArray(vehiculo.novedades) && vehiculo.novedades.length > 0) {
         for (const nov of vehiculo.novedades) {
           await connection.query(
             `INSERT INTO novedades (vehiculo_id, registro_id, tipo_novedad, descripcion, foto_url) VALUES (?, ?, ?, ?, ?)`,
-            [vehiculoId, registroId, nov.tipo || '', nov.descripcion || '', nov.foto_url || '']
+            [vehiculoId, registroId, nov.tipo || '', nov.descripcion || '', (nov.foto_url || '').trim()]
           );
         }
       }
 
-      // ✅ Insertar detalles de inspección (CORREGIDO)
+      // ✅ Insertar detalles de inspección
       await connection.query(
         `INSERT INTO detalles_vehiculos (
           vehiculo_id, interior_camion, estado_carpa, olores_extranos, 
@@ -168,7 +173,7 @@ app.post('/api/registro', async (req, res) => {
         ]
       );
 
-      // ✅ Insertar productos escaneados (CORREGIDO)
+      // ✅ Insertar productos escaneados
       if (Array.isArray(vehiculo.productos_escaneados) && vehiculo.productos_escaneados.length > 0) {
         for (const prod of vehiculo.productos_escaneados) {
           await connection.query(
@@ -179,7 +184,7 @@ app.post('/api/registro', async (req, res) => {
       }
     }
 
-    // ✅ 3. Insertar paradas de operación (CORREGIDO)
+    // ✅ 3. Insertar paradas de operación
     if (Array.isArray(datos_paradas_operacion) && datos_paradas_operacion.length > 0) {
       for (const parada of datos_paradas_operacion) {
         if (parada.inicio || parada.fin || parada.motivo || parada.otro_motivo) {
