@@ -1,7 +1,6 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
-
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -23,7 +22,7 @@ const pool = mysql.createPool({
   user: process.env.MYSQLUSER,
   password: process.env.MYSQLPASSWORD,
   database: process.env.MYSQLDATABASE,
-  port: process.env.MYSQLPORT || 4000, 
+  port: process.env.MYSQLPORT || 4000,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -49,7 +48,7 @@ app.post('/api/registro', async (req, res) => {
     connection = await pool.getConnection();
     await connection.beginTransaction();
 
-    // ✅ Extraer datos (CORREGIDO)
+    // ✅ Extraer datos (CORREGIDO - SIN ESPACIOS)
     const {
       fecha,
       lugar,
@@ -64,7 +63,7 @@ app.post('/api/registro', async (req, res) => {
       respo_diligen,
       datos_vehiculos = [],
       datos_paradas_operacion = []
-    } = req.body; // ✅ CORREGIDO: sin espacio
+    } = req.body; // ✅ CORREGIDO
 
     if (!fecha || !lugar) {
       throw new Error('Faltan campos obligatorios: fecha o lugar');
@@ -88,7 +87,7 @@ app.post('/api/registro', async (req, res) => {
     const registroId = regResult.insertId; // ✅ CORREGIDO
     console.log('✅ Registro principal creado con ID:', registroId);
 
-    // ✅ 2. Insertar vehículos
+    // ✅ 2. Insertar vehículos (CORREGIDO)
     for (const vehiculo of datos_vehiculos) {
       const nombresJSON = Array.isArray(vehiculo.nombres_personal) && vehiculo.nombres_personal.length > 0 
         ? JSON.stringify(vehiculo.nombres_personal) 
@@ -105,7 +104,7 @@ app.post('/api/registro', async (req, res) => {
         tiene_fin: !!vehiculo.foto_fin_url
       });
 
-      // ✅ INSERT CORREGIDO - foto_inicio_url sin espacios
+      // ✅ INSERT CORREGIDO - SIN ESPACIOS
       const [vehResult] = await connection.query(
         `INSERT INTO vehiculos (
           registro_id, inicio, fin, motivo, otro_motivo, tipo_carga, muelle, otro_muelle_num,
