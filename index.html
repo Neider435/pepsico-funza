@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
   <html lang="es">
   <head>
       <meta charset="UTF-8">
@@ -4927,7 +4927,7 @@ function sincronizarVehiculosDesdeDOM() {
   // ============================================
   // ENVÍO DEL FORMULARIO (CORREGIDO)
   // ============================================
-  // ✅ FUNCIÓN ENVÍO DEL FORMULARIO (COMPLETA Y CORREGIDA)
+  // ✅ ENVÍO DEL FORMULARIO (CORREGIDO)
 function enviarFormulario(event) {
   event.preventDefault();
 
@@ -5066,33 +5066,7 @@ function enviarFormulario(event) {
     }
   }
   
-  // ✅ PASO 10: Preparar datos para enviar (CORREGIDO)
-  // Primero, procesamos los vehículos asegurando propiedades y agregando URLs de fotos
-  const vehiculosParaEnviar = vehiculosData.map((v, i) => {
-    // Aseguramos que tengan las propiedades básicas
-    if (v.tipo_operacion === undefined) {
-      console.warn(`⚠️ Vehículo ${i}: tipo_operacion es undefined, corrigiendo a ""`);
-      v.tipo_operacion = '';
-    }
-    if (!v.novedades) v.novedades = [];
-    if (!v.justificaciones) v.justificaciones = [];
-    if (!v.tipo_carga) v.tipo_carga = '';
-    
-    // ✅ Inyectar URLs de fotos desde los elementos del DOM
-    v.foto_inicio_url = document.getElementById(`url-inicio-${i}`)?.value || '';
-    v.foto_durante_url = document.getElementById(`url-durante-${i}`)?.value || '';
-    v.foto_fin_url = document.getElementById(`url-fin-${i}`)?.value || '';
-    
-    console.log(`📸 Vehículo ${i} fotos preparadas:`, {
-      inicio: v.foto_inicio_url?.substring(0, 50) + '...',
-      durante: v.foto_durante_url?.substring(0, 50) + '...',
-      fin: v.foto_fin_url?.substring(0, 50) + '...'
-    });
-    
-    return v;
-  });
-
-  // ✅ Construimos el objeto final a enviar
+  // ✅ PASO 10: Preparar datos para enviar (CORREGIDO - SIN DUPLICADOS)
   const formData = {
     fecha: document.getElementById('fecha').value,
     lugar: document.getElementById('lugar').value,
@@ -5106,10 +5080,22 @@ function enviarFormulario(event) {
     cajas_totales: document.getElementById('cajas_totales').value,
     respo_diligen: document.getElementById('responsable').value,
     
-    // ✅ Vehículos procesados
-    datos_vehiculos: vehiculosParaEnviar,
+    // ✅ Procesamiento de vehículos con validación integrada
+    datos_vehiculos: vehiculosData.map((v, i) => {
+      // ✅ Validar y corregir tipo_operacion
+      if (v.tipo_operacion === undefined) {
+        console.warn(`⚠️ Vehículo ${i}: tipo_operacion es undefined, corrigiendo a ""`);
+        v.tipo_operacion = '';
+      }
+      // ✅ Asegurar que existan los arrays
+      v.novedades = v.novedades || [];
+      v.justificaciones = v.justificaciones || [];
+      // ✅ Asegurar tipo_carga
+      v.tipo_carga = v.tipo_carga || '';
+      return v;
+    }),
     
-    // ✅ Paradas de operación
+    // ✅ Procesamiento de paradas de operación
     datos_paradas_operacion: Array.from(
       document.querySelectorAll('#operacion-contenedor .parada-group')
     ).map(grupo => {
@@ -5122,19 +5108,19 @@ function enviarFormulario(event) {
     })
   };
 
-  console.log('📝 Datos finales que se enviarán a MySQL:');
-  console.log('Vehículos:', JSON.stringify(vehiculosParaEnviar, null, 2));
+  console.log('📝 Datos que se enviarán a MySQL:');
+  console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
   
-  // ✅ PASO 11: URL DEL API (SIN ESPACIOS)
+  // ✅ PASO 11: URL CORREGIDA (SIN ESPACIOS)
   const API_URL = 'https://inlo-pepsico-api.onrender.com/api/registro';
 
-  // ✅ PASO 12: Mostrar mensaje de carga y deshabilitar botón
+  // ✅ PASO 12: Mostrar mensaje de carga
   const submitBtn = document.querySelector('button[type="submit"]');
   const originalText = submitBtn.textContent;
   submitBtn.disabled = true;
   submitBtn.textContent = 'Enviando...';
   
-  // ✅ PASO 13: Enviar al API (MySQL)
+  // ✅ PASO 13: Enviar al API (MySQL) - UNA SOLA LLAMADA
   fetch(API_URL, {
     method: 'POST',
     headers: {
@@ -5157,22 +5143,19 @@ function enviarFormulario(event) {
       
       // ✅ Enviar correo con EmailJS (NO BLOQUEANTE)
       enviarCorreoEmailJS(formData)
-        .then(() => console.log('✅ Correo enviado exitosamente'))
+        .then(() => console.log('✅ Correo enviado'))
         .catch(err => console.error('⚠️ Error al enviar correo:', err));
       
-      // ✅ Redirigir después de 1 segundo
       setTimeout(() => {
         window.location.href = 'aceptacion.html';
       }, 1000);
     } else {
-      throw new Error(result.error || 'Error desconocido del servidor');
+      throw new Error(result.error || 'Error desconocido');
     }
   })
   .catch(error => {
-    console.error('❌ Error en el envío:', error);
+    console.error('Error:', error);
     alert('❌ Error al guardar: ' + error.message + '\n\nPor favor, inténtalo de nuevo.');
-    
-    // ✅ Restaurar botón en caso de error
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
   });
@@ -5574,7 +5557,8 @@ function enviarFormulario(event) {
                 <option value="cajas_rotas" ${tipoValor === 'cajas_rotas' ? 'selected' : ''}>Cajas rotas</option>
                 <option value="faltante_producto" ${tipoValor === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
                 <option value="sobrante_producto" ${tipoValor === 'sobrante_producto' ? 'selected' : ''}>Sobrante de producto</option>
-                <option value="estibas_malas" ${tipoValor === 'estibas_malas' ? 'selected' : ''}>Estibas malas</option>
+                <option value="estibas_malas" ${tipoVal
+or === 'estibas_malas' ? 'selected' : ''}>Estibas malas</option>
                 <option value="otro" ${tipoValor === 'otro' ? 'selected' : ''}>Otro</option>
               </select>
 
