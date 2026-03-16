@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
   <html lang="es">
   <head>
       <meta charset="UTF-8">
@@ -4927,8 +4927,7 @@ function sincronizarVehiculosDesdeDOM() {
   // ============================================
   // ENVÍO DEL FORMULARIO (CORREGIDO)
   // ============================================
-  // ✅ ENVÍO DEL FORMULARIO (CORREGIDO)
-function enviarFormulario(event) {
+  function enviarFormulario(event) {
   event.preventDefault();
 
   console.log('📧 EmailJS cargado:', typeof emailjs !== 'undefined');
@@ -5066,7 +5065,7 @@ function enviarFormulario(event) {
     }
   }
   
-  // ✅ PASO 10: Preparar datos para enviar (CORREGIDO - SIN DUPLICADOS)
+  // ✅ PASO 10: Preparar datos para enviar (CORREGIDO)
   const formData = {
     fecha: document.getElementById('fecha').value,
     lugar: document.getElementById('lugar').value,
@@ -5079,23 +5078,20 @@ function enviarFormulario(event) {
     total_personas: document.getElementById('total_personas').value,
     cajas_totales: document.getElementById('cajas_totales').value,
     respo_diligen: document.getElementById('responsable').value,
-    
-    // ✅ Procesamiento de vehículos con validación integrada
     datos_vehiculos: vehiculosData.map((v, i) => {
-      // ✅ Validar y corregir tipo_operacion
+      // ✅ Verificar que tipo_operacion tenga valor
       if (v.tipo_operacion === undefined) {
         console.warn(`⚠️ Vehículo ${i}: tipo_operacion es undefined, corrigiendo a ""`);
         v.tipo_operacion = '';
       }
-      // ✅ Asegurar que existan los arrays
+      // ✅ Incluir novedades
       v.novedades = v.novedades || [];
+      // ✅ Incluir justificaciones
       v.justificaciones = v.justificaciones || [];
-      // ✅ Asegurar tipo_carga
+      // ✅ Incluir tipo_carga
       v.tipo_carga = v.tipo_carga || '';
       return v;
     }),
-    
-    // ✅ Procesamiento de paradas de operación
     datos_paradas_operacion: Array.from(
       document.querySelectorAll('#operacion-contenedor .parada-group')
     ).map(grupo => {
@@ -5107,12 +5103,13 @@ function enviarFormulario(event) {
       };
     })
   };
-
+  
   console.log('📝 Datos que se enviarán a MySQL:');
   console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
+  console.log("DATOS VEHICULOS:", vehiculosData);
   
-  // ✅ PASO 11: URL CORREGIDA (SIN ESPACIOS)
-  const API_URL = 'https://inlo-pepsico-api.onrender.com/api/registro';
+  // ✅ PASO 11: URL CORREGIDA (SIN ESPACIOS) ⚠️ IMPORTANTE
+  const API_URL = 'https://inlo-pepsico-api.onrender.com/api/registro'; // ✅ Sin espacios al final
 
   // ✅ PASO 12: Mostrar mensaje de carga
   const submitBtn = document.querySelector('button[type="submit"]');
@@ -5120,7 +5117,7 @@ function enviarFormulario(event) {
   submitBtn.disabled = true;
   submitBtn.textContent = 'Enviando...';
   
-  // ✅ PASO 13: Enviar al API (MySQL) - UNA SOLA LLAMADA
+  // ✅ PASO 13: Enviar al API (MySQL) - ÚNICA LLAMADA CORRECTA
   fetch(API_URL, {
     method: 'POST',
     headers: {
@@ -5557,8 +5554,7 @@ function enviarFormulario(event) {
                 <option value="cajas_rotas" ${tipoValor === 'cajas_rotas' ? 'selected' : ''}>Cajas rotas</option>
                 <option value="faltante_producto" ${tipoValor === 'faltante_producto' ? 'selected' : ''}>Faltante de producto</option>
                 <option value="sobrante_producto" ${tipoValor === 'sobrante_producto' ? 'selected' : ''}>Sobrante de producto</option>
-                <option value="estibas_malas" ${tipoVal
-or === 'estibas_malas' ? 'selected' : ''}>Estibas malas</option>
+                <option value="estibas_malas" ${tipoValor === 'estibas_malas' ? 'selected' : ''}>Estibas malas</option>
                 <option value="otro" ${tipoValor === 'otro' ? 'selected' : ''}>Otro</option>
               </select>
 
