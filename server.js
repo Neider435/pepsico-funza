@@ -4,19 +4,11 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// ✅ Middleware
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-// ===== LOGS DE VARIABLES DE ENTORNO =====
-console.log('=== VARIABLES DE ENTORNO AL INICIAR ===');
-console.log('MYSQLHOST:', process.env.MYSQLHOST ? '✅' : '❌ NO DEFINIDO');
-console.log('MYSQLPORT:', process.env.MYSQLPORT || '4000');
-console.log('MYSQLUSER:', process.env.MYSQLUSER ? '✅' : '❌ NO DEFINIDO');
-console.log('MYSQLDATABASE:', process.env.MYSQLDATABASE ? '✅' : '❌ NO DEFINIDO');
-console.log('=======================================');
-
-// ===== CONEXIÓN A MYSQL/TIDB =====
+console.log('=== ENV ===');
+console.log('MYSQLHOST:', process.env.MYSQLHOST ? '✅' : '❌');
 const pool = mysql.createPool({
   host: process.env.MYSQLHOST,
   user: process.env.MYSQLUSER,
@@ -29,215 +21,72 @@ const pool = mysql.createPool({
   ssl: { rejectUnauthorized: true }
 });
 
-// ✅ TEST DE CONEXIÓN
-(async () => {
-  try {
-    const connection = await pool.getConnection();
-    console.log('✅ Conexión a MySQL/TiDB exitosa');
-    connection.release();
-  } catch (error) {
-    console.error('❌ Error de conexión a MySQL:', error.message);
-  }
-})();
-
-// ✅ ENDPOINT PRINCIPAL
 app.post('/api/registro', async (req, res) => {
-  let connection;
+  let conn;
   try {
-    console.log('📥 Datos recibidos - Body keys:', Object.keys(req.body));
-    connection = await pool.getConnection();
-    await connection.beginTransaction();
+    console.log('📥 BODY COMPLETO RECIBIDO:', JSON.stringify(req.body, null, 2).substring(0, 500));
+    console.log('📥 datos_vehiculos:', req.body.datos_vehiculos ? req.body.datos_vehiculos.length : 0, 'vehículos');
+    
+    conn = await pool.getConnection();
+    await conn.beginTransaction();
 
-    // ✅ Extraer datos (Limpio y sin espacios)
-    const {
-      fecha,
-      lugar,
-      lider_asignado,
-      coordinador,
-      coordinador_otro,
-      lider_pepsico,
-      lider_pepsico_otro,
-      turno,
-      total_personas,
-      cajas_totales,
-      respo_diligen,
-      datos_vehiculos = [],
-      datos_paradas_operacion = []
-    } = req.body;
+    const { fecha, lugar, datos_vehiculos = [] } = req.body;
+    
+    if (!fecha || !lugar) throw new Error('Faltan fecha/lugar');
 
-    if (!fecha || !lugar) {
-      throw new Error('Faltan campos obligatorios: fecha o lugar');
-    }
-
-    const respoLimpio = (respo_diligen || '').replace(/\./g, '');
-
-    // ✅ 1. Insertar registro principal
-    const [regResult] = await connection.query(
-      `INSERT INTO registros (
-        fecha, lugar, lider_asignado, coordinador, coordinador_otro,
-        lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales, respo_diligen
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        fecha, lugar, lider_asignado || '', coordinador || '', coordinador_otro || '',
-        lider_pepsico || '', lider_pepsico_otro || '', turno || '', 
-        total_personas || '', cajas_totales || '', respoLimpio
-      ]
+    // Insert registro
+    const [regResult] = await conn.query(
+      `INSERT INTO registros (fecha, lugar) VALUES (?, ?)`,
+      [fecha, lugar]
     );
-
     const registroId = regResult.insertId;
-    console.log('✅ Registro principal creado con ID:', registroId);
+    console.log('✅ Registro creado ID:', registroId);
 
-    // ✅ 2. Insertar vehículos
-    for (const vehiculo of datos_vehiculos) {
+    // Insert vehículos con DEBUG EXTREMO
+    for (let i = 0; i < datos_vehiculos.length; i++) {
+      const v = datos_vehiculos[i];
       
-      // 🔥 SOLUCIÓN MÁGICA: Mapeo automático de nombres de fotos
-      // Si viene 'foto_inicio' usa ese, si viene 'foto_inicio_url' usa ese.
-      const f_inicio = (vehiculo.foto_inicio || vehiculo.foto_inicio_url || '').trim();
-      const f_durante = (vehiculo.foto_durante || vehiculo.foto_durante_url || '').trim();
-      const f_fin = (vehiculo.foto_fin || vehiculo.foto_fin_url || '').trim();
-      const f_principal = (vehiculo.foto || vehiculo.foto_url || '').trim();
-
-      const nombresJSON = Array.isArray(vehiculo.nombres_personal) && vehiculo.nombres_personal.length > 0 
-        ? JSON.stringify(vehiculo.nombres_personal) 
-        : null;
-
-      // 🔍 DEBUG: Verificar URLs mapeadas
-      console.log(`📸 Vehículo placa ${vehiculo.placa || 'N/A'} - URLs procesadas:`, {
-        inicio: f_inicio.substring(0, 50),
-        durante: f_durante.substring(0, 50),
-        fin: f_fin.substring(0, 50),
-        tiene_datos: !!f_inicio || !!f_durante || !!f_fin
+      console.log(`\n🔍 VEHÍCULO ${i} - DATOS RAW:`, JSON.stringify(v, null, 2));
+      
+      const f_inicio = (v.foto_inicio || v.foto_inicio_url || '').trim();
+      const f_durante = (v.foto_durante || v.foto_durante_url || '').trim();
+      const f_fin = (v.foto_fin || v.foto_fin_url || '').trim();
+      
+      console.log(`🔍 FOTOS PROCESADAS:`, {
+        inicio: f_inicio ? f_inicio.substring(0, 60) : 'VACÍO',
+        durante: f_durante ? f_durante.substring(0, 60) : 'VACÍO',
+        fin: f_fin ? f_fin.substring(0, 60) : 'VACÍO',
+        longitud_inicio: f_inicio.length,
+        es_string: typeof f_inicio
       });
 
-      // ✅ INSERT (Los nombres de columna en la DB siguen siendo _url, que es correcto)
-      const [vehResult] = await connection.query(
+      const [vehResult] = await conn.query(
         `INSERT INTO vehiculos (
-          registro_id, inicio, fin, motivo, otro_motivo, tipo_carga, muelle, otro_muelle_num,
-          placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, otro_origen, personas, cajas,
-          foto_url, foto_inicio_url, foto_durante_url, foto_fin_url, nombres_personal, tipo_operacion
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          registroId,
-          vehiculo.inicio || '', vehiculo.fin || '', vehiculo.motivo || '', vehiculo.otro_motivo || '',
-          vehiculo.tipo_carga || '', vehiculo.muelle || '', vehiculo.otro_muelle_num || '',
-          vehiculo.placa || '', vehiculo.tipo_vehi || '', vehiculo.otro_tipo || '',
-          vehiculo.destino || '', vehiculo.otro_destino || '', vehiculo.origen || '', vehiculo.otro_origen || '',
-          vehiculo.personas || '', vehiculo.cajas || '', 
-          f_principal,   // ✅ Usamos la variable mapeada y limpiada
-          f_inicio,      // ✅ Usamos la variable mapeada y limpiada
-          f_durante,     // ✅ Usamos la variable mapeada y limpiada
-          f_fin,         // ✅ Usamos la variable mapeada y limpiada
-          nombresJSON, 
-          vehiculo.tipo_operacion || ''
-        ]
+          registro_id, placa, foto_inicio_url, foto_durante_url, foto_fin_url
+        ) VALUES (?, ?, ?, ?, ?)`,
+        [registroId, v.placa || '', f_inicio, f_durante, f_fin]
       );
       
-      const vehiculoId = vehResult.insertId;
-      console.log('✅ Vehículo creado con ID:', vehiculoId);
-
-      // ✅ Insertar justificaciones
-      if (Array.isArray(vehiculo.justificaciones) && vehiculo.justificaciones.length > 0) {
-        for (const just of vehiculo.justificaciones) {
-          await connection.query(
-            `INSERT INTO justificaciones (vehiculo_id, registro_id, justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_final) VALUES (?, ?, ?, ?, ?, ?)`,
-            [vehiculoId, registroId, just.justificacion || '', just.otro_justificacion || '', just.tiempo_muerto_inicio || '', just.tiempo_muerto_final || '']
-          );
-        }
-      }
-
-      // ✅ Insertar novedades
-      if (Array.isArray(vehiculo.novedades) && vehiculo.novedades.length > 0) {
-        for (const nov of vehiculo.novedades) {
-          await connection.query(
-            `INSERT INTO novedades (vehiculo_id, registro_id, tipo_novedad, descripcion, foto_url) VALUES (?, ?, ?, ?, ?)`,
-            [vehiculoId, registroId, nov.tipo || '', nov.descripcion || '', (nov.foto_url || '').trim()]
-          );
-        }
-      }
-
-      // ✅ Insertar detalles de inspección
-      await connection.query(
-        `INSERT INTO detalles_vehiculos (
-          vehiculo_id, interior_camion, estado_carpa, olores_extranos, 
-          objetos_extranos, evidencias_plagas, estado_suelo, aprobado
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          vehiculoId,
-          vehiculo.interior_camion || null, 
-          vehiculo.estado_carpa || null,
-          vehiculo.olores_extranos || null,
-          vehiculo.objetos_extranos || null,
-          vehiculo.evidencias_plagas || null, 
-          vehiculo.estado_suelo || null,
-          vehiculo.aprobado || null
-        ]
+      console.log('✅ Vehículo insertado, ID:', vehResult.insertId);
+      
+      // Verificar inmediatamente después de insertar
+      const [check] = await conn.query(
+        `SELECT foto_inicio_url, foto_durante_url, foto_fin_url FROM vehiculos WHERE id = ?`,
+        [vehResult.insertId]
       );
-
-      // ✅ Insertar productos escaneados
-      if (Array.isArray(vehiculo.productos_escaneados) && vehiculo.productos_escaneados.length > 0) {
-        for (const prod of vehiculo.productos_escaneados) {
-          await connection.query(
-            `INSERT INTO num_producto (vehiculo_id, registro_id, codigo_producto, referencia, nombre_producto, cantidad_cajas) VALUES (?, ?, ?, ?, ?, ?)`,
-            [vehiculoId, registroId, prod.codigo || '', prod.referencia || '', prod.nombre || '', prod.cantidad || 0]
-          );
-        }
-      }
+      console.log('🔍 VERIFICACIÓN POST-INSERT:', check[0]);
     }
 
-    // ✅ 3. Insertar paradas de operación
-    if (Array.isArray(datos_paradas_operacion) && datos_paradas_operacion.length > 0) {
-      for (const parada of datos_paradas_operacion) {
-        if (parada.inicio || parada.fin || parada.motivo || parada.otro_motivo) {
-          await connection.query(
-            `INSERT INTO paradas_operacion (registro_id, inicio, fin, motivo, otro_motivo) VALUES (?, ?, ?, ?, ?)`,
-            [registroId, parada.inicio || null, parada.fin || null, parada.motivo || null, parada.otro_motivo || null]
-          );
-        }
-      }
-    }
-
-    await connection.commit();
-    connection.release();
-
-    res.json({
-      success: true,
-      message: 'Registro guardado correctamente en MySQL',
-      id: registroId
-    });
-  } catch (error) {
-    console.error('❌ Error al guardar:', error);
-    if (connection) {
-      await connection.rollback();
-      connection.release();
-    }
-
-    res.status(500).json({
-      success: false,
-      error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
-  }
-});
-
-// ✅ Health check
-app.get('/health', async (req, res) => {
-  try {
-    const conn = await pool.getConnection();
+    await conn.commit();
     conn.release();
-    res.json({
-      status: 'ok',
-      message: 'API y base de datos funcionando correctamente',
-      timestamp: new Date().toISOString()
-    });
+    
+    res.json({ success: true, message: 'Guardado', id: registroId });
+    
   } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'Base de datos NO accesible',
-      error: error.message
-    });
+    console.error('❌ ERROR:', error.message);
+    if (conn) { await conn.rollback(); conn.release(); }
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.listen(port, () => {
-  console.log(`✅ Servidor corriendo en puerto ${port}`);
-});
+app.listen(port, () => console.log(`✅ Server: ${port}`));
