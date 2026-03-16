@@ -1,6 +1,7 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -22,7 +23,7 @@ const pool = mysql.createPool({
   user: process.env.MYSQLUSER,
   password: process.env.MYSQLPASSWORD,
   database: process.env.MYSQLDATABASE,
-  port: process.env.MYSQLPORT || 4000,
+  port: process.env.MYSQLPORT || 4000, 
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -43,13 +44,14 @@ const pool = mysql.createPool({
 // ✅ ENDPOINT PRINCIPAL
 app.post('/api/registro', async (req, res) => {
   let connection;
+  
   try {
     console.log('📥 Datos recibidos - Body keys:', Object.keys(req.body));
     
     connection = await pool.getConnection();
     await connection.beginTransaction();
-
-    // ✅ Extraer datos (NOMBRES SIN ESPACIOS - CORREGIDO)
+    
+    // ✅ Extraer datos (NOMBRES SIN ESPACIOS)
     const {
       fecha,
       lugar,
@@ -64,7 +66,7 @@ app.post('/api/registro', async (req, res) => {
       respo_diligen,
       datos_vehiculos = [],
       datos_paradas_operacion = []
-    } = req.body; // ✅ CORREGIDO: 'r eq.body' -> 'req.body'
+    } = req.body;
 
     if (!fecha || !lugar) {
       throw new Error('Faltan campos obligatorios: fecha o lugar');
@@ -79,21 +81,13 @@ app.post('/api/registro', async (req, res) => {
         lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales, respo_diligen
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        fecha, 
-        lugar, 
-        lider_asignado || '', 
-        coordinador || '', 
-        coordinador_otro || '',
-        lider_pepsico || '', 
-        lider_pepsico_otro || '',
-        turno || '', 
-        total_personas || '', 
-        cajas_totales || '', 
-        respoLimpio
+        fecha, lugar, lider_asignado || '', coordinador || '', coordinador_otro || '',
+        lider_pepsico || '', lider_pepsico_otro || '', turno || '', 
+        total_personas || '', cajas_totales || '', respoLimpio
       ]
     );
-
-    const registroId = regResult.insertId; // ✅ CORREGIDO: 'regResul t' -> 'regResult'
+    
+    const registroId = regResult.insertId;
     console.log('✅ Registro principal creado con ID:', registroId);
 
     // ✅ 2. Insertar vehículos
@@ -106,7 +100,7 @@ app.post('/api/registro', async (req, res) => {
       console.log(`📸 Vehículo placa ${vehiculo.placa || 'N/A'} - URLs recibidas:`, {
         foto_url: (vehiculo.foto_url || '').substring(0, 80),
         foto_inicio_url: (vehiculo.foto_inicio_url || '').substring(0, 80),
-        foto_durante_url: (vehiculo.foto_durante_url || '').substring(0, 80), // ✅ CORREGIDO
+        foto_durante_url: (vehiculo.foto_durante_url || '').substring(0, 80),
         foto_fin_url: (vehiculo.foto_fin_url || '').substring(0, 80),
         tiene_inicio: !!vehiculo.foto_inicio_url,
         tiene_durante: !!vehiculo.foto_durante_url,
@@ -121,22 +115,11 @@ app.post('/api/registro', async (req, res) => {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           registroId,
-          vehiculo.inicio || '', 
-          vehiculo.fin || '', 
-          vehiculo.motivo || '', 
-          vehiculo.otro_motivo || '',
-          vehiculo.tipo_carga || '', 
-          vehiculo.muelle || '', 
-          vehiculo.otro_muelle_num || '',
-          vehiculo.placa || '', 
-          vehiculo.tipo_vehi || '', 
-          vehiculo.otro_tipo || '',
-          vehiculo.destino || '', 
-          vehiculo.otro_destino || '', 
-          vehiculo.origen || '', 
-          vehiculo.otro_origen || '',
-          vehiculo.personas || '', 
-          vehiculo.cajas || '', 
+          vehiculo.inicio || '', vehiculo.fin || '', vehiculo.motivo || '', vehiculo.otro_motivo || '',
+          vehiculo.tipo_carga || '', vehiculo.muelle || '', vehiculo.otro_muelle_num || '',
+          vehiculo.placa || '', vehiculo.tipo_vehi || '', vehiculo.otro_tipo || '',
+          vehiculo.destino || '', vehiculo.otro_destino || '', vehiculo.origen || '', vehiculo.otro_origen || '',
+          vehiculo.personas || '', vehiculo.cajas || '', 
           vehiculo.foto_url || '', 
           vehiculo.foto_inicio_url || '',
           vehiculo.foto_durante_url || '',
@@ -154,14 +137,7 @@ app.post('/api/registro', async (req, res) => {
         for (const just of vehiculo.justificaciones) {
           await connection.query(
             `INSERT INTO justificaciones (vehiculo_id, registro_id, justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_final) VALUES (?, ?, ?, ?, ?, ?)`,
-            [
-              vehiculoId, 
-              registroId, 
-              just.justificacion || '', 
-              just.otro_justificacion || '', 
-              just.tiempo_muerto_inicio || '', 
-              just.tiempo_muerto_final || ''
-            ]
+            [vehiculoId, registroId, just.justificacion || '', just.otro_justificacion || '', just.tiempo_muerto_inicio || '', just.tiempo_muerto_final || '']
           );
         }
       }
@@ -186,8 +162,8 @@ app.post('/api/registro', async (req, res) => {
           vehiculoId,
           vehiculo.interior_camion || null, 
           vehiculo.estado_carpa || null,
-          vehiculo.olores_extraños || null,
-          vehiculo.objetos_extraños || null,
+          vehiculo.olores_extranos || null,
+          vehiculo.objetos_extranos || null,
           vehiculo.evidencias_plagas || null, 
           vehiculo.estado_suelo || null,
           vehiculo.aprobado || null
@@ -228,11 +204,12 @@ app.post('/api/registro', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error al guardar:', error);
+    
     if (connection) {
       await connection.rollback();
       connection.release();
     }
-
+    
     res.status(500).json({
       success: false,
       error: error.message,
