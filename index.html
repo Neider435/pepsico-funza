@@ -1895,6 +1895,9 @@ function sincronizarVehiculosDesdeDOM() {
       <div id="estado-fotos-${vIndex}" style="background: #d1ecf1; color: #0c5460; padding: 10px; border-radius: 5px; font-size: 0.85em; border-left: 4px solid #17a2b8;">
           💡 <strong>Consejo:</strong> Toma fotos en cada etapa para un mejor registro.
       </div>
+      
+      <!-- ✅ INPUT OCULTO LEGACY (para compatibilidad) -->
+      <input type="hidden" name="vehiculo_${vIndex}_foto_url" id="foto_url_${vIndex}" value="${datos.foto_url || ''}">
   </div>
 
                   <div class="parada-group">
@@ -2474,6 +2477,19 @@ function sincronizarVehiculosDesdeDOM() {
               const totalPersonas = datos.personas;
               if (totalPersonas && parseInt(totalPersonas) > 0 && (!datos.nombres_personal || datos.nombres_personal.length === 0)) {
                   generarCamposNombresVehiculo(vIndex);
+              }
+              
+              const fotoInput = registro.querySelector(`#${fotoInputId}`);
+              if (fotoInput) {
+                  fotoInput.addEventListener('change', function() {
+                      let fechaInput = document.getElementById('fecha').value;
+                      if (!fechaInput) fechaInput = new Date().toISOString().split('T')[0];
+                      const [yyyy, mm, dd] = fechaInput.split('-');
+                      const fechaFormateada = `${dd}.${mm}.${yyyy}`;
+                      const tipoVehiculo = (datos.tipo_vehi || 'vehiculo').replace(/ /g, '_');
+                      const nombrePersonalizado = `${fechaFormateada}.${tipoVehiculo}.vehiculo_${vIndex}`;
+                      setupFotoPreview(fotoInputId, previewFotoId, nombrePersonalizado);
+                  });
               }
           }
 
@@ -4761,6 +4777,11 @@ function sincronizarVehiculosDesdeDOM() {
       
       const vehiculos = document.querySelectorAll('.registro-vehiculo');
       vehiculos.forEach((_, vIndex) => {
+          // ✅ CAPTURAR FOTO PRINCIPAL DEL VEHÍCULO
+          const fotoUrlInput = document.getElementById(`foto_url_${vIndex}`);
+          if (fotoUrlInput) {
+              data[`vehiculo_${vIndex}_foto_url`] = fotoUrlInput.value || '';
+          }
           
           // ✅ ============================================
           // ✅ CAPTURAR LAS 3 FOTOS (INICIO, DURANTE, FIN)
@@ -4902,11 +4923,7 @@ function sincronizarVehiculosDesdeDOM() {
               }
               return true;
           }
-
-  // ============================================
-  // ENVÍO DEL FORMULARIO (CORREGIDO)
-  // ============================================
-  // ✅ BANDERA PARA EVITAR DOBLE CLIC
+          
 let enviandoFormulario = false;
 
 function enviarFormulario(event) {
@@ -5081,7 +5098,7 @@ function enviarFormulario(event) {
   submitBtn.disabled = true;
   submitBtn.textContent = 'Enviando...';
 
-  const API_URL = 'https://pepsico-funza.onrender.com/api/registro';
+  const API_URL = 'https://pepsico-api.onrender.com/api/registro';
 
   // ✅ PASO 13: Enviar al API
   fetch(API_URL, {
@@ -5372,6 +5389,14 @@ function enviarFormulario(event) {
         }
         vehiculosData.push(vObj);
         crearVehiculoHTML(document.getElementById('vehiculos-contenedor'), i, vObj);
+
+        // ✅ RESTAURAR FOTO PRINCIPAL DEL VEHÍCULO
+        if (vObj.foto_url) {
+          const previewFoto = document.getElementById(`preview_foto_${i}`);
+          if (previewFoto) {
+            previewFoto.innerHTML = `<img src="${vObj.foto_url}" style="max-width: 100%; border-radius: 8px; border: 2px solid #001855; margin-top: 10px;">`;
+          }
+        }
 
         // ✅ RESTAURAR LAS 3 FOTOS (INICIO, DURANTE, FIN)
         if (data[`vehiculo_${i}_foto_inicio_url`] || data[`vehiculo_${i}_foto_durante_url`] || data[`vehiculo_${i}_foto_fin_url`]) {
