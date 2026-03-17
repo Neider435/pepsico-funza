@@ -146,12 +146,13 @@ app.post('/api/registro', async (req, res) => {
         : null;
 
       // ✅ INSERT VEHÍCULO
+      // ✅ NOTA: Se eliminó 'foto_url' de la lista de columnas y valores
       const [vehResult] = await connection.query(
         `INSERT INTO vehiculos (
           registro_id, inicio, fin, motivo, otro_motivo, tipo_carga, muelle, otro_muelle_num,
           placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, otro_origen, personas, cajas,
           foto_inicio_url, foto_durante_url, foto_fin_url, nombres_personal, tipo_operacion
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
         [
           registroId,
           vehiculo.inicio || '', vehiculo.fin || '', vehiculo.motivo || '', vehiculo.otro_motivo || '',
@@ -159,7 +160,7 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.placa || '', vehiculo.tipo_vehi || '', vehiculo.otro_tipo || '',
           vehiculo.destino || '', vehiculo.otro_destino || '', vehiculo.origen || '', vehiculo.otro_origen || '',
           vehiculo.personas || '', vehiculo.cajas || '', 
-          // ✅ foto_url eliminado - ahora solo las 3 fotos específicas
+          // ✅ Se eliminó 'vehiculo.foto_url || ''', ahora solo van las 3 fotos específicas
           vehiculo.foto_inicio_url || '',
           vehiculo.foto_durante_url || '',
           vehiculo.foto_fin_url || '',
@@ -167,7 +168,7 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.tipo_operacion || ''
         ]
       );
-      
+            
       const vehiculoId = vehResult.insertId;
       console.log(`[${BUILD_ID}] ✅ Vehículo insertado - ID: ${vehiculoId}`);
 
