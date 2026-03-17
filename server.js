@@ -1,49 +1,7 @@
-const express = require('express');
-const mysql = require('mysql2/promise');
-const cors = require('cors');
-
-const app = express();
-const port = process.env.PORT || 3000;
-
-// 🔥 IDENTIFICADOR DE BUILD
-const BUILD_ID = 'PEPSICO-BUILD-20260317-V4-SIN-FOTO-URL';
-
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-
-// ===== LOGS DE INICIO =====
-console.log(`\n🚀 === INICIANDO SERVIDOR [${BUILD_ID}] ===`);
-console.log('🔍 Build ID:', BUILD_ID);
-console.log('📅 Timestamp:', new Date().toISOString());
-console.log('🗄️  MYSQLHOST:', process.env.MYSQLHOST ? '✅' : '❌');
-console.log('🗄️  MYSQLDATABASE:', process.env.MYSQLDATABASE ? '✅' : '❌');
-console.log('=======================================\n');
-
-// ===== CONEXIÓN A MYSQL =====
-const pool = mysql.createPool({
-  host: process.env.MYSQLHOST,
-  user: process.env.MYSQLUSER,
-  password: process.env.MYSQLPASSWORD,
-  database: process.env.MYSQLDATABASE,
-  port: process.env.MYSQLPORT || 4000,
-  waitForConnections: true,
-  connectionLimit: 10,
-  ssl: { rejectUnauthorized: true }
-});
-
-(async () => {
-  try {
-    const conn = await pool.getConnection();
-    console.log(`[${BUILD_ID}] ✅ MySQL conectado`);
-    conn.release();
-  } catch (err) {
-    console.error(`[${BUILD_ID}] ❌ Error MySQL:`, err.message);
-  }
-})();
-
-// ✅ ENDPOINT PRINCIPAL
+// ✅ ENDPOINT: Recibir y guardar datos del formulario
 app.post('/api/registro', async (req, res) => {
   let connection;
+  
   try {
     console.log(`[${BUILD_ID}] 🔍 === NUEVA PETICIÓN /api/registro ===`);
     console.log(`[${BUILD_ID}] 📦 Body keys:`, Object.keys(req.body));
@@ -128,7 +86,7 @@ app.post('/api/registro', async (req, res) => {
           registro_id, inicio, fin, motivo, otro_motivo, tipo_carga, muelle, otro_muelle_num,
           placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, otro_origen, personas, cajas,
           foto_inicio_url, foto_durante_url, foto_fin_url, nombres_personal, tipo_operacion
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           registroId,
           vehiculo.inicio || '', vehiculo.fin || '', vehiculo.motivo || '', vehiculo.otro_motivo || '',
@@ -136,7 +94,7 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.placa || '', vehiculo.tipo_vehi || '', vehiculo.otro_tipo || '',
           vehiculo.destino || '', vehiculo.otro_destino || '', vehiculo.origen || '', vehiculo.otro_origen || '',
           vehiculo.personas || '', vehiculo.cajas || '', 
-          // ✅ SOLO 3 FOTOS (foto_url eliminado)
+          // ✅ SOLO LAS 3 FOTOS (foto_url eliminado)
           vehiculo.foto_inicio_url || '',
           vehiculo.foto_durante_url || '',
           vehiculo.foto_fin_url || '',
@@ -248,28 +206,4 @@ app.post('/api/registro', async (req, res) => {
       build: BUILD_ID
     });
   }
-});
-
-// Health check
-app.get('/health', async (req, res) => {
-  try {
-    const conn = await pool.getConnection();
-    conn.release();
-    res.json({
-      status: 'ok',
-      build: BUILD_ID,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      error: error.message,
-      build: BUILD_ID
-    });
-  }
-});
-
-app.listen(port, () => {
-  console.log(`[${BUILD_ID}] 🚀 Servidor corriendo en puerto ${port}`);
-  console.log(`[${BUILD_ID}] ✅ API lista en /api/registro\n`);
 });
