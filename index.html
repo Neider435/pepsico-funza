@@ -4924,11 +4924,7 @@ function sincronizarVehiculosDesdeDOM() {
               return true;
           }
 
-  // ============================================
-  // ENVÍO DEL FORMULARIO (CORREGIDO)
-  // ============================================
-  
-  function enviarFormulario(event) {
+function enviarFormulario(event) {
   event.preventDefault();
 
   console.log('📧 EmailJS cargado:', typeof emailjs !== 'undefined');
@@ -5109,24 +5105,16 @@ function sincronizarVehiculosDesdeDOM() {
   console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
   console.log("DATOS VEHICULOS:", vehiculosData);
   
-  // ✅ PASO 11: URL CORREGIDA (SIN ESPACIOS)
-  const API_URL = 'https://pepsico-funza.onrender.com/api/registro';
+  // ✅ PASO 11: URL CORREGIDA (SIN ESPACIOS - .trim())
+  const API_URL = 'https://pepsico-funza.onrender.com/api/registro'.trim();
 
-  fetch(API_URL, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify(formData)
-})
-  
-  // ✅ PASO 12: Mostrar mensaje de carga
+  // ✅ PASO 12: Mostrar mensaje de carga y deshabilitar botón
   const submitBtn = document.querySelector('button[type="submit"]');
   const originalText = submitBtn.textContent;
   submitBtn.disabled = true;
   submitBtn.textContent = 'Enviando...';
   
-  // ✅ PASO 13: Enviar al API (MySQL)
+  // ✅ PASO 13: Enviar al API (MySQL) - ÚNICO FETCH CON MANEJO COMPLETO
   fetch(API_URL, {
     method: 'POST',
     headers: {
@@ -5147,11 +5135,12 @@ function sincronizarVehiculosDesdeDOM() {
       
       console.log('✅ Registro guardado, redirigiendo...');
       
-      // ✅ Enviar correo con EmailJS (NO BLOQUEANTE)
+      // ✅ Enviar correo con EmailJS (NO BLOQUEANTE - en paralelo)
       enviarCorreoEmailJS(formData)
         .then(() => console.log('✅ Correo enviado'))
         .catch(err => console.error('⚠️ Error al enviar correo:', err));
       
+      // ✅ Redirigir después de 1 segundo
       setTimeout(() => {
         window.location.href = 'aceptacion.html';
       }, 1000);
@@ -5160,8 +5149,9 @@ function sincronizarVehiculosDesdeDOM() {
     }
   })
   .catch(error => {
-    console.error('Error:', error);
+    console.error('❌ Error:', error);
     alert('❌ Error al guardar: ' + error.message + '\n\nPor favor, inténtalo de nuevo.');
+    // ✅ Restaurar botón en caso de error
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
   });
