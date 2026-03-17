@@ -1644,17 +1644,29 @@ function sincronizarVehiculosDesdeDOM() {
   }
   
   // ✅ Depuración
-  console.log('📊 Datos de vehículos sincronizados:');
-  vehiculosData.forEach((v, i) => {
-    console.log(`Vehículo ${i}:`, {
-      placa: v.placa,
-      motivo: v.motivo,
-      tipo_carga: v.tipo_carga,
-      tipo_operacion: v.tipo_operacion,
-      justificaciones_count: v.justificaciones?.length || 0,
-      novedades_count: v.novedades?.length || 0
-    });
+  // ✅ Depuración - CON FOTOS
+console.log('📊 === DATOS DE VEHÍCULOS SINCRONIZADOS ===');
+vehiculosData.forEach((v, i) => {
+  console.log(`\n🚗 Vehículo #${i + 1}:`, {
+    placa: v.placa,
+    motivo: v.motivo,
+    tipo_carga: v.tipo_carga,
+    tipo_operacion: v.tipo_operacion,
+    // ✅ FOTOS - AGREGADO
+    foto_inicio_url: v.foto_inicio_url ? v.foto_inicio_url.substring(0, 80) : '❌ VACÍA',
+    foto_durante_url: v.foto_durante_url ? v.foto_durante_url.substring(0, 80) : '❌ VACÍA',
+    foto_fin_url: v.foto_fin_url ? v.foto_fin_url.substring(0, 80) : '❌ VACÍA',
+    tiene_inicio: !!v.foto_inicio_url,
+    tiene_durante: !!v.foto_durante_url,
+    tiene_fin: !!v.foto_fin_url,
+    // ✅ OTROS DATOS
+    justificaciones_count: v.justificaciones?.length || 0,
+    novedades_count: v.novedades?.length || 0,
+    personas: v.personas,
+    cajas: v.cajas
   });
+});
+console.log('===========================================\n');
 }
           // ============================================
           // MANEJO DE CAMPOS "OTRO"
@@ -5202,7 +5214,6 @@ function sincronizarVehiculosDesdeDOM() {
   console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
   console.log("DATOS VEHICULOS:", vehiculosData);
   
-  // ✅ PASO 11: URL CORREGIDA (SIN ESPACIOS)
   const API_URL = 'https://inlo-pepsico-api.onrender.com/api/registro';
 
   fetch(API_URL, {
