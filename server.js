@@ -150,8 +150,8 @@ app.post('/api/registro', async (req, res) => {
         `INSERT INTO vehiculos (
           registro_id, inicio, fin, motivo, otro_motivo, tipo_carga, muelle, otro_muelle_num,
           placa, tipo_vehi, otro_tipo, destino, otro_destino, origen, otro_origen, personas, cajas,
-          foto_url, foto_inicio_url, foto_durante_url, foto_fin_url, nombres_personal, tipo_operacion
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          foto_inicio_url, foto_durante_url, foto_fin_url, nombres_personal, tipo_operacion
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           registroId,
           vehiculo.inicio || '', vehiculo.fin || '', vehiculo.motivo || '', vehiculo.otro_motivo || '',
@@ -159,7 +159,10 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.placa || '', vehiculo.tipo_vehi || '', vehiculo.otro_tipo || '',
           vehiculo.destino || '', vehiculo.otro_destino || '', vehiculo.origen || '', vehiculo.otro_origen || '',
           vehiculo.personas || '', vehiculo.cajas || '', 
-          urls.general, urls.inicio, urls.durante, urls.fin,  // ✅ URLs con trim
+          // ✅ foto_url eliminado - ahora solo las 3 fotos específicas
+          vehiculo.foto_inicio_url || '',
+          vehiculo.foto_durante_url || '',
+          vehiculo.foto_fin_url || '',
           nombresJSON, 
           vehiculo.tipo_operacion || ''
         ]
