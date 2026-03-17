@@ -1,13 +1,13 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
-
 const app = express();
+
+// 🔥 IDENTIFICADOR ÚNICO DE BUILD (CAMBIA ESTE VALOR CUANDO ACTUALICES)
+const BUILD_ID = 'PEPSICO-BUILD-20260318-V4-FINAL';
 const port = process.env.PORT || 3000;
 
-// IDENTIFICADOR ÚNICO DE BUILD (CAMBIA ESTE VALOR CUANDO ACTUALICES)
-const BUILD_ID = 'PEPSICO-BUILD-20260317-V3-FOTOS-FIX';
-
+// ✅ Middleware
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
@@ -25,27 +25,30 @@ const pool = mysql.createPool({
   user: process.env.MYSQLUSER,
   password: process.env.MYSQLPASSWORD,
   database: process.env.MYSQLDATABASE,
-  port: process.env.MYSQLPORT || 4000,
+  port: process.env.MYSQLPORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
-  ssl: { rejectUnauthorized: true }
+  queueLimit: 0,
+  ssl: { rejectUnauthorized: false } // ✅ Para compatibilidad con Render
 });
 
+// ✅ TEST DE CONEXIÓN AL INICIAR
 (async () => {
   try {
     const conn = await pool.getConnection();
-    console.log(`[${BUILD_ID}] ✅ MySQL conectado`);
+    console.log(`[${BUILD_ID}] ✅ MySQL conectado exitosamente`);
     conn.release();
   } catch (err) {
     console.error(`[${BUILD_ID}] ❌ Error MySQL:`, err.message);
   }
 })();
 
-// 🔥 ENDPOINT CON BUILD ID EN CADA LOG
+// 🔥 ENDPOINT PRINCIPAL - POST /api/registro
 app.post('/api/registro', async (req, res) => {
   let connection;
+  
   try {
-    // 🎯 LOG CON BUILD ID - ¡ESTO CONFIRMA QUE EL CÓDIGO NUEVO ESTÁ ACTIVO!
+    // 🎯 LOG CON BUILD ID
     console.log(`\n[${BUILD_ID}] 🔍 === NUEVA PETICIÓN /api/registro ===`);
     console.log(`[${BUILD_ID}] 📦 Body keys:`, Object.keys(req.body));
     
@@ -58,24 +61,16 @@ app.post('/api/registro', async (req, res) => {
         
         // 🔥 LOG CRÍTICO DE FOTOS CON BUILD ID
         console.log(`[${BUILD_ID}] 📸 URLs de fotos RECIBIDAS:`, {
-          foto_url: {
-            value: (v.foto_url || '').substring(0, 70),
-            type: typeof v.foto_url,
-            hasValue: !!(v.foto_url && v.foto_url.trim())
-          },
           foto_inicio_url: {
             value: (v.foto_inicio_url || '').substring(0, 70),
-            type: typeof v.foto_inicio_url,
             hasValue: !!(v.foto_inicio_url && v.foto_inicio_url.trim())
           },
           foto_durante_url: {
             value: (v.foto_durante_url || '').substring(0, 70),
-            type: typeof v.foto_durante_url,
             hasValue: !!(v.foto_durante_url && v.foto_durante_url.trim())
           },
           foto_fin_url: {
             value: (v.foto_fin_url || '').substring(0, 70),
-            type: typeof v.foto_fin_url,
             hasValue: !!(v.foto_fin_url && v.foto_fin_url.trim())
           }
         });
@@ -85,7 +80,7 @@ app.post('/api/registro', async (req, res) => {
     connection = await pool.getConnection();
     await connection.beginTransaction();
 
-    // ✅ Extraer datos (CORREGIDO - SIN ESPACIOS)
+    // ✅ Extraer datos (CORREGIDO - SIN ESPACIOS EN LOS NOMBRES)
     const {
       fecha,
       lugar,
@@ -95,8 +90,8 @@ app.post('/api/registro', async (req, res) => {
       lider_pepsico,
       lider_pepsico_otro,
       turno,
-      total_personas,  // ✅ CORREGIDO: sin espacio
-      cajas_totales,   // ✅ CORREGIDO: sin espacio
+      total_personas,
+      cajas_totales,
       respo_diligen,
       datos_vehiculos = [],
       datos_paradas_operacion = []
@@ -109,7 +104,7 @@ app.post('/api/registro', async (req, res) => {
     const respoLimpio = (respo_diligen || '').replace(/\./g, '');
 
     // ✅ 1. Insertar registro principal
-    const [regResult] = await connection.query(  // ✅ CORREGIDO: connection.query
+    const [regResult] = await connection.query(
       `INSERT INTO registros (
         fecha, lugar, lider_asignado, coordinador, coordinador_otro,
         lider_pepsico, lider_pepsico_otro, turno, total_personas, cajas_totales, respo_diligen
@@ -117,7 +112,7 @@ app.post('/api/registro', async (req, res) => {
       [
         fecha, lugar, lider_asignado || '', coordinador || '', coordinador_otro || '',
         lider_pepsico || '', lider_pepsico_otro || '', turno || '', 
-        total_personas || '', cajas_totales || '', respoLimpio  // ✅ CORREGIDO
+        total_personas || '', cajas_totales || '', respoLimpio
       ]
     );
 
@@ -142,10 +137,10 @@ app.post('/api/registro', async (req, res) => {
       });
 
       const nombresJSON = Array.isArray(vehiculo.nombres_personal) && vehiculo.nombres_personal.length > 0 
-        ? JSON.stringify(vehiculo.nombres_personal)  // ✅ CORREGIDO: && sin espacios
+        ? JSON.stringify(vehiculo.nombres_personal)
         : null;
 
-      // ✅ INSERT VEHÍCULO
+      // ✅ INSERT VEHÍCULO (CAMPOS CORREGIDOS SIN ESPACIOS)
       const [vehResult] = await connection.query(
         `INSERT INTO vehiculos (
           registro_id, inicio, fin, motivo, otro_motivo, tipo_carga, muelle, otro_muelle_num,
@@ -159,7 +154,7 @@ app.post('/api/registro', async (req, res) => {
           vehiculo.placa || '', vehiculo.tipo_vehi || '', vehiculo.otro_tipo || '',
           vehiculo.destino || '', vehiculo.otro_destino || '', vehiculo.origen || '', vehiculo.otro_origen || '',
           vehiculo.personas || '', vehiculo.cajas || '', 
-          urls.general, urls.inicio, urls.durante, urls.fin,  // ✅ URLs con trim
+          urls.general, urls.inicio, urls.durante, urls.fin,
           nombresJSON, 
           vehiculo.tipo_operacion || ''
         ]
@@ -186,8 +181,8 @@ app.post('/api/registro', async (req, res) => {
         console.warn(`[${BUILD_ID}] ⚠️ No se pudo verificar inserción:`, e.message);
       }
 
-      // Justificaciones
-      if (Array.isArray(vehiculo.justificaciones) && vehiculo.justificaciones.length > 0) {  // ✅ CORREGIDO
+      // ✅ Justificaciones
+      if (Array.isArray(vehiculo.justificaciones) && vehiculo.justificaciones.length > 0) {
         for (const just of vehiculo.justificaciones) {
           await connection.query(
             `INSERT INTO justificaciones (vehiculo_id, registro_id, justificacion, otro_justificacion, tiempo_muerto_inicio, tiempo_muerto_final) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -196,8 +191,8 @@ app.post('/api/registro', async (req, res) => {
         }
       }
 
-      // Novedades
-      if (Array.isArray(vehiculo.novedades) && vehiculo.novedades.length > 0) {  // ✅ CORREGIDO
+      // ✅ Novedades
+      if (Array.isArray(vehiculo.novedades) && vehiculo.novedades.length > 0) {
         for (const nov of vehiculo.novedades) {
           await connection.query(
             `INSERT INTO novedades (vehiculo_id, registro_id, tipo_novedad, descripcion, foto_url) VALUES (?, ?, ?, ?, ?)`,
@@ -206,7 +201,7 @@ app.post('/api/registro', async (req, res) => {
         }
       }
 
-      // Detalles
+      // ✅ Detalles de inspección
       await connection.query(
         `INSERT INTO detalles_vehiculos (
           vehiculo_id, interior_camion, estado_carpa, olores_extranos, 
@@ -224,8 +219,8 @@ app.post('/api/registro', async (req, res) => {
         ]
       );
 
-      // Productos
-      if (Array.isArray(vehiculo.productos_escaneados) && vehiculo.productos_escaneados.length > 0) {  // ✅ CORREGIDO
+      // ✅ Productos escaneados
+      if (Array.isArray(vehiculo.productos_escaneados) && vehiculo.productos_escaneados.length > 0) {
         for (const prod of vehiculo.productos_escaneados) {
           await connection.query(
             `INSERT INTO num_producto (vehiculo_id, registro_id, codigo_producto, referencia, nombre_producto, cantidad_cajas) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -236,10 +231,10 @@ app.post('/api/registro', async (req, res) => {
     }
 
     // ✅ 3. Insertar paradas de operación
-    if (Array.isArray(datos_paradas_operacion) && datos_paradas_operacion.length > 0) {  // ✅ CORREGIDO
+    if (Array.isArray(datos_paradas_operacion) && datos_paradas_operacion.length > 0) {
       for (const parada of datos_paradas_operacion) {
         if (parada.inicio || parada.fin || parada.motivo || parada.otro_motivo) {
-          await connection.query(
+          await connection.query( 
             `INSERT INTO paradas_operacion (registro_id, inicio, fin, motivo, otro_motivo) VALUES (?, ?, ?, ?, ?)`,
             [registroId, parada.inicio || null, parada.fin || null, parada.motivo || null, parada.otro_motivo || null]
           );
@@ -251,19 +246,22 @@ app.post('/api/registro', async (req, res) => {
     connection.release();
 
     console.log(`[${BUILD_ID}] ✅ === PETICIÓN COMPLETADA ===\n`);
+    
     res.json({
       success: true,
       message: 'Registro guardado correctamente',
       id: registroId,
-      build: BUILD_ID  // 🔥 Devuelve el BUILD ID en la respuesta
+      build: BUILD_ID
     });
 
   } catch (error) {
     console.error(`[${BUILD_ID}] 💥 ERROR FATAL:`, error.message);
+    
     if (connection) {
       await connection.rollback();
       connection.release();
     }
+    
     res.status(500).json({
       success: false,
       error: error.message,
@@ -272,26 +270,57 @@ app.post('/api/registro', async (req, res) => {
   }
 });
 
-// Health check con BUILD ID
+// ✅ Health check con BUILD ID
 app.get('/health', async (req, res) => {
   try {
     const conn = await pool.getConnection();
     conn.release();
-    res.json({ 
-      status: 'ok', 
-      build: BUILD_ID,  // 🔥 BUILD ID en health check
-      timestamp: new Date().toISOString() 
+    res.json({
+      status: 'ok',
+      build: BUILD_ID,
+      timestamp: new Date().toISOString(),
+      message: 'API y base de datos funcionando correctamente'
     });
   } catch (error) {
-    res.status(500).json({ 
-      status: 'error', 
+    res.status(500).json({
+      status: 'error',
       error: error.message,
       build: BUILD_ID
     });
   }
 });
 
+// ✅ Endpoint de prueba
+app.get('/', (req, res) => {
+  res.json({
+    message: '🚀 API Pepsico Funza - Online',
+    build: BUILD_ID,
+    endpoints: {
+      post_registro: '/api/registro',
+      health_check: '/health'
+    }
+  });
+});
+
+// ✅ Manejo de errores 404
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: 'Endpoint no encontrado',
+    build: BUILD_ID
+  });
+});
+
+// ✅ Iniciar servidor
 app.listen(port, () => {
   console.log(`[${BUILD_ID}] 🚀 Servidor corriendo en puerto ${port}`);
   console.log(`[${BUILD_ID}] ✅ API lista en /api/registro\n`);
+});
+
+// ✅ Manejo de cierre graceful
+process.on('SIGINT', async () => {
+  console.log(`\n[${BUILD_ID}] 🛑 Cerrando servidor...`);
+  await pool.end();
+  console.log(`[${BUILD_ID}] ✅ Conexiones cerradas`);
+  process.exit(0);
 });
