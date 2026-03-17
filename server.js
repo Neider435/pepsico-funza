@@ -209,14 +209,14 @@ app.post('/api/registro', async (req, res) => {
       // Detalles
       await connection.query(
         `INSERT INTO detalles_vehiculos (
-          vehiculo_id, interior_camion, estado_carpa, olores_extraños, 
+          vehiculo_id, interior_camion, estado_carpa, olores_extranos, 
           objetos_extranos, evidencias_plagas, estado_suelo, aprobado
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           vehiculoId,
           vehiculo.interior_camion || null, 
           vehiculo.estado_carpa || null,
-          vehiculo.olores_extraños || null,
+          vehiculo.olores_extranos || null,
           vehiculo.objetos_extranos || null,
           vehiculo.evidencias_plagas || null, 
           vehiculo.estado_suelo || null,
