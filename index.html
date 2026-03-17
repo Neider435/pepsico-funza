@@ -4923,28 +4923,23 @@ function sincronizarVehiculosDesdeDOM() {
               }
               return true;
           }
-          
-let enviandoFormulario = false;
-function enviarFormulario(event) {
+
+  // ============================================
+  // ENVÍO DEL FORMULARIO (CORREGIDO)
+  // ============================================
+  
+  function enviarFormulario(event) {
   event.preventDefault();
 
-  // 🛑 PREVENIR DOBLE ENVÍO
-  if (enviandoFormulario) {
-    console.warn('⚠️ El formulario ya se está enviando...');
-    return;
-  }
-
   console.log('📧 EmailJS cargado:', typeof emailjs !== 'undefined');
+  console.log('📧 EmailJS inicializado:', emailjs);
   
   // ✅ PASO 1: Hacer visibles los campos de motivo ANTES de validar
   mostrarCamposMotivo();
-
-  // ✅ LIMPIAR DATOS PREVIOS PARA EVITAR DUPLICIDAD
-  vehiculosData = []; 
   
-  // ✅ PASO 2: Sincronizar datos del DOM a vehiculosData (ÚNICA VEZ)
+  // ✅ PASO 2: Sincronizar datos del DOM a vehiculosData
   sincronizarVehiculosDesdeDOM();
-
+  
   // ✅ PASO 3: Debug - Verificar qué valores se capturaron
   console.log('🔍 Debug motivos antes de validar:');
   vehiculosData.forEach((v, i) => {
@@ -4954,12 +4949,14 @@ function enviarFormulario(event) {
       motivo_empty: !v.motivo || v.motivo.trim() === ''
     });
   });
-
+  
   // ✅ PASO 4: Validar motivo de cada vehículo
   for (let i = 0; i < vehiculosData.length; i++) {
     const vehiculo = vehiculosData[i];
+    
     if (!vehiculo.motivo || vehiculo.motivo.trim() === '') {
       alert(`❌ Error: El Vehículo #${i + 1} no tiene motivo seleccionado.\n\nPor favor, seleccione: Cargue, Descargue u Otro.`);
+      
       const motivoSelect = document.getElementById(`motivo-cargue-descargue-${i}`);
       if (motivoSelect) {
         const container = motivoSelect.closest('.registro-vehiculo');
@@ -4973,13 +4970,14 @@ function enviarFormulario(event) {
       return;
     }
   }
-
+  
   // ✅ PASO 5: Validar inspección de vehículos
   let inspeccionCompleta = true;
   let vehiculoConInspeccionPendiente = -1;
   
   for (let i = 0; i < vehiculosData.length; i++) {
     const vehiculo = vehiculosData[i];
+    
     if (!vehiculo.interior_camion || 
         !vehiculo.estado_carpa || 
         !vehiculo.olores_extranos || 
@@ -4999,7 +4997,7 @@ function enviarFormulario(event) {
     abrirInspeccionVehiculo(vehiculoConInspeccionPendiente);
     return;
   }
-
+  
   console.log('📊 Vehículos con nombres del personal:');
   vehiculosData.forEach((vehiculo, index) => {
     console.log(`Vehículo ${index}:`, {
@@ -5010,7 +5008,7 @@ function enviarFormulario(event) {
       justificaciones: vehiculo.justificaciones
     });
   });
-
+  
   // ✅ PASO 6: Validar campos obligatorios del formulario principal
   const camposObligatorios = [
     { id: 'lugar', nombre: 'Lugar de operación' },
@@ -5028,7 +5026,7 @@ function enviarFormulario(event) {
       return;
     }
   }
-
+  
   // ✅ PASO 7: Validar nombres por vehículo
   for (let i = 0; i < vehiculosData.length; i++) {
     const vehiculo = vehiculosData[i];
@@ -5047,12 +5045,28 @@ function enviarFormulario(event) {
       }
     }
   }
-
+  
   // ✅ PASO 8: Validar placas y solapamientos
   if (!validarPlacas()) return;
   if (!validarSolapamientoVehiculos() || !validarSolapamientoParadas()) return;
-
-  // ✅ PASO 9: Preparar datos finales para enviar
+  
+  // ✅ PASO 9: Sincronizar productos escaneados con vehiculosData
+  sincronizarVehiculosDesdeDOM();
+  for (let i = 0; i < vehiculosData.length; i++) {
+    if (productosEscaneadosPorVehiculo[i]) {
+      const productosArray = Object.entries(productosEscaneadosPorVehiculo[i].productos).map(([codigo, prod]) => ({
+        codigo: codigo,
+        referencia: prod.referencia,
+        nombre: prod.nombre,
+        cantidad: prod.cantidad
+      }));
+      
+      vehiculosData[i].productos_escaneados = productosArray;
+      vehiculosData[i].total_cajas_escaneadas = productosEscaneadosPorVehiculo[i].totalCajas;
+    }
+  }
+  
+  // ✅ PASO 10: Preparar datos para enviar (CORREGIDO)
   const formData = {
     fecha: document.getElementById('fecha').value,
     lugar: document.getElementById('lugar').value,
@@ -5066,9 +5080,16 @@ function enviarFormulario(event) {
     cajas_totales: document.getElementById('cajas_totales').value,
     respo_diligen: document.getElementById('responsable').value,
     datos_vehiculos: vehiculosData.map((v, i) => {
-      if (v.tipo_operacion === undefined) v.tipo_operacion = '';
+      // ✅ Verificar que tipo_operacion tenga valor
+      if (v.tipo_operacion === undefined) {
+        console.warn(`⚠️ Vehículo ${i}: tipo_operacion es undefined, corrigiendo a ""`);
+        v.tipo_operacion = '';
+      }
+      // ✅ Incluir novedades
       v.novedades = v.novedades || [];
+      // ✅ Incluir justificaciones
       v.justificaciones = v.justificaciones || [];
+      // ✅ Incluir tipo_carga
       v.tipo_carga = v.tipo_carga || '';
       return v;
     }),
@@ -5083,39 +5104,54 @@ function enviarFormulario(event) {
       };
     })
   };
+  
+  console.log('📝 Datos que se enviarán a MySQL:');
+  console.log('Vehículos:', JSON.stringify(vehiculosData, null, 2));
+  console.log("DATOS VEHICULOS:", vehiculosData);
+  
+  // ✅ PASO 11: URL CORREGIDA (SIN ESPACIOS)
+  const API_URL = 'https://pepsico-funza.onrender.com/api/registro';
 
-  console.log('📝 Datos finales que se enviarán a MySQL:', JSON.stringify(formData, null, 2));
-
-  // ✅ MARCAR COMO ENVIANDO
-  enviandoFormulario = true;
+  fetch(API_URL, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(formData)
+})
+  
+  // ✅ PASO 12: Mostrar mensaje de carga
   const submitBtn = document.querySelector('button[type="submit"]');
   const originalText = submitBtn.textContent;
   submitBtn.disabled = true;
-  submitBtn.textContent = '🔄 Enviando...';
-
-  // ✅ URL CORREGIDA (SIN ESPACIOS)
-  const API_URL = 'https://pepsico-funza.onrender.com/api/registro';
-
-  // ✅ Enviar al API
+  submitBtn.textContent = 'Enviando...';
+  
+  // ✅ PASO 13: Enviar al API (MySQL)
   fetch(API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify(formData)
   })
   .then(response => {
-    if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`Error HTTP: ${response.status}`);
+    }
     return response.json();
   })
   .then(result => {
     if (result.success) {
+      // ✅ Eliminar datos de localStorage
       localStorage.removeItem('pepsico_data');
+      
       console.log('✅ Registro guardado, redirigiendo...');
       
-      // Enviar correo (no bloqueante)
+      // ✅ Enviar correo con EmailJS (NO BLOQUEANTE)
       enviarCorreoEmailJS(formData)
         .then(() => console.log('✅ Correo enviado'))
         .catch(err => console.error('⚠️ Error al enviar correo:', err));
-
+      
       setTimeout(() => {
         window.location.href = 'aceptacion.html';
       }, 1000);
@@ -5124,171 +5160,179 @@ function enviarFormulario(event) {
     }
   })
   .catch(error => {
-    console.error('❌ Error:', error);
+    console.error('Error:', error);
     alert('❌ Error al guardar: ' + error.message + '\n\nPor favor, inténtalo de nuevo.');
-    // ✅ RESETEAR BANDERA EN CASO DE ERROR PARA PERMITIR REINTENTO
-    enviandoFormulario = false;
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
   });
 }
 
-// ✅ ENVIAR CORREO CON EMAILJS
-function enviarCorreoEmailJS(data) {
-  return new Promise((resolve, reject) => {
-    try {
-      if (typeof emailjs === 'undefined') {
-        throw new Error('EmailJS no está cargado. Verifica el script.');
-      }
+  // ✅ ENVIAR CORREO CON EMAILJS (CORREGIDO - PRODUCTOS POR VEHÍCULO)
+  function enviarCorreoEmailJS(data) {
+    return new Promise((resolve, reject) => {
+      try {
+        // ✅ VERIFICAR QUE EMAILJS ESTÉ INICIALIZADO
+        if (typeof emailjs === 'undefined') {
+          throw new Error('EmailJS no está cargado. Verifica el script.');
+        }
 
-      // ✅ FORMATEAR VEHÍCULOS COMO TABLA HTML
-      let vehiculosHTML = '<table style="width:100%; border-collapse:collapse; margin-top:10px;">';
-      vehiculosHTML += '<thead><tr style="background:#001855; color:white;">';
-      vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">#</th>';
-      vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Motivo</th>';
-      vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Muelle</th>';
-      vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Placa</th>';
-      vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Destino</th>';
-      vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Cajas</th>';
-      vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Tipo Vehículo</th>';
-      vehiculosHTML += '</tr></thead><tbody>';
-      
-      if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
-        data.datos_vehiculos.forEach((v, index) => {
-          const muelle = v.muelle === 'otro' ? (v.otro_muelle_num || 'N/A') : (v.muelle || 'N/A');
-          const destino = v.destino || v.origen || 'N/A';
-          const cajas = v.cajas || v.total_cajas_escaneadas || '0';
-          const tipoVehiculo = v.tipo_vehi || 'N/A';
-          const motivo = v.motivo ? v.motivo.charAt(0).toUpperCase() + v.motivo.slice(1) : 'N/A';
-          
-          vehiculosHTML += '<tr style="background:' + (index % 2 === 0 ? '#f8f9fa' : 'white') + ';">';
-          vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + (index + 1) + '</td>';
-          vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd;">' + motivo + '</td>';
-          vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + muelle + '</td>';
-          vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + (v.placa || 'N/A') + '</td>';
-          vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd;">' + destino + '</td>';
-          vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + cajas + '</td>';
-          vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd;">' + tipoVehiculo + '</td>';
-          vehiculosHTML += '</tr>';
-        });
-      } else {
-        vehiculosHTML += '<tr><td colspan="7" style="padding:15px; text-align:center; color:#6c757d;">No hay vehículos registrados</td></tr>';
-      }
-      vehiculosHTML += '</tbody></table>';
+        // ✅ FORMATEAR VEHÍCULOS COMO TABLA HTML
+        let vehiculosHTML = '<table style="width:100%; border-collapse:collapse; margin-top:10px;">';
+        vehiculosHTML += '<thead><tr style="background:#001855; color:white;">';
+        vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">#</th>';
+        vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Motivo</th>';
+        vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Muelle</th>';
+        vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Placa</th>';
+        vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Destino</th>';
+        vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Cajas</th>';
+        vehiculosHTML += '<th style="padding:10px; border:1px solid #ddd;">Tipo Vehículo</th>';
+        vehiculosHTML += '</tr></thead><tbody>';
+        
+        if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
+          data.datos_vehiculos.forEach((v, index) => {
+            const muelle = v.muelle === 'otro' ? (v.otro_muelle_num || 'N/A') : (v.muelle || 'N/A');
+            const destino = v.destino || v.origen || 'N/A';
+            const cajas = v.cajas || v.total_cajas_escaneadas || '0';
+            const tipoVehiculo = v.tipo_vehi || 'N/A';
+            const motivo = v.motivo ? v.motivo.charAt(0).toUpperCase() + v.motivo.slice(1) : 'N/A';
+            
+            vehiculosHTML += '<tr style="background:' + (index % 2 === 0 ? '#f8f9fa' : 'white') + ';">';
+            vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + (index + 1) + '</td>';
+            vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd;">' + motivo + '</td>';
+            vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + muelle + '</td>';
+            vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + (v.placa || 'N/A') + '</td>';
+            vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd;">' + destino + '</td>';
+            vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + cajas + '</td>';
+            vehiculosHTML += '<td style="padding:8px; border:1px solid #ddd;">' + tipoVehiculo + '</td>';
+            vehiculosHTML += '</tr>';
+          });
+        } else {
+          vehiculosHTML += '<tr><td colspan="7" style="padding:15px; text-align:center; color:#6c757d;">No hay vehículos registrados</td></tr>';
+        }
+        vehiculosHTML += '</tbody></table>';
 
-      // ✅ FORMATEAR PRODUCTOS COMO TABLA HTML
-      let productosHTML = '<table style="width:100%; border-collapse:collapse; margin-top:10px;">';
-      productosHTML += '<thead><tr style="background:#001855; color:white;">';
-      productosHTML += '<th style="padding:10px; border:1px solid #ddd;">#</th>';
-      productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Vehículo</th>';
-      productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Placa</th>';
-      productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Código</th>';
-      productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Nombre Producto</th>';
-      productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Cantidad Cajas</th>';
-      productosHTML += '</tr></thead><tbody>';
-      
-      let productoIndex = 0;
-      if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
-        data.datos_vehiculos.forEach((v, vIndex) => {
-          if (v.productos_escaneados && v.productos_escaneados.length > 0) {
-            v.productos_escaneados.forEach((prod) => {
+        // ✅ FORMATEAR PRODUCTOS COMO TABLA HTML (CON VEHÍCULO IDENTIFICADO)
+        let productosHTML = '<table style="width:100%; border-collapse:collapse; margin-top:10px;">';
+        productosHTML += '<thead><tr style="background:#001855; color:white;">';
+        productosHTML += '<th style="padding:10px; border:1px solid #ddd;">#</th>';
+        productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Vehículo</th>';
+        productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Placa</th>';
+        productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Código</th>';
+        productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Nombre Producto</th>';
+        productosHTML += '<th style="padding:10px; border:1px solid #ddd;">Cantidad Cajas</th>';
+        productosHTML += '</tr></thead><tbody>';
+        
+        let productoIndex = 0;
+        if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
+          data.datos_vehiculos.forEach((v, vIndex) => {
+            // ✅ VERIFICAR SI EL VEHÍCULO TIENE PRODUCTOS ESCANEADOS
+            if (v.productos_escaneados && v.productos_escaneados.length > 0) {
+              v.productos_escaneados.forEach((prod, pIndex) => {
+                productoIndex++;
+                const bg = productoIndex % 2 === 0 ? '#f8f9fa' : 'white';
+                productosHTML += '<tr style="background:' + bg + ';">';
+                productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + productoIndex + '</td>';
+                productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:#001855;">' + (vIndex + 1) + '</td>';
+                productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-family:monospace;">' + (v.placa || 'N/A') + '</td>';
+                productosHTML += '<td style="padding:8px; border:1px solid #ddd; font-family:monospace;">' + (prod.codigo || prod.referencia || 'N/A') + '</td>';
+                productosHTML += '<td style="padding:8px; border:1px solid #ddd;">' + (prod.nombre || 'N/A') + '</td>';
+                productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:#C76E00;">' + (prod.cantidad || '0') + '</td>';
+                productosHTML += '</tr>';
+              });
+            } else {
+              // ✅ MOSTRAR FILA CUANDO NO HAY PRODUCTOS PARA ESE VEHÍCULO
               productoIndex++;
               const bg = productoIndex % 2 === 0 ? '#f8f9fa' : 'white';
               productosHTML += '<tr style="background:' + bg + ';">';
               productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + productoIndex + '</td>';
               productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:#001855;">' + (vIndex + 1) + '</td>';
               productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-family:monospace;">' + (v.placa || 'N/A') + '</td>';
-              productosHTML += '<td style="padding:8px; border:1px solid #ddd; font-family:monospace;">' + (prod.codigo || prod.referencia || 'N/A') + '</td>';
-              productosHTML += '<td style="padding:8px; border:1px solid #ddd;">' + (prod.nombre || 'N/A') + '</td>';
-              productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:#C76E00;">' + (prod.cantidad || '0') + '</td>';
+              productosHTML += '<td style="padding:8px; border:1px solid #ddd; font-family:monospace; color:#6c757d;" colspan="3">Sin productos escaneados</td>';
               productosHTML += '</tr>';
-            });
-          } else {
-            productoIndex++;
-            const bg = productoIndex % 2 === 0 ? '#f8f9fa' : 'white';
-            productosHTML += '<tr style="background:' + bg + ';">';
-            productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + productoIndex + '</td>';
-            productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:#001855;">' + (vIndex + 1) + '</td>';
-            productosHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-family:monospace;">' + (v.placa || 'N/A') + '</td>';
-            productosHTML += '<td style="padding:8px; border:1px solid #ddd; font-family:monospace; color:#6c757d;" colspan="3">Sin productos escaneados</td>';
-            productosHTML += '</tr>';
-          }
-        });
+            }
+          });
+        }
+        if (productoIndex === 0) {
+          productosHTML += '<tr><td colspan="6" style="padding:15px; text-align:center; color:#6c757d;">No hay productos escaneados</td></tr>';
+        }
+        productosHTML += '</tbody></table>';
+
+        // ✅ FUNCIÓN PARA FORMATEAR TIPO DE NOVEDAD (QUITAR GUIONES Y CAPITALIZAR)
+        function formatearTipoNovedad(tipo) {
+          if (!tipo) return 'N/A';
+          return tipo
+            .replace(/_/g, ' ')
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
+        }
+
+        // ✅ FORMATEAR NOVEDADES COMO TABLA HTML (CON VEHÍCULO IDENTIFICADO)
+        let novedadesHTML = '<table style="width:100%; border-collapse:collapse; margin-top:10px;">';
+        novedadesHTML += '<thead><tr style="background:#001855; color:white;">';
+        novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">#</th>';
+        novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">Vehículo</th>';
+        novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">Placa</th>';
+        novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">Tipo Novedad</th>';
+        novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">Descripción</th>';
+        novedadesHTML += '</tr></thead><tbody>';
+        
+        let novedadIndex = 0;
+        if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
+          data.datos_vehiculos.forEach((v, vIndex) => {
+            if (v.novedades && v.novedades.length > 0) {
+              v.novedades.forEach((nov, nIndex) => {
+                novedadIndex++;
+                const bg = novedadIndex % 2 === 0 ? '#f8f9fa' : 'white';
+                const tipoFormateado = formatearTipoNovedad(nov.tipo);
+                novedadesHTML += '<tr style="background:' + bg + ';">';
+                novedadesHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + novedadIndex + '</td>';
+                novedadesHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:#001855;">' + (vIndex + 1) + '</td>';
+                novedadesHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-family:monospace;">' + (v.placa || 'N/A') + '</td>';
+                novedadesHTML += '<td style="padding:8px; border:1px solid #ddd; font-weight:bold; color:#C76E00;">' + tipoFormateado + '</td>';
+                novedadesHTML += '<td style="padding:8px; border:1px solid #ddd;">' + (nov.descripcion || 'Sin descripción') + '</td>';
+                novedadesHTML += '</tr>';
+              });
+            }
+          });
+        }
+        if (novedadIndex === 0) {
+          novedadesHTML += '<tr><td colspan="5" style="padding:15px; text-align:center; color:#6c757d;">No hay novedades registradas</td></tr>';
+        }
+        novedadesHTML += '</tbody></table>';
+
+        // ✅ PARÁMETROS PARA LA PLANTILLA DE EMAILJS
+        const templateParams = {
+          // ✅ INFORMACIÓN DE REGISTRO (SOLO ESTOS 3 CAMPOS)
+          fecha: data.fecha || 'N/A',
+          coordinador: data.coordinador || data.coordinador_otro || 'N/A',
+          turno: data.turno || 'N/A',
+          
+          // ✅ TABLAS HTML CON LOS DATOS
+          vehiculos_tabla: vehiculosHTML,
+          productos_tabla: productosHTML,
+          novedades_tabla: novedadesHTML
+        };
+
+        console.log('📧 Enviando correo con EmailJS...', templateParams);
+
+        // ✅ ENVIAR CORREO (EMAILJS V3+)
+        emailjs.send('service_urgmrrs', 'template_j8l706d', templateParams)
+          .then(function(response) {
+            console.log('✅ Correo enviado exitosamente!', response.status, response.text);
+            resolve(response);
+          })
+          .catch(function(error) {
+            console.error('❌ Error al enviar correo:', error);
+            reject(error);
+          });
+
+      } catch (error) {
+        console.error('❌ Error en enviarCorreoEmailJS:', error);
+        reject(error);
       }
-      if (productoIndex === 0) {
-        productosHTML += '<tr><td colspan="6" style="padding:15px; text-align:center; color:#6c757d;">No hay productos escaneados</td></tr>';
-      }
-      productosHTML += '</tbody></table>';
-
-      // ✅ FUNCIÓN PARA FORMATEAR TIPO DE NOVEDAD
-      function formatearTipoNovedad(tipo) {
-        if (!tipo) return 'N/A';
-        return tipo.replace(/_/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
-      }
-
-      // ✅ FORMATEAR NOVEDADES COMO TABLA HTML
-      let novedadesHTML = '<table style="width:100%; border-collapse:collapse; margin-top:10px;">';
-      novedadesHTML += '<thead><tr style="background:#001855; color:white;">';
-      novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">#</th>';
-      novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">Vehículo</th>';
-      novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">Placa</th>';
-      novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">Tipo Novedad</th>';
-      novedadesHTML += '<th style="padding:10px; border:1px solid #ddd;">Descripción</th>';
-      novedadesHTML += '</tr></thead><tbody>';
-      
-      let novedadIndex = 0;
-      if (data.datos_vehiculos && data.datos_vehiculos.length > 0) {
-        data.datos_vehiculos.forEach((v, vIndex) => {
-          if (v.novedades && v.novedades.length > 0) {
-            v.novedades.forEach((nov) => {
-              novedadIndex++;
-              const bg = novedadIndex % 2 === 0 ? '#f8f9fa' : 'white';
-              const tipoFormateado = formatearTipoNovedad(nov.tipo);
-              novedadesHTML += '<tr style="background:' + bg + ';">';
-              novedadesHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center;">' + novedadIndex + '</td>';
-              novedadesHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-weight:bold; color:#001855;">' + (vIndex + 1) + '</td>';
-              novedadesHTML += '<td style="padding:8px; border:1px solid #ddd; text-align:center; font-family:monospace;">' + (v.placa || 'N/A') + '</td>';
-              novedadesHTML += '<td style="padding:8px; border:1px solid #ddd; font-weight:bold; color:#C76E00;">' + tipoFormateado + '</td>';
-              novedadesHTML += '<td style="padding:8px; border:1px solid #ddd;">' + (nov.descripcion || 'Sin descripción') + '</td>';
-              novedadesHTML += '</tr>';
-            });
-          }
-        });
-      }
-      if (novedadIndex === 0) {
-        novedadesHTML += '<tr><td colspan="5" style="padding:15px; text-align:center; color:#6c757d;">No hay novedades registradas</td></tr>';
-      }
-      novedadesHTML += '</tbody></table>';
-
-      // ✅ PARÁMETROS PARA EMAILJS
-      const templateParams = {
-        fecha: data.fecha || 'N/A',
-        coordinador: data.coordinador || data.coordinador_otro || 'N/A',
-        turno: data.turno || 'N/A',
-        vehiculos_tabla: vehiculosHTML,
-        productos_tabla: productosHTML,
-        novedades_tabla: novedadesHTML
-      };
-
-      console.log('📧 Enviando correo con EmailJS...', templateParams);
-
-      emailjs.send('service_urgmrrs', 'template_j8l706d', templateParams)
-        .then(function(response) {
-          console.log('✅ Correo enviado exitosamente!', response.status, response.text);
-          resolve(response);
-        })
-        .catch(function(error) {
-          console.error('❌ Error al enviar correo:', error);
-          reject(error);
-        });
-
-    } catch (error) {
-      console.error('❌ Error en enviarCorreoEmailJS:', error);
-      reject(error);
-    }
-  });
-}
-
+    });
+  }
           
 
           // ============================================
